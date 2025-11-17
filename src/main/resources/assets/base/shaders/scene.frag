@@ -1,7 +1,5 @@
-layout(std430, binding = 0) buffer voxelsSSBO
-{
-    float[] voxelsData;
-};
+int size = 1024;
+int height = 320;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -9,8 +7,10 @@ uniform ivec3 selected;
 uniform bool ui;
 uniform ivec2 res;
 
-layout(binding = 0) uniform sampler2D raster_color;
-layout(binding = 1) uniform sampler2D raster_depth;
+uniform layout(binding = 0) sampler2D raster_color;
+uniform layout(binding = 1) sampler2D raster_depth;
+uniform layout(binding = 2, rgba32f) image3D atlas;
+uniform layout(binding = 3, rgba16i) iimage3D blocks;
 
 in vec4 gl_FragCoord;
 
@@ -40,26 +40,8 @@ bool checker(ivec2 pixel) {
     return false;
 }
 
-int condensePos(int x, int y, int z) {
-    return ((((x*8)+y)*8)+z)*4;
-}
-int condensePos(float x, float y, float z) {
-    return condensePos(int(x), int(y), int(z));
-}
-
-vec4 getVoxel(float x, float y, float z) {
-    if (x >= 0 && x < 8 && z >= 0 && z < 8) {
-        if (y >= 0 && y < 8) {
-            int pos = condensePos(x, y, z);
-            return vec4(voxelsData[pos], voxelsData[pos+1], voxelsData[pos+2], voxelsData[pos+3]);
-        } else if (ui && y == -1) {
-            if (checker(ivec2(x, z))) {
-                return vec4(0.2f, 0.6, 0.2f, 1.f);
-            }
-            return vec4(0.2f, 0.8f, 0.2f, 1.f);
-        }
-    }
-    return vec4(0.f);
+ivec2 getBlock(float x, float y, float z) {
+    return imageLoad(blocks, ivec3(int(x), int(y), int(z))).rg;
 }
 
 bool didntTraceAnything = true;
@@ -75,8 +57,15 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
     vec3 mask = stepMask(sideDist);
     vec3 prevMapPos = mapPos+(stepMask(sideDist+(mask*(-raySign)*deltaDist))*(-raySign));
 
-    for (int i = 0; i < 256; i++) {
-        vec4 voxelColor = getVoxel(mapPos.x, mapPos.y, mapPos.z);
+    for (int i = 0; i < size*2; i++) {
+        if (distance(rayPos, mapPos) > size) {
+            break;
+        }
+        ivec2 block = getBlock(mapPos.x, mapPos.y, mapPos.z);
+        vec4 voxelColor = block.x == 1 ? vec4(0, 0, 1, 0.2f) : (block.x == 2 ? vec4(0, 1, 0, 1) : vec4(0));
+        if (checker(ivec2(mapPos.x, mapPos.z))) {
+            voxelColor.rgb *= 0.75f;
+        }
         if (voxelColor.a > 0.f) {
             voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
             if (selected == mapPos) {
@@ -117,7 +106,7 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
         sideDist += mask * raySign * deltaDist;
     }
 
-    return mapPos.y < 0 ? vec4(0.85f, 0.95f, 1.f, 1.f) : vec4(0.5f, 0.75f, 1.f, 1.f);
+    return mapPos.y < 64 ? vec4(0.f, 0.f, 1.f, 1.f) : vec4(0.5f, 0.75f, 1.f, 1.f);
 }
 
 float nearClip = 0.1f;
@@ -146,7 +135,7 @@ void main() {
     }
 
     float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
-    if (rasterDepth > tracedDepth || (didntTraceAnything && rasterColor.a >= 1)) {
+    if (rasterDepth > tracedDepth) {
         fragColor = rasterColor;
     }
 }

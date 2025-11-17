@@ -2,7 +2,7 @@ package org.archipelacraft.engine;
 
 import org.lwjgl.glfw.GLFW;
 import org.archipelacraft.Main;
-import org.archipelacraft.game.Renderer;
+import org.archipelacraft.game.rendering.Renderer;
 
 import java.util.ArrayList;
 import java.util.List;

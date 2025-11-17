@@ -1,38 +1,44 @@
 package org.archipelacraft.game;
 
-import org.joml.Vector4f;
+import org.archipelacraft.engine.Utils;
+import org.archipelacraft.game.noise.Noises;
 
 public class World {
-    public static float[] voxels = new float[512*4];
+    public static int size = 1024;
+    public static int height = 320;
+    public static int[] blocks = new int[World.size*World.size*World.height*4];
 
     public static int condensePos(int x, int y, int z) {
-        return ((((x*8)+y)*8)+z)*4;
+        return ((((x*height)+y)*size)+z)*4;
     }
     public static boolean inBounds(int x, int y, int z) {
-        return (x >= 0 && x < 8 && y >= 0 && y < 8 && z >= 0 && z < 8);
+        return (x >= 0 && x < size && y >= 0 && y < height && z >= 0 && z < size);
     }
 
-    public static Vector4f getVoxel(int x, int y, int z) {
+    public static void setBlock(int x, int y, int z, int block) {
         if (inBounds(x, y, z)) {
             int pos = condensePos(x, y, z);
-            return new Vector4f(voxels[pos], voxels[pos+1], voxels[pos+2], voxels[pos+3]);
+            blocks[pos] = block;
         }
-        return new Vector4f(0);
     }
-    public static Vector4f getVoxel(float x, float y, float z) {
-        return getVoxel((int) x, (int) y, (int) z);
+    public static void setBlock(float x, float y, float z, int block) {
+        setBlock((int) x, (int) y, (int) z, block);
     }
 
-    public static void setVoxel(int x, int y, int z, Vector4f color) {
-        if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z);
-            voxels[pos] = color.x;
-            voxels[pos + 1] = color.y;
-            voxels[pos + 2] = color.z;
-            voxels[pos + 3] = color.w;
+    public static void generate() {
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                float baseCellularNoise = (Noises.COHERERENT_NOISE.sample(x, z)+0.5f)/2;
+                int surface = (int)(32*baseCellularNoise)+52;
+                for (int y = surface; y >= 0; y--) {
+                    setBlock(x, y, z, 2);
+                }
+                if (surface < 63) {
+                    for (int y = 63; y >= surface; y--) {
+                        setBlock(x, y, z, 1);
+                    }
+                }
+            }
         }
-    }
-    public static void setVoxel(float x, float y, float z, Vector4f color) {
-        setVoxel((int) x, (int) y, (int) z, color);
     }
 }

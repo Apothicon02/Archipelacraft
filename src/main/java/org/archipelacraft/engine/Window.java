@@ -1,6 +1,6 @@
 package org.archipelacraft.engine;
 
-import org.archipelacraft.game.Renderer;
+import org.archipelacraft.game.rendering.Renderer;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.system.MemoryUtil;
