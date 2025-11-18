@@ -99,7 +99,7 @@ bool checker(ivec2 pixel) {
 }
 
 ivec4 getBlock(float x, float y, float z) {
-    return texture(blocks, (vec3(x, y, z)+0.001f)/vec3(size, height, size), 0);
+    return texelFetch(blocks, ivec3(x, y, z), x > 512 ? 0 : 1);
 }
 vec4 getLight(float x, float y, float z) {
     return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0);
