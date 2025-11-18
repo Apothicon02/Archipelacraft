@@ -1,7 +1,7 @@
 package org.archipelacraft.game.rendering;
 
 import org.archipelacraft.Main;
-import org.archipelacraft.game.World;
+import org.archipelacraft.game.world.World;
 import org.joml.*;
 import org.archipelacraft.engine.*;
 import org.archipelacraft.engine.Window;

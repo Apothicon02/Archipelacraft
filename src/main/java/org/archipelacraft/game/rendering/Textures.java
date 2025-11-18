@@ -1,6 +1,6 @@
 package org.archipelacraft.game.rendering;
 
-import org.archipelacraft.game.World;
+import org.archipelacraft.game.world.World;
 import org.lwjgl.opengl.GL40;
 
 import java.util.ArrayList;

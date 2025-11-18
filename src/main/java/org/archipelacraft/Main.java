@@ -1,7 +1,9 @@
 package org.archipelacraft;
 
+import com.google.gson.Gson;
 import org.archipelacraft.game.Player;
-import org.archipelacraft.game.World;
+import org.archipelacraft.game.audio.AudioController;
+import org.archipelacraft.game.world.World;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Renderer;
 import org.joml.*;
@@ -14,6 +16,9 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL45.*;
 
 public class Main {
+    public static String mainFolder = System.getenv("APPDATA")+"/Archipelacraft/";
+    public static String resourcesPath = mainFolder+"resources/";
+    public static Gson gson = new Gson();
     public static Player player = new Player();
     private static final float MOUSE_SENSITIVITY = 0.01f;
 
@@ -31,6 +36,10 @@ public class Main {
         glFrontFace(GL_CW);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
+
+        AudioController.init();
+        AudioController.setListenerData(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new float[6]);
+
         Noises.init();
         World.generate();
     }

@@ -1,6 +1,7 @@
 package org.archipelacraft.engine;
 
 import org.archipelacraft.Main;
+import org.archipelacraft.game.world.World;
 import org.joml.*;
 
 import java.awt.*;
@@ -150,5 +151,14 @@ public class Utils {
     }
     public static Vector4i unpackColor(int color) {
         return new Vector4i(0xFF & color >> 16, 0xFF & color >> 8, 0xFF & color, 0xFF & color >> 24);
+    }
+    public static int condensePos(int x, int y, int z) {
+        return ((((x*World.height)+y)*World.size)+z)*4;
+    }
+    public static int condensePos(Vector3i pos) {
+        return ((((pos.x*World.height)+pos.y)*World.size)+pos.z)*4;
+    }
+    public static int condensePos(int x, int z) {
+        return (x * World.size) + z;
     }
 }
