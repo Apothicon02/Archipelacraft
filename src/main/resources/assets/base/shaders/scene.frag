@@ -6,6 +6,8 @@ uniform mat4 view;
 uniform ivec3 selected;
 uniform bool ui;
 uniform ivec2 res;
+uniform double time;
+uniform float timeOfDay;
 
 uniform layout(binding = 0) sampler2D raster_color;
 uniform layout(binding = 1) sampler2D raster_depth;
@@ -15,6 +17,67 @@ uniform layout(binding = 3, rgba16i) iimage3D blocks;
 in vec4 gl_FragCoord;
 
 out vec4 fragColor;
+
+// Converts a color from linear light gamma to sRGB gamma
+vec4 fromLinear(vec4 linearRGB)
+{
+    bvec4 cutoff = lessThan(linearRGB, vec4(0.0031308));
+    vec4 higher = vec4(1.055)*pow(linearRGB, vec4(1.0/2.4)) - vec4(0.055);
+    vec4 lower = linearRGB * vec4(12.92);
+
+    return mix(higher, lower, cutoff);
+}
+
+// Converts a color from sRGB gamma to linear light gamma
+vec4 toLinear(vec4 sRGB)
+{
+    bvec4 cutoff = lessThan(sRGB, vec4(0.04045));
+    vec4 higher = pow((sRGB + vec4(0.055))/vec4(1.055), vec4(2.4));
+    vec4 lower = sRGB/vec4(12.92);
+
+    return mix(higher, lower, cutoff);
+}
+
+vec3 fromLinear(vec3 linearRGB)
+{
+    bvec3 cutoff = lessThan(linearRGB, vec3(0.0031308));
+    vec3 higher = vec3(1.055)*pow(linearRGB, vec3(1.0/2.4)) - vec3(0.055);
+    vec3 lower = linearRGB * vec3(12.92);
+
+    return vec3(mix(higher, lower, cutoff));
+}
+
+// Converts a color from sRGB gamma to linear light gamma
+vec3 toLinear(vec3 sRGB)
+{
+    bvec3 cutoff = lessThan(sRGB, vec3(0.04045));
+    vec3 higher = pow((sRGB + vec3(0.055))/vec3(1.055), vec3(2.4));
+    vec3 lower = sRGB/vec3(12.92);
+
+    return vec3(mix(higher, lower, cutoff));
+}
+
+float noise(vec2 coords) {
+    return 0.5f;
+}
+
+bool hitSelection = false;
+vec4 getVoxel(int x, int y, int z, int bX, int bY, int bZ, int blockType, int blockSubtype, float fire) {
+    vec4 color = imageLoad(atlas, ivec3(x+(blockType*8), ((abs(y-8)-1)*8)+z, blockSubtype)) + (fire > 0 ? (vec4(vec3(1, 0.3, 0.05)*(abs(max(0, noise((vec2(x+bX, y+bZ)*64)+(float(time)*10000))+noise((vec2(y+bX, z+bZ)*8)+(float(time)*10000))+noise((vec2(z+bZ+x+bX, x+bY)*64)+(float(time)*10000)))*6.66)*fire), 0)) : vec4(0));
+
+    color.rgb = fromLinear(color.rgb)*0.8;
+    if (ui && selected == ivec3(bX, bY, bZ) && color.a > 0) {
+        hitSelection = true;
+    }
+    if (blockType == 31) {
+        color.rgb *= 1.5f;
+    }
+    return color;
+
+}
+vec4 getVoxel(float x, float y, float z, float bX, float bY, float bZ, int blockType, int blockSubtype, float fire) {
+    return getVoxel(int(x), int(y), int(z), int(bX), int(bY), int(bZ), blockType, blockSubtype, fire);
+}
 
 vec3 stepMask(vec3 sideDist) {
     bvec3 b1 = lessThan(sideDist.xyz, sideDist.yzx);
@@ -45,7 +108,6 @@ ivec2 getBlock(float x, float y, float z) {
 }
 
 bool didntTraceAnything = true;
-bool hitSelection = false;
 float voxelBrightness = 0.f;
 vec3 mapPos = vec3(0);
 
@@ -62,10 +124,7 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
             break;
         }
         ivec2 block = getBlock(mapPos.x, mapPos.y, mapPos.z);
-        vec4 voxelColor = block.x == 1 ? vec4(0, 0, 1, 0.2f) : (block.x == 2 ? vec4(0, 1, 0, 1) : vec4(0));
-        if (checker(ivec2(mapPos.x, mapPos.z))) {
-            voxelColor.rgb *= 0.75f;
-        }
+        vec4 voxelColor = getVoxel(4, 4, 4, mapPos.x, mapPos.y, mapPos.z, block.x, block.y, 0.f);
         if (voxelColor.a > 0.f) {
             voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
             if (selected == mapPos) {

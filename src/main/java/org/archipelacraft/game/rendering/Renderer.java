@@ -112,7 +112,7 @@ public class Renderer {
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.atlas.width, Textures.atlas.height, ((Texture3D)Textures.atlas).depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, Utils.imageToBuffer(atlasImage));
 
         glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RGBA_INTEGER, GL_INT, World.blocks);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RGBA_INTEGER, GL_SHORT, World.blocks);
     }
 
     public static void bindTextures() {
