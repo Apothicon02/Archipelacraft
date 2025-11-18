@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -113,13 +114,18 @@ public class Renderer {
 
         glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RGBA_INTEGER, GL_SHORT, World.blocks);
+
+        glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, 0, GL_RGBA, GL_BYTE, World.lights.flip());
+
     }
 
     public static void bindTextures() {
         glBindTextureUnit(0, Textures.rasterColor.id);
         glBindTextureUnit(1, Textures.rasterDepth.id);
-        glBindImageTexture(2, Textures.atlas.id, 0, false, 0, GL_READ_ONLY, GL_RGBA32F);
-        glBindImageTexture(3, Textures.blocks.id, 0, false, 0, GL_READ_ONLY, GL_RGBA16I);
+        glBindTextureUnit(2, Textures.atlas.id);
+        glBindTextureUnit(3, Textures.blocks.id);
+        glBindTextureUnit(4, Textures.lights.id);
     }
 
     public static void init(Window window) throws Exception {

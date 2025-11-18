@@ -18,6 +18,12 @@ public class Textures {
     public static Texture rasterDepth = create(1920, 1080);
     public static Texture atlas = create(544, 64, 1024/64);
     public static Texture blocks = create(World.size, World.height, World.size);
+    public static Texture lights = create(new int[]{
+            GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_LINEAR,
+            GL40.GL_TEXTURE_MAG_FILTER,GL40.GL_LINEAR,
+            GL40.GL_TEXTURE_WRAP_S, GL40.GL_CLAMP_TO_EDGE,
+            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE
+    }, World.size, World.height, World.size);
 
     public static Texture create(int width, int height) {
         Texture texture = new Texture(defaultParameters, width, height);
@@ -26,6 +32,11 @@ public class Textures {
     }
     public static Texture create(int width, int height, int depth) {
         Texture texture = new Texture3D(defaultParameters, width, height, depth);
+        textures.addLast(texture);
+        return texture;
+    }
+    public static Texture create(int[] params, int width, int height, int depth) {
+        Texture texture = new Texture3D(params, width, height, depth);
         textures.addLast(texture);
         return texture;
     }

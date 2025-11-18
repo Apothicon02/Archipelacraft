@@ -146,17 +146,17 @@ public class Utils {
     public static int colorToInt(Color color) {
         return color.getRed() << 16 | color.getGreen() << 8 | color.getBlue() | color.getAlpha() << 24;
     }
-    public static int packColor(Vector4i color) {
-        return color.x() << 16 | color.y() << 8 | color.z() | color.w() << 24;
+    public static short packColor(Vector4i color) {
+        return (short) (color.x() << 8 | color.y() << 4 | color.z() | color.w() << 12);
     }
     public static Vector4i unpackColor(int color) {
         return new Vector4i(0xFF & color >> 16, 0xFF & color >> 8, 0xFF & color, 0xFF & color >> 24);
     }
     public static int condensePos(int x, int y, int z) {
-        return ((((x*World.height)+y)*World.size)+z)*4;
+        return ((((x*World.height)+y)*World.size)+z);
     }
     public static int condensePos(Vector3i pos) {
-        return ((((pos.x*World.height)+pos.y)*World.size)+pos.z)*4;
+        return ((((pos.x*World.height)+pos.y)*World.size)+pos.z);
     }
     public static int condensePos(int x, int z) {
         return (x * World.size) + z;

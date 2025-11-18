@@ -11,8 +11,9 @@ uniform float timeOfDay;
 
 uniform layout(binding = 0) sampler2D raster_color;
 uniform layout(binding = 1) sampler2D raster_depth;
-uniform layout(binding = 2, rgba32f) image3D atlas;
-uniform layout(binding = 3, rgba16i) iimage3D blocks;
+uniform layout(binding = 2) sampler3D atlas;
+uniform layout(binding = 3) isampler3D blocks;
+uniform layout(binding = 4) sampler3D lights;
 
 in vec4 gl_FragCoord;
 
@@ -57,14 +58,17 @@ vec3 toLinear(vec3 sRGB)
     return vec3(mix(higher, lower, cutoff));
 }
 
+vec4 shortToColor(int color) {
+    return vec4(0xFF & color >> 8, 0xFF & color >> 4, 0xFF & color, 0xFF & color >> 12);
+}
+
 float noise(vec2 coords) {
     return 0.5f;
 }
 
 bool hitSelection = false;
 vec4 getVoxel(int x, int y, int z, int bX, int bY, int bZ, int blockType, int blockSubtype) {
-    return imageLoad(atlas, ivec3(x+(blockType*8), ((abs(y-8)-1)*8)+z, blockSubtype));
-
+    return texelFetch(atlas, ivec3(x+(blockType*8), ((abs(y-8)-1)*8)+z, blockSubtype), 0);
 }
 vec4 getVoxel(float x, float y, float z, float bX, float bY, float bZ, int blockType, int blockSubtype) {
     return getVoxel(int(x), int(y), int(z), int(bX), int(bY), int(bZ), blockType, blockSubtype);
@@ -94,17 +98,21 @@ bool checker(ivec2 pixel) {
     return false;
 }
 
-ivec2 getBlock(float x, float y, float z) {
-    return imageLoad(blocks, ivec3(int(x), int(y), int(z))).rg;
+ivec4 getBlock(float x, float y, float z) {
+    return texture(blocks, (vec3(x, y, z)+0.001f)/vec3(size, height, size), 0);
+}
+vec4 getLight(float x, float y, float z) {
+    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0);
 }
 
 bool didntTraceAnything = true;
 float voxelBrightness = 0.f;
+vec3 ogRayPos = vec3(0);
+vec3 hitPos = vec3(0);
 vec3 mapPos = vec3(0);
 vec3 normal = vec3(0);
 
-vec4 traceVoxel(vec3 rayPos, vec3 rayDir, vec3 iMask, ivec2 block) {
-    vec3 ogRayPos = rayPos;
+vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2 block) {
     rayPos *= 8;
     vec3 voxelMapPos = floor(clamp(rayPos, vec3(0.0001f), vec3(7.9999f)));
     vec3 raySign = sign(rayDir);
@@ -115,18 +123,15 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, vec3 iMask, ivec2 block) {
 
     for (int i = 0; voxelMapPos.x < 8.0 && voxelMapPos.x >= 0.0 && voxelMapPos.y < 8.0 && voxelMapPos.y >= 0.0 && voxelMapPos.z < 8.0 && voxelMapPos.z >= 0.0 && i < 8*3; i++) {
         vec4 voxelColor = getVoxel(voxelMapPos.x, voxelMapPos.y, voxelMapPos.z, mapPos.x, mapPos.y, mapPos.z, block.x, block.y);
-        if (voxelColor.a > 0) {
-            vec3 uv3d = vec3(0);
-            vec3 intersect = vec3(0);
-            vec3 mini = ((voxelMapPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
-            float blockDist = max(mini.x, max(mini.y, mini.z));
-            intersect = rayPos + rayDir*blockDist;
-            uv3d = intersect - voxelMapPos;
 
-            if (voxelMapPos == floor(rayPos)) { // Handle edge case where camera origin is inside of block
-                uv3d = rayPos - voxelMapPos;
+        if (voxelColor.a > 0) {
+            vec3 mini = ((voxelMapPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
+            float voxelDist = max(mini.x, max(mini.y, mini.z));
+            float rayLength = prevRayLength;
+            if (voxelDist > 0.0f) {
+                rayLength += voxelDist/8;
             }
-            mapPos += ogRayPos+(uv3d/8);
+            hitPos = (ogRayPos + rayDir * (rayLength-0.05f));
             normal = ivec3(voxelMapPos - prevVoxelMapPos);
             return vec4(voxelColor.rgb, 1);
         }
@@ -141,18 +146,17 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, vec3 iMask, ivec2 block) {
 }
 
 vec4 raytrace(vec3 rayPos, vec3 rayDir) {
+    ogRayPos = rayPos;
     mapPos = floor(rayPos);
     vec3 raySign = sign(rayDir);
     vec3 deltaDist = 1.0/rayDir;
     vec3 sideDist = ((mapPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
     vec3 mask = stepMask(sideDist);
     vec3 prevMapPos = mapPos+(stepMask(sideDist+(mask*(-raySign)*deltaDist))*(-raySign));
+    ivec4 prevBlock = ivec4(0);
 
-    for (int i = 0; i < size*2; i++) {
-        if (distance(rayPos, mapPos) > size) {
-            break;
-        }
-        ivec2 block = getBlock(mapPos.x, mapPos.y, mapPos.z);
+    for (int i = 0; !(mapPos.x < 0 || mapPos.x >= size || mapPos.y < 0 || mapPos.y >= height || mapPos.z < 0 || mapPos.z >= size) && !(distance(rayPos, mapPos) > size) && i < size*2; i++) {
+        ivec4 block = getBlock(mapPos.x, mapPos.y, mapPos.z);
         if (block.x > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
@@ -164,8 +168,7 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
             if (mapPos == floor(rayPos)) { // Handle edge case where camera origin is inside of block
                 uv3d = rayPos - mapPos;
             }
-
-            vec4 voxelColor = traceVoxel(uv3d, rayDir, mask, block);
+            vec4 voxelColor = traceVoxel(uv3d, rayDir, blockDist, mask, block.xy);
             if (voxelColor.a >= 1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
                 if (block.x == 31) {
@@ -189,11 +192,15 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
                     voxelColor *= 0.95f;
                 }
 
+                vec3 lightPos = hitPos;
+                vec4 lighting = (getLight(lightPos.x, lightPos.y, lightPos.z)*10);
+                voxelColor.rgb *= max(lighting.rgb, lighting.a);
                 didntTraceAnything = false;
                 return voxelColor;
             }
         }
 
+        prevBlock = block;
         mask = stepMask(sideDist);
         prevMapPos = mapPos;
         mapPos += mask * raySign;
@@ -218,7 +225,7 @@ void main() {
     if (ui && uv.x >= -0.004f && uv.x <= 0.004f && uv.y >= -0.004385f && uv.y <= 0.004385f) {
         fragColor = vec4(0.9, 0.9, 1, 1);
     } else {
-        fragColor = raytrace(ogPos, ogDir);
+        fragColor = toLinear(raytrace(ogPos, ogDir));
         if (hitSelection) {
             if (voxelBrightness > 0.5f) {
                 fragColor/=2;

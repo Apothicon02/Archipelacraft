@@ -13,6 +13,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
 
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 public class World {
@@ -20,6 +21,7 @@ public class World {
     public static int height = 320;
     public static int seaLevel = 63;
     public static short[] blocks = new short[World.size*World.size*World.height*4];
+    public static ByteBuffer lights = ByteBuffer.allocateDirect(World.size*World.size*World.height*4);
     public static short[] heightmap = new short[World.size*World.size];
     public static Random seededRand = new Random();
 
@@ -28,7 +30,29 @@ public class World {
     }
 
     public static void setLight(int x, int y, int z, Vector4i light) {
-
+        if (inBounds(x, y, z)) {
+            int pos = Utils.condensePos(x, y, z)*4;
+            lights.put(pos, (byte)(light.x));
+            lights.put(pos+1, (byte)(light.y));
+            lights.put(pos+2, (byte)(light.z));
+            lights.put(pos+3, (byte)(light.w));
+        }
+    }
+    public static Vector4i getLight(int x, int y, int z, boolean returnNull) {
+        if (inBounds(x, y, z)) {
+            int pos = Utils.condensePos(x, y, z)*4;
+            return new Vector4i(lights.get(pos), lights.get(pos+1), lights.get(pos+2), lights.get(pos+3));
+        }
+        return returnNull ? null : new Vector4i(0);
+    }
+    public static Vector4i getLight(int x, int y, int z) {
+        return getLight(x, y, z, true);
+    }
+    public static Vector4i getLight(Vector3i pos) {
+        return getLight(pos.x, pos.y, pos.z, true);
+    }
+    public static int getCorner(int x, int y, int z) {
+        return 0;
     }
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType, boolean replace, boolean priority, int tickDelay, boolean silent) {
@@ -80,7 +104,7 @@ public class World {
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z);
+            int pos = Utils.condensePos(x, y, z)*4;
             blocks[pos] = (short)(block);
             blocks[pos+1] = (short)(blockSubType);
         }
@@ -91,10 +115,10 @@ public class World {
 
     public static Vector2i getBlock(int x, int y, int z) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z);
+            int pos = Utils.condensePos(x, y, z)*4;
             return new Vector2i(blocks[pos], blocks[pos+1]);
         } else {
-            return new Vector2i(0);
+            return null;
         }
     }
     public static Vector2i getBlock(Vector3i pos) {
@@ -144,6 +168,33 @@ public class World {
                     int foliageChance = seededRand.nextInt(0, 1000);
                     if (foliageChance == 0) { //tree
                         PalmTree.generate(blockOn, x, surface, z, seededRand.nextInt(8, 22), 25, 0, 27, 0);
+                    }
+                }
+            }
+        }
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                for (int y = height-1; y >= 0; y--) {
+                    Vector2i block = getBlock(x, y, z);
+                    BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
+                    if (!blockType.obstructingHeightmap(block)) {
+                        setLight(x, y, z, new Vector4i(0, 0, 0, 15));
+                    } else {
+                        heightmap[(x*size)+z] = (short)(y);
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                for (int y = 63; y < heightmap[(x*size)+z]; y++) {
+                    if (getLight(x, y, z + 1, false).w() > 0 || getLight(x + 1, y, z, false).w() > 0 || getLight(x, y, z - 1, false).w() > 0 ||
+                            getLight(x - 1, y, z, false).w() > 0 || getLight(x, y + 1, z, false).w() > 0 || getLight(x, y - 1, z, false).w() > 0) {
+                        LightHelper.updateLight(new Vector3i(x, y, z), getBlock(x, y, z), getLight(x, y, z));
                     }
                 }
             }
