@@ -20,8 +20,9 @@ public class World {
     public static int size = 1024;
     public static int height = 320;
     public static int seaLevel = 63;
-    public static short[] blocks = new short[World.size*World.size*World.height*4];
+    public static short[] blocks = new short[World.size*World.size*World.height*2];
     public static short[] blocksLOD = new short[(World.size*World.size*World.height)/4];
+    public static short[] blocksLOD2 = new short[(World.size*World.size*World.height)/16];
     public static ByteBuffer lights = ByteBuffer.allocateDirect(World.size*World.size*World.height*4);
     public static short[] heightmap = new short[World.size*World.size];
     public static Random seededRand = new Random(35311350L);
@@ -106,11 +107,11 @@ public class World {
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*4;
+            int pos = Utils.condensePos(x, y, z)*2;
             blocks[pos] = (short)(block);
             blocks[pos+1] = (short)(blockSubType);
-            pos = (((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4));
-            blocksLOD[pos] = (short)(block);
+            blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(block);
+            blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(block);
         }
     }
     public static void setBlock(float x, float y, float z, int block, int blockSubType) {
@@ -119,7 +120,7 @@ public class World {
 
     public static Vector2i getBlock(int x, int y, int z) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*4;
+            int pos = Utils.condensePos(x, y, z)*2;
             return new Vector2i(blocks[pos], blocks[pos+1]);
         } else {
             return null;

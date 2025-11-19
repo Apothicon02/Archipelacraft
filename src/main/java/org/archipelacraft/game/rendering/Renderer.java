@@ -113,8 +113,9 @@ public class Renderer {
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.atlas.width, Textures.atlas.height, ((Texture3D)Textures.atlas).depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, Utils.imageToBuffer(atlasImage));
 
         glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RGBA_INTEGER, GL_SHORT, World.blocks);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RG_INTEGER, GL_SHORT, World.blocks);
         glTexImage3D(GL_TEXTURE_3D, 2, GL_RGBA16I, Textures.blocks.width/4, Textures.blocks.height/4, ((Texture3D)Textures.blocks).depth/4, 0, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
+        glTexImage3D(GL_TEXTURE_3D, 4, GL_RGBA16I, Textures.blocks.width/16, Textures.blocks.height/16, ((Texture3D)Textures.blocks).depth/16, 0, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
 
         glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, 0, GL_RGBA, GL_BYTE, World.lights.flip());
