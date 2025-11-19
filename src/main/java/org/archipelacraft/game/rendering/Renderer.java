@@ -114,8 +114,7 @@ public class Renderer {
 
         glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RGBA_INTEGER, GL_SHORT, World.blocks);
-        glTexImage3D(GL_TEXTURE_3D, 1, GL_RGBA16I, Textures.blocks.width/4, Textures.blocks.height/4, ((Texture3D)Textures.blocks).depth/4, 0, GL_RGBA_INTEGER, GL_SHORT, World.blocks);
-//        glGenerateMipmap(GL_TEXTURE_3D);
+        glTexImage3D(GL_TEXTURE_3D, 2, GL_RGBA16I, Textures.blocks.width/4, Textures.blocks.height/4, ((Texture3D)Textures.blocks).depth/4, 0, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
 
         glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, 0, GL_RGBA, GL_BYTE, World.lights.flip());

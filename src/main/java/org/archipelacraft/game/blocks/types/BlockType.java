@@ -30,6 +30,10 @@ public class BlockType {
         return blockProperties.ttb;
     }
 
+    public boolean blocksLight(Vector2i block) {
+        return  blockProperties.blocksLight;
+    }
+
     public boolean needsSupport(Vector2i block) {
         return blockProperties.needsSupport;
     }

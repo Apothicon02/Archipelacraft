@@ -99,7 +99,7 @@ bool checker(ivec2 pixel) {
 }
 
 ivec4 getBlock(float x, float y, float z) {
-    return texelFetch(blocks, ivec3(x, y, z), x > 512 ? 0 : 1);
+    return texelFetch(blocks, ivec3(x, y, z), 0);
 }
 vec4 getLight(float x, float y, float z) {
     return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0);
@@ -145,37 +145,75 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2
     return vec4(0);
 }
 
-vec4 raytrace(vec3 rayPos, vec3 rayDir) {
-    ogRayPos = rayPos;
-    mapPos = floor(rayPos);
+vec3 lodPos = vec3(0);
+ivec4 block = ivec4(0);
+vec4 traceBlock(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask) {
+    rayPos *= 4;
+    vec3 blockPos = floor(clamp(rayPos, vec3(0.0001), vec3(3.9999)));
     vec3 raySign = sign(rayDir);
     vec3 deltaDist = 1.0/rayDir;
-    vec3 sideDist = ((mapPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
-    vec3 mask = stepMask(sideDist);
-    vec3 prevMapPos = mapPos+(stepMask(sideDist+(mask*(-raySign)*deltaDist))*(-raySign));
-    ivec4 prevBlock = ivec4(0);
+    vec3 sideDist = ((blockPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
+    vec3 mask = iMask;
 
-    for (int i = 0; !(mapPos.x < 0 || mapPos.x >= size || mapPos.y < 0 || mapPos.y >= height || mapPos.z < 0 || mapPos.z >= size) && !(distance(rayPos, mapPos) > size) && i < size*2; i++) {
-        ivec4 block = getBlock(mapPos.x, mapPos.y, mapPos.z);
+    for (int i = 0; blockPos.x < 4.0 && blockPos.x >= 0.0 && blockPos.y < 4.0 && blockPos.y >= 0.0 && blockPos.z < 4.0 && blockPos.z >= 0.0 && i < 4*3; i++) {
+        mapPos = (lodPos*4)+blockPos;
+        block = getBlock(mapPos.x, mapPos.y, mapPos.z);
         if (block.x > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
-            vec3 mini = ((mapPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
+            vec3 mini = ((blockPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
             float blockDist = max(mini.x, max(mini.y, mini.z));
             intersect = rayPos + rayDir*blockDist;
-            uv3d = intersect - mapPos;
+            uv3d = intersect - blockPos;
 
-            if (mapPos == floor(rayPos)) { // Handle edge case where camera origin is inside of block
-                uv3d = rayPos - mapPos;
+            if (blockPos == floor(rayPos)) { // Handle edge case where camera origin is inside of block
+                uv3d = rayPos - blockPos;
             }
-            vec4 voxelColor = traceVoxel(uv3d, rayDir, blockDist, mask, block.xy);
+            vec4 voxelColor = traceVoxel(uv3d, rayDir, prevRayLength+blockDist, mask, block.xy);
+            if (voxelColor.a >= 1) {
+                return voxelColor;
+            }
+        }
+
+        mask = stepMask(sideDist);
+        blockPos += mask * raySign;
+        sideDist += mask * raySign * deltaDist;
+    }
+
+    return vec4(0);
+}
+
+vec4 raytrace(vec3 ogPos, vec3 rayDir) {
+    ogRayPos = ogPos;
+    vec3 rayPos = ogPos/4;
+    lodPos = floor(rayPos);
+    vec3 raySign = sign(rayDir);
+    vec3 deltaDist = 1.0/rayDir;
+    vec3 sideDist = ((lodPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
+    vec3 mask = stepMask(sideDist);
+
+    for (int i = 0; i < size; i++) {
+        ivec4 lod = texelFetch(blocks, ivec3(lodPos.x, lodPos.y, lodPos.z), 2);
+        if (lod.x > 0) {
+//            return fromLinear(vec4(0, 1, 0, 1));
+            vec3 uv3d = vec3(0);
+            vec3 intersect = vec3(0);
+            vec3 mini = ((lodPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
+            float lodDist = max(mini.x, max(mini.y, mini.z));
+            intersect = rayPos + rayDir*lodDist;
+            uv3d = intersect - lodPos;
+
+            if (lodPos == floor(rayPos)) { // Handle edge case where camera origin is inside of block
+                uv3d = rayPos - lodPos;
+            }
+            vec4 voxelColor = traceBlock(uv3d, rayDir, lodDist*4, mask);
             if (voxelColor.a >= 1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
                 if (block.x == 31) {
                     voxelColor.rgb *= 1.5f;
                 }
                 voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
-                if (selected == mapPos) {
+                if (selected == lodPos) {
                     hitSelection = true;
                 }
                 if (normal.y >0) { //down
@@ -200,14 +238,12 @@ vec4 raytrace(vec3 rayPos, vec3 rayDir) {
             }
         }
 
-        prevBlock = block;
         mask = stepMask(sideDist);
-        prevMapPos = mapPos;
-        mapPos += mask * raySign;
+        lodPos += mask * raySign;
         sideDist += mask * raySign * deltaDist;
     }
 
-    return mapPos.y < 64 ? vec4(0.f, 0.f, 1.f, 1.f) : vec4(0.5f, 0.75f, 1.f, 1.f);
+    return lodPos.y < 16 ? vec4(0.f, 0.f, 1.f, 1.f) : vec4(0.5f, 0.75f, 1.f, 1.f);
 }
 
 float nearClip = 0.1f;
@@ -235,8 +271,8 @@ void main() {
         }
     }
 
-    float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
-    if (rasterDepth > tracedDepth) {
-        fragColor = rasterColor;
-    }
+//    float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
+//    if (rasterDepth > tracedDepth) {
+//        fragColor = rasterColor;
+//    }
 }

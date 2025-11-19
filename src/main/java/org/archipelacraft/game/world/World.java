@@ -21,9 +21,10 @@ public class World {
     public static int height = 320;
     public static int seaLevel = 63;
     public static short[] blocks = new short[World.size*World.size*World.height*4];
+    public static short[] blocksLOD = new short[(World.size*World.size*World.height)/4];
     public static ByteBuffer lights = ByteBuffer.allocateDirect(World.size*World.size*World.height*4);
     public static short[] heightmap = new short[World.size*World.size];
-    public static Random seededRand = new Random();
+    public static Random seededRand = new Random(35311350L);
 
     public static boolean inBounds(int x, int y, int z) {
         return (x >= 0 && x < size && y >= 0 && y < height && z >= 0 && z < size);
@@ -64,6 +65,7 @@ public class World {
                 byte r = 0;
                 byte g = 0;
                 byte b = 0;
+                Vector2i newBlock = new Vector2i(block, blockSubType);
                 BlockType blockType = BlockTypes.blockTypeMap.get(block);
                 boolean lightChanged = false;
                 if (blockType instanceof LightBlockType lType) {
@@ -79,7 +81,7 @@ public class World {
                     ScheduledTicker.scheduleTick(Main.currentTick+tickDelay, pos, 0);
                 }
                 if (!lightChanged) {
-                    lightChanged = blockType.blockProperties.blocksLight != oldBlockType.blockProperties.blocksLight;
+                    lightChanged = blockType.blocksLight(newBlock) != oldBlockType.blocksLight(newBlock);
                 }
                 if (lightChanged) {
                     //setLight(x, y, z, r, g, b, 0, pos);
@@ -107,6 +109,8 @@ public class World {
             int pos = Utils.condensePos(x, y, z)*4;
             blocks[pos] = (short)(block);
             blocks[pos+1] = (short)(blockSubType);
+            pos = (((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4));
+            blocksLOD[pos] = (short)(block);
         }
     }
     public static void setBlock(float x, float y, float z, int block, int blockSubType) {

@@ -49,7 +49,7 @@ public class Blob {
                                 }
                                 if (type.obstructingHeightmap(block)) {
                                     heightmap[condensedPos] = (short) Math.max(heightmap[condensedPos], lY);
-                                    if (type.blockProperties.blocksLight) {
+                                    if (type.blocksLight(block)) {
                                         for (int extraY = lY; extraY >= surfaceY; extraY--) {
                                             setLight(lX, extraY, lZ, new Vector4i(0, 0, 0, 0));
                                         }

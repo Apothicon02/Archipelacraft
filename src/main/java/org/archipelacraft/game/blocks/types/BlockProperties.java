@@ -4,6 +4,7 @@ import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.audio.SFX;
 import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.blocks.Tag;
+import org.joml.Vector2i;
 
 import java.util.Map;
 

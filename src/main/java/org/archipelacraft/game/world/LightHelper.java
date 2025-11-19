@@ -16,7 +16,7 @@ public class LightHelper {
         BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
         int corners = getCorner(pos.x, pos.y, pos.z);
         boolean isLight = blockType instanceof LightBlockType;
-        if (!blocksLight(block.x, corners) || isLight) {
+        if (!blocksLight(block, corners) || isLight) {
             int r = Math.max(light.x(), isLight ? ((LightBlockType) blockType).lightBlockProperties().r : 0);
             int g = Math.max(light.y(), isLight ? ((LightBlockType) blockType).lightBlockProperties().g : 0);
             int b = Math.max(light.z(), isLight ? ((LightBlockType) blockType).lightBlockProperties().b : 0);
@@ -30,7 +30,7 @@ public class LightHelper {
                 if (neighborLight != null) {
                     BlockType neighborBlockType = BlockTypes.blockTypeMap.get(neighbor.x);
                     boolean isNLight = neighborBlockType instanceof LightBlockType;
-                    if (!blocksLight(neighbor.x, getCorner(neighborPos.x, neighborPos.y, neighborPos.z)) || isNLight) {
+                    if (!blocksLight(neighbor, getCorner(neighborPos.x, neighborPos.y, neighborPos.z)) || isNLight) {
                         r = Math.max(r, Math.max(neighborLight.x(), isNLight ? ((LightBlockType) neighborBlockType).lightBlockProperties().r : 0) - 1);
                         g = Math.max(g, Math.max(neighborLight.y(), isNLight ? ((LightBlockType) neighborBlockType).lightBlockProperties().g : 0) - 1);
                         b = Math.max(b, Math.max(neighborLight.z(), isNLight ? ((LightBlockType) neighborBlockType).lightBlockProperties().b : 0) - 1);
@@ -60,8 +60,8 @@ public class LightHelper {
     public static boolean isDarker(int r, int g, int b, int s, Vector4i darker) {
         return r-2 > darker.x() || g-2 > darker.y() || b-2 > darker.z() || s-2 > darker.w();
     }
-    public static boolean blocksLight(int blockType, int corners) {
-        if (!BlockTypes.blockTypeMap.get(blockType).blockProperties.blocksLight) {
+    public static boolean blocksLight(Vector2i block, int corners) {
+        if (!BlockTypes.blockTypeMap.get(block.x).blocksLight(block)) {
             return false;
         } else {
             int blocked = 0;
