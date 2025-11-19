@@ -193,9 +193,9 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     vec3 mask = stepMask(sideDist);
 
     for (int i = 0; i < size; i++) {
+        mapPos = lodPos*4;
         ivec4 lod = texelFetch(blocks, ivec3(lodPos.x, lodPos.y, lodPos.z), 2);
         if (lod.x > 0) {
-//            return fromLinear(vec4(0, 1, 0, 1));
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
             vec3 mini = ((lodPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
@@ -271,8 +271,8 @@ void main() {
         }
     }
 
-//    float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
-//    if (rasterDepth > tracedDepth) {
-//        fragColor = rasterColor;
-//    }
+    float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
+    if (rasterDepth > tracedDepth) {
+        fragColor = rasterColor;
+    }
 }
