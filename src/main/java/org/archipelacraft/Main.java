@@ -3,6 +3,7 @@ package org.archipelacraft;
 import com.google.gson.Gson;
 import org.archipelacraft.game.Player;
 import org.archipelacraft.game.audio.AudioController;
+import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.World;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Renderer;
@@ -42,6 +43,7 @@ public class Main {
 
         Noises.init();
         World.generate();
+        Models.loadModels();
     }
 
     boolean wasXDown = false;

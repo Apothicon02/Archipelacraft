@@ -131,7 +131,7 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2
             if (voxelDist > 0.0f) {
                 rayLength += voxelDist/8;
             }
-            hitPos = (ogRayPos + rayDir * (rayLength-0.05f));
+            hitPos = (prevVoxelMapPos/8)+floor(mapPos);//(ogRayPos + rayDir * (rayLength-0.05f));
             normal = ivec3(voxelMapPos - prevVoxelMapPos);
             return vec4(voxelColor.rgb, 1);
         }
@@ -267,9 +267,6 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
                     voxelColor *= 0.95f;
                 }
 
-                vec3 lightPos = hitPos;
-                vec4 lighting = (getLight(lightPos.x, lightPos.y, lightPos.z)*10);
-                voxelColor.rgb *= max(lighting.rgb, lighting.a);
                 didntTraceAnything = false;
                 return voxelColor;
             }
@@ -284,21 +281,34 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
 }
 
 float nearClip = 0.1f;
+float far = 1024.f;
+
+float linearizeDepth(float depth) {
+    vec4 linear = vec4(depth)*inverse(projection);
+    return linear.b;
+}
 
 void main() {
     vec2 pos = gl_FragCoord.xy;//window space
     vec4 rasterColor = texture(raster_color, pos/res);
     float rasterDepth = texture(raster_depth, pos/res).r;
-    fragColor = vec4(rasterDepth);
+//    fragColor = vec4(linearizeDepth(rasterDepth));
     vec2 uv = ((pos / res)*2.f)-1.f;//ndc clip space
     vec4 clipSpace = (inverse(projection) * vec4(uv, -1.f, 1.f));//world space
     clipSpace.w = 0;
     vec3 ogDir = normalize((inverse(view)*clipSpace).xyz);
     vec3 ogPos = inverse(view)[3].xyz;
+    bool isSky = rasterColor.a <= 0.f;
     if (ui && uv.x >= -0.004f && uv.x <= 0.004f && uv.y >= -0.004385f && uv.y <= 0.004385f) {
         fragColor = vec4(0.9, 0.9, 1, 1);
     } else {
-        fragColor = toLinear(raytrace(ogPos, ogDir));
+        fragColor = raytrace(ogPos, ogDir);
+        if (hitPos != vec3(0)) {
+            isSky = false;
+        }
+        if (isSky) {
+            hitPos = mapPos;
+        }
         if (hitSelection) {
             if (voxelBrightness > 0.5f) {
                 fragColor/=2;
@@ -308,8 +318,14 @@ void main() {
         }
     }
 
-    float tracedDepth = nearClip/dot(mapPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
-    if (rasterDepth > tracedDepth) {
-        fragColor = rasterColor;
+    float tracedDepth = nearClip/dot(hitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
+    if (rasterDepth > tracedDepth && !isSky) {
+        fragColor = fromLinear(rasterColor);
+        hitPos = ogPos + ogDir * ((abs(1-min(1, linearizeDepth(rasterDepth)))*10)-0.05f);;
+        //fragColor = vec4(vec3(abs(1-min(1, linearizeDepth(rasterDepth)))), 1);
+        //fragColor = vec4((ogPos + ogDir * ((abs(1-linearizeDepth(rasterDepth))*1024)-0.05f))/vec3(size, height, size), 1);
     }
+    vec4 lighting = isSky ? vec4(0, 0, 0, 150) : (getLight(hitPos.x, hitPos.y, hitPos.z)*10);
+    fragColor.rgb *= max(lighting.rgb, lighting.a);
+    fragColor = toLinear(fragColor);
 }

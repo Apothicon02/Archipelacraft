@@ -19,6 +19,7 @@ public class Renderer {
     public static ShaderProgram debug;
     public static int sceneVaoId;
     public static int debugVaoId;
+    public static int debugWheelVaoId;
 
     public static int rasterFBOId;
 
@@ -58,44 +59,13 @@ public class Renderer {
         debugVaoId = glGenVertexArrays();
         glBindVertexArray(debugVaoId);
         glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, new float[]{
-                -0.5f,-0.5f,-0.5f, // triangle 1 : begin
-                -0.5f,-0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f, // triangle 1 : end
-                0.5f, 0.5f,-0.5f, // triangle 2 : begin
-                -0.5f,-0.5f,-0.5f,
-                -0.5f, 0.5f,-0.5f, // triangle 2 : end
-                0.5f,-0.5f, 0.5f,
-                -0.5f,-0.5f,-0.5f,
-                0.5f,-0.5f,-0.5f,
-                0.5f, 0.5f,-0.5f,
-                0.5f,-0.5f,-0.5f,
-                -0.5f,-0.5f,-0.5f,
-                -0.5f,-0.5f,-0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f,-0.5f,
-                0.5f,-0.5f, 0.5f,
-                -0.5f,-0.5f, 0.5f,
-                -0.5f,-0.5f,-0.5f,
-                -0.5f, 0.5f, 0.5f,
-                -0.5f,-0.5f, 0.5f,
-                0.5f,-0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f,-0.5f,-0.5f,
-                0.5f, 0.5f,-0.5f,
-                0.5f,-0.5f,-0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f,-0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f,-0.5f,
-                -0.5f, 0.5f,-0.5f,
-                0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f,-0.5f,
-                -0.5f, 0.5f, 0.5f,
-                0.5f, 0.5f, 0.5f,
-                -0.5f, 0.5f, 0.5f,
-                0.5f,-0.5f, 0.5f
-        }, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, Models.CUBE.verts, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+
+        debugWheelVaoId = glGenVertexArrays();
+        glBindVertexArray(debugWheelVaoId);
+        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
+        glBufferData(GL_ARRAY_BUFFER, Models.WATER_WHEEL.verts, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
     }
 
@@ -179,7 +149,13 @@ public class Renderer {
     public static void drawDebug() {
         glBindVertexArray(debugVaoId);
         glEnableVertexAttribArray(0);
-        glDrawArrays(GL_TRIANGLES, 0, 12*3);
+        glDrawArrays(GL_TRIANGLES, 0, Models.CUBE.verts.length*3);
+        glDisableVertexAttribArray(0);
+    }
+    public static void drawDebugWheel() {
+        glBindVertexArray(debugWheelVaoId);
+        glEnableVertexAttribArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, Models.WATER_WHEEL.verts.length*3);
         glDisableVertexAttribArray(0);
     }
     public static void drawLowerCorner() {
@@ -218,6 +194,48 @@ public class Renderer {
         }
         drawDebug();
     }
+    public static void drawCenter() {
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 319.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 269.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 219.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 169.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 119.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 513.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 516.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 519.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 522.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 525.5f).get(stack.mallocFloat(16)));
+        }
+        drawDebug();
+    }
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {
             glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
@@ -228,6 +246,11 @@ public class Renderer {
             updateUniforms(debug, window);
             drawLowerCorner();
             drawUpperCorner();
+            drawCenter();
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
+            }
+            drawDebugWheel();
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(0, 0, 0, 0);
