@@ -11,7 +11,8 @@ public class Textures {
             GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_NEAREST,
             GL40.GL_TEXTURE_MAG_FILTER,GL40. GL_NEAREST,
             GL40.GL_TEXTURE_WRAP_S, GL40.GL_CLAMP_TO_EDGE,
-            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE};
+            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE,
+            GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE};
 
     public static List<Texture> textures = new ArrayList<>(List.of());
     public static Texture rasterColor = create(1920, 1080);
@@ -21,13 +22,15 @@ public class Textures {
             GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_LINEAR,
             GL40.GL_TEXTURE_MAG_FILTER,GL40.GL_LINEAR,
             GL40.GL_TEXTURE_WRAP_S, GL40.GL_CLAMP_TO_EDGE,
-            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE
+            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE,
+            GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE
     }, World.size, World.height, World.size);
     public static Texture lights = create(new int[]{
             GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_LINEAR,
             GL40.GL_TEXTURE_MAG_FILTER,GL40.GL_LINEAR,
             GL40.GL_TEXTURE_WRAP_S, GL40.GL_CLAMP_TO_EDGE,
-            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE
+            GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE,
+            GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE
     }, World.size, World.height, World.size);
 
     public static Texture create(int width, int height) {

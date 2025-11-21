@@ -104,7 +104,7 @@ public class Renderer {
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
                 new String[]{"res", "projection", "view", "selected", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
         debug = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
+                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
         generateVaos();
 
         rasterFBOId = glGenFramebuffers();
@@ -113,6 +113,8 @@ public class Renderer {
         Textures.generate();
         initiallyFillTextures(window);
     }
+
+    public static Vector3f sunPos = new Vector3f(0, World.height*2, 0);
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -133,10 +135,9 @@ public class Renderer {
         glUniform1d(program.uniforms.get("time"), time);
         glUniform1i(program.uniforms.get("shadowsEnabled"), shadowsEnabled ? 1 : 0);
         glUniform1i(program.uniforms.get("reflectionShadows"), reflectionShadows ? 1 : 0);
-        float halfSize = World.size / 2f;
-        Vector3f sunPos = new Vector3f(halfSize, 0, halfSize);
-        sunPos.rotateY((float) time);
-        sunPos = new Vector3f(sunPos.x + halfSize, World.height + 64, sunPos.z + halfSize);
+        sunPos.set(0, World.size*2, 0);
+        sunPos.rotateZ((float) time);
+        sunPos.set(sunPos.x + Main.player.pos.x, sunPos.y-World.size, sunPos.z + Main.player.pos.z);
         glUniform3f(program.uniforms.get("sun"), sunPos.x, sunPos.y, sunPos.z);
     }
 
@@ -153,48 +154,38 @@ public class Renderer {
         glDisableVertexAttribArray(0);
     }
     public static void drawDebugWheel() {
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
+        }
+        glUniform4f(debug.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
         glBindVertexArray(debugWheelVaoId);
         glEnableVertexAttribArray(0);
         glDrawArrays(GL_TRIANGLES, 0, Models.WATER_WHEEL.verts.length*3);
         glDisableVertexAttribArray(0);
     }
-    public static void drawLowerCorner() {
+    public static void drawSun() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(-0.5f, -0.5f, -0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(100).get(stack.mallocFloat(16)));
         }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(-0.5f, 0.5f, -0.5f).get(stack.mallocFloat(16)));
-        }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(-0.5f, -0.5f, 0.5f).get(stack.mallocFloat(16)));
-        }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(0.5f, -0.5f, -0.5f).get(stack.mallocFloat(16)));
-        }
+        glUniform4f(debug.uniforms.get("color"), 1, 1, 0.05f, 10);
         drawDebug();
     }
-    public static void drawUpperCorner() {
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(1024.5f, 320.5f, 1024.5f).get(stack.mallocFloat(16)));
+    public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
+    public static void drawStars() {
+        Random starRand = new Random(911);
+        for (int i = 0; i < 1024; i++) {
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(World.size/2, 0, World.size/2).rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
+                        .translate(World.size*(starRand.nextFloat() < 0.5f ? 1 : -1), World.size*(starRand.nextFloat() < 0.5f ? 1 : -1), World.size*(starRand.nextFloat() < 0.5f ? 1 : -1))
+                        .translate(starRand.nextInt(256), starRand.nextInt(256), starRand.nextInt(256)).scale(starRand.nextInt(13)+2).get(stack.mallocFloat(16)));
+            }
+            Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length-1)];
+            glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 10);
+            drawDebug();
         }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(1024.5f, 319.5f, 1024.5f).get(stack.mallocFloat(16)));
-        }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(1024.5f, 320.5f, 1023.5f).get(stack.mallocFloat(16)));
-        }
-        drawDebug();
-        try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(1023.5f, 320.5f, 1024.5f).get(stack.mallocFloat(16)));
-        }
-        drawDebug();
     }
     public static void drawCenter() {
+        glUniform4f(debug.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 319.5f, 513.5f).get(stack.mallocFloat(16)));
         }
@@ -244,13 +235,10 @@ public class Renderer {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             debug.bind();
             updateUniforms(debug, window);
-            drawLowerCorner();
-            drawUpperCorner();
+            drawSun();
+            drawStars();
             drawCenter();
-            try(MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
-            }
-            drawDebugWheel();
+            //drawDebugWheel();
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(0, 0, 0, 0);

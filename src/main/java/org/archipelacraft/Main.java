@@ -97,6 +97,16 @@ public class Main {
                     //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
                 }
 
+                if (wasTDown && !window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS)) {
+                    updateTime(100000L, 1);
+                }
+                if (wasUpDown && !window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS)) {
+                    timeMul = Math.min(100, timeMul+(isShiftDown ? 10.f : 0.25f));
+                }
+                if (wasDownDown && !window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS)) {
+                    timeMul = Math.max(0, timeMul-(isShiftDown ? 10.f : 0.25f));
+                }
+
                 wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
                 wasF4Down = window.isKeyPressed(GLFW_KEY_F4, GLFW_PRESS);
                 wasF5Down = window.isKeyPressed(GLFW_KEY_F5, GLFW_PRESS);
@@ -119,8 +129,9 @@ public class Main {
     public static int meridiem = 1;
 
     public void updateTime(long diffTimeMillis, float mul) {
-        Renderer.time += (diffTimeMillis/600000f)*mul;
-        float time = Renderer.timeOfDay+((diffTimeMillis/600000f)*mul)*meridiem;
+        float inc = (diffTimeMillis/600000f)*mul;
+        Renderer.time += inc*mul;
+        float time = Renderer.timeOfDay+(inc*meridiem);
         if (time < 0f) {
             time = 0;
             meridiem = 1;

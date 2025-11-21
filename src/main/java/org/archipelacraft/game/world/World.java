@@ -162,7 +162,7 @@ public class World {
                 int surface = heightmap[(x*size)+z];
                 Vector2i blockOn = getBlock(x, surface, z);
                 if (blockOn.x == 2) {
-                    int foliageChance = seededRand.nextInt(0, 1000);
+                    int foliageChance = seededRand.nextInt(0, 400);
                     if (foliageChance == 0) { //tree
                         int maxHeight = (int) (Math.random() * 6) + 12;
                         int leavesHeight = (int) (Math.random() * 3) + 3;
