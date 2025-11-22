@@ -26,7 +26,7 @@ public class PineTree {
             int minCollisionY = y+3;
             outerLoop:
             for (Vector3i canopyPos : generatedTrunk.getSecond()) {
-                Map<Vector3i, Vector2i> canopy = PineCanopy.generateCanopy(canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, maxHeight, new Vector3i(x, y, z));
+                Map<Vector3i, Vector2i> canopy = PineCanopy.generateCanopy(blocks, canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, maxHeight, new Vector3i(x, y, z));
                 for (Vector3i pos : canopy.keySet()) {
                     if (pos.y > minCollisionY && FeatureHelper.inBounds(pos) && World.getBlock(pos.x, pos.y, pos.z).x != 0) {
                         colliding = true;

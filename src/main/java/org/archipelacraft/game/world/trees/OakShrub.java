@@ -23,7 +23,7 @@ public class OakShrub {
             Pair<Map<Vector3i, Vector2i>, Set<Vector3i>> generatedTrunk = StraightTrunk.generateTrunk(x, y, z, maxHeight, logType, logSubType);
             Map<Vector3i, Vector2i> blocks = new HashMap<>(generatedTrunk.getFirst());
             for (Vector3i canopyPos : generatedTrunk.getSecond()) {
-                Map<Vector3i, Vector2i> canopy = BlobCanopy.generateCanopy(canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, radius, radius);
+                Map<Vector3i, Vector2i> canopy = BlobCanopy.generateCanopy(blocks, canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, radius, radius);
                 blocks.putAll(canopy);
             }
             blocks.forEach((pos, block) -> {

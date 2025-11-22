@@ -1,14 +1,15 @@
 package org.archipelacraft.game.world;
 
 import org.archipelacraft.Main;
+import org.archipelacraft.engine.ArchipelacraftMath;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.LightBlockType;
 import org.archipelacraft.game.noise.Noises;
-import org.archipelacraft.game.world.trees.OakTree;
-import org.archipelacraft.game.world.trees.PalmTree;
+import org.archipelacraft.game.world.shapes.Blob;
+import org.archipelacraft.game.world.trees.*;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
@@ -16,8 +17,12 @@ import org.joml.Vector4i;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
+import static org.archipelacraft.engine.Utils.condensePos;
+import static org.archipelacraft.engine.Utils.distance;
+
 public class World {
     public static int size = 1024;
+    public static int halfSize = 1024/2;
     public static int height = 320;
     public static int seaLevel = 63;
     public static short[] blocks = new short[World.size*World.size*World.height*2];
@@ -33,7 +38,7 @@ public class World {
 
     public static void setLight(int x, int y, int z, Vector4i light) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*4;
+            int pos = condensePos(x, y, z)*4;
             lights.put(pos, (byte)(light.x));
             lights.put(pos+1, (byte)(light.y));
             lights.put(pos+2, (byte)(light.z));
@@ -42,7 +47,7 @@ public class World {
     }
     public static Vector4i getLight(int x, int y, int z, boolean returnNull) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*4;
+            int pos = condensePos(x, y, z)*4;
             return new Vector4i(lights.get(pos), lights.get(pos+1), lights.get(pos+2), lights.get(pos+3));
         }
         return returnNull ? null : new Vector4i(0);
@@ -107,7 +112,7 @@ public class World {
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*2;
+            int pos = condensePos(x, y, z)*2;
             blocks[pos] = (short)(block);
             blocks[pos+1] = (short)(blockSubType);
             blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(block);
@@ -120,7 +125,7 @@ public class World {
 
     public static Vector2i getBlock(int x, int y, int z) {
         if (inBounds(x, y, z)) {
-            int pos = Utils.condensePos(x, y, z)*2;
+            int pos = condensePos(x, y, z)*2;
             return new Vector2i(blocks[pos], blocks[pos+1]);
         } else {
             return null;
@@ -136,23 +141,59 @@ public class World {
     public static void generate() {
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                float baseCellularNoise = (Noises.COHERERENT_NOISE.sample(x, z)+0.5f)/2;
-                int surface = (int)(32*baseCellularNoise)+52;
+                float basePerlinNoise = (Noises.COHERERENT_NOISE.sample(x, z)+0.5f)/2;
+                float baseCellularNoise = Noises.CELLULAR_NOISE.sample(x, z)/2;
+                float centDist = (float) (distance(x, z, size/2, size/2)/halfSize);
+                float centDistExp = (Math.max(0.5f, centDist)-0.5f);
+                centDistExp *= centDistExp;
+                int surface = (int)(((200*(Math.max(0.1f, baseCellularNoise)*basePerlinNoise))+70)-(centDistExp*300));
+                surface = Math.max(8, surface);
                 heightmap[(x*size)+z] = (short)(surface);
                 for (int y = surface; y >= 0; y--) {
                     setBlock(x, y, z, 3, 0);
                 }
-                if (surface < 63) {
-                    setBlock(x, 63, z, 1, 13);
-                    for (int y = 62; y >= surface; y--) {
-                        setBlock(x, y, z, 1, 15);
+            }
+        }
+
+        for (int x = 0; x < size; x++) {
+            for (int z = 0; z < size; z++) {
+                int maxSteepness = 0;
+                int minNeighborY = height - 1;
+                int condensedPos = condensePos(x, z);
+                int surface = heightmap[condensedPos];
+                for (int pos : new int[]{condensePos(Math.min(size - 1, x + 3), z), condensePos(Math.max(0, x - 3), z), condensePos(x, Math.min(size - 1, z + 3)), condensePos(x, Math.max(0, z - 3)),
+                        condensePos(Math.max(0, x - 3), Math.max(0, z - 3)), condensePos(Math.min(size - 1, x + 3), Math.max(0, z - 3)), condensePos(Math.max(0, x - 3), Math.min(size - 1, z + 3)), condensePos(Math.min(size - 1, x + 3), Math.min(size - 1, z + 3))}) {
+                    int nY = heightmap[pos];
+                    minNeighborY = Math.min(minNeighborY, nY);
+                    int steepness = Math.abs(surface - nY);
+                    maxSteepness = Math.max(maxSteepness, steepness);
+                }
+                boolean flat = maxSteepness < 3;
+                if (flat) {
+                    if (surface < seaLevel) {
+                        setBlock(x, seaLevel, z, 1, 13);
+                        for (int y = 62; y > surface; y--) {
+                            setBlock(x, y, z, 1, 15);
+                        }
+                    } else if (surface < seaLevel+3) {
+                        setBlock(x, surface, z, 23, 0);
+                    } else {
+                        setBlock(x, surface, z, 2, 0);
+                        double flowerChance = seededRand.nextDouble();
+                        setBlock(x, surface+1, z, 4 + (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0), seededRand.nextInt(0, 3));
                     }
-                } else if (surface == 63) {
-                    setBlock(x, surface, z, 23, 0);
                 } else {
-                    setBlock(x, surface, z, 2, 0);
-                    double flowerChance = seededRand.nextDouble();
-                    setBlock(x, surface+1, z, 4 + (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0), seededRand.nextInt(0, 3));
+                    if (surface < seaLevel) {
+                        setBlock(x, seaLevel, z, 1, 13);
+                        for (int y = 62; y > surface; y--) {
+                            setBlock(x, y, z, 1, 15);
+                        }
+                    }
+                    int lowestY = surface;
+                    for (int newY = surface; newY >= surface-5; newY--) {
+                        setBlock(x, newY, z, 55, 0);
+                    }
+                    heightmap[condensedPos] = (short)(lowestY);
                 }
             }
         }
@@ -161,18 +202,39 @@ public class World {
             for (int z = 0; z < size; z++) {
                 int surface = heightmap[(x*size)+z];
                 Vector2i blockOn = getBlock(x, surface, z);
+                float randomNumber = seededRand.nextFloat();
                 if (blockOn.x == 2) {
-                    int foliageChance = seededRand.nextInt(0, 400);
-                    if (foliageChance == 0) { //tree
-                        int maxHeight = (int) (Math.random() * 6) + 12;
-                        int leavesHeight = (int) (Math.random() * 3) + 3;
-                        int radius = (int) (Math.random() * 4) + 6;
-                        OakTree.generate(blockOn, x, surface, z, maxHeight, radius, leavesHeight, 16, 0, 17, 0);
+                    float foliageChance = Noises.COHERERENT_NOISE.sample(x, z) + 0.5f;
+                    float foliageChanceExp = foliageChance * foliageChance;
+                    if (randomNumber*10 < foliageChanceExp - 0.2f || randomNumber < 0.0002f) { //tree
+                        float foliageType = seededRand.nextFloat();
+                        if (foliageType < 0.0015f) { //1.5% chance the tree is dead
+                            int maxHeight = seededRand.nextInt(6) + 12;
+                            DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
+                            Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((Math.random() + 1) * 3), new int[]{2, 23}, true);
+                        } else if (foliageType < ArchipelacraftMath.gradient(surface, 82, 100, 1, 0)) {
+                            if (randomNumber < 0.2f) { //80% chance to not generate anything
+                                int maxHeight = seededRand.nextInt(19) + 5;
+                                PineTree.generate(blockOn, x, surface, z, maxHeight, 35, 0, 36, 0);
+                            }
+                        } else {
+                            int maxHeight = seededRand.nextInt(6) + 12;
+                            int leavesHeight = seededRand.nextInt(3) + 3;
+                            int radius = seededRand.nextInt(4) + 6;
+                            OakTree.generate(blockOn, x, surface, z, maxHeight, radius, leavesHeight, 16, 0, 17, 0);
+                        }
+                    } else if ((randomNumber*10)+0.15f < foliageChance-0.2f || randomNumber < 0.0005f) { //bush
+                        int maxHeight = (int) (Math.random() + 1);
+                        OakShrub.generate(blockOn, x, surface, z, maxHeight, 3 + (maxHeight * 2), 16, 0, 17, 0);
                     }
                 } else if (blockOn.x == 23) {
-                    int foliageChance = seededRand.nextInt(0, 1000);
+                    int foliageChance = seededRand.nextInt(0, 400);
                     if (foliageChance == 0) { //tree
                         PalmTree.generate(blockOn, x, surface, z, seededRand.nextInt(8, 22), 25, 0, 27, 0);
+                    }
+                } else if (blockOn.x == 55) {
+                    if (randomNumber < 0.08f) {
+                        Blob.generate(blockOn, x, surface, z, 8, 0, (int)(2 + (seededRand.nextFloat() * 8)));
                     }
                 }
             }
@@ -196,7 +258,7 @@ public class World {
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                for (int y = 63; y < heightmap[(x*size)+z]; y++) {
+                for (int y = seaLevel; y < heightmap[(x*size)+z]; y++) {
                     if (getLight(x, y, z + 1, false).w() > 0 || getLight(x + 1, y, z, false).w() > 0 || getLight(x, y, z - 1, false).w() > 0 ||
                             getLight(x - 1, y, z, false).w() > 0 || getLight(x, y + 1, z, false).w() > 0 || getLight(x, y - 1, z, false).w() > 0) {
                         LightHelper.updateLight(new Vector3i(x, y, z), getBlock(x, y, z), getLight(x, y, z));

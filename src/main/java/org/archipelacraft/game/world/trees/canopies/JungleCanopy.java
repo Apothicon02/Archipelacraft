@@ -17,7 +17,7 @@ public class JungleCanopy extends Canopy {
         map.put(pos, new Vector2i(blockType, blockSubType));
     }
 
-    public static Map<Vector3i, Vector2i> generateCanopy(int x, int y, int z, int blockType, int blockSubType, int radius, int height) {
+    public static Map<Vector3i, Vector2i> generateCanopy(Map<Vector3i, Vector2i> blocks, int x, int y, int z, int blockType, int blockSubType, int radius, int height) {
         Map<Vector3i, Vector2i> map = new java.util.HashMap<>(Map.of());
         addSquare(map, x, y+1, z, radius-1, false, blockType, blockSubType);
         for (int i = 0; i < height; i++) {
@@ -36,11 +36,13 @@ public class JungleCanopy extends Canopy {
                     heightmap[condensedPos] = (short) Math.max(heightmap[condensedPos], y-1);
                     for (int extraY = y-1; extraY >= surfaceY; extraY--) {
                         if (extraY == surfaceY) {
+                            Vector3i abovePos = new Vector3i(newX, extraY + 1, newZ);
                             if (BlockTypes.blockTypeMap.get(getBlock(newX, extraY, newZ).x).blockProperties.isSolid &&
-                                    !BlockTypes.blockTypeMap.get(getBlock(newX, extraY+1, newZ).x).blockProperties.isSolid) {
-                                addToMap(map, new Vector3i(newX, extraY + 1, newZ), blockType, 0);
-                                if (!BlockTypes.blockTypeMap.get(getBlock(newX, extraY+2, newZ).x).blockProperties.isSolid) {
-                                    addToMap(map, new Vector3i(newX, extraY + 2, newZ), blockType, (int) Math.abs(Math.random() * 6) + 1);
+                                    !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos)) {
+                                addToMap(map, abovePos, blockType, 0);
+                                Vector3i aboveAbovePos = new Vector3i(newX, extraY + 2, newZ);
+                                if (!BlockTypes.blockTypeMap.get(getBlock(aboveAbovePos).x).blockProperties.isSolid && !blocks.containsKey(aboveAbovePos)) {
+                                    addToMap(map, new Vector3i(aboveAbovePos), blockType, (int) Math.abs(Math.random() * 6) + 1);
                                 }
                             }
                         }

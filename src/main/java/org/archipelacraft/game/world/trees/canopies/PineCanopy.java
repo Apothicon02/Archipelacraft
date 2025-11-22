@@ -13,7 +13,7 @@ public class PineCanopy extends Canopy {
         map.put(pos, new Vector2i(blockType, blockSubType));
     }
     
-    public static Map<Vector3i, Vector2i> generateCanopy(int x, int ogY, int z, int blockType, int blockSubType, int trunkHeight, Vector3i treeOrigin) {
+    public static Map<Vector3i, Vector2i> generateCanopy(Map<Vector3i, Vector2i> blocks, int x, int ogY, int z, int blockType, int blockSubType, int trunkHeight, Vector3i treeOrigin) {
         Vector3i origin = new Vector3i(x, ogY, z);
         Random random = new Random();
         Map<Vector3i, Vector2i> map = new java.util.HashMap<>(Map.of());

@@ -27,7 +27,7 @@ public class PalmTree {
             int minCollisionY = y+5;
             outerLoop:
             for (Vector3i canopyPos : generatedTrunk.getSecond()) {
-                Map<Vector3i, Vector2i> canopy = PalmCanopy.generateCanopy(canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, maxHeight, new Vector3i(x, y, z));
+                Map<Vector3i, Vector2i> canopy = PalmCanopy.generateCanopy(blocks, canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, maxHeight, new Vector3i(x, y, z));
                 for (Vector3i pos : canopy.keySet()) {
                     if (pos.y > minCollisionY && FeatureHelper.inBounds(pos) && World.getBlock(pos.x, pos.y, pos.z).x != 0) {
                         colliding = true;

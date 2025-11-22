@@ -16,7 +16,7 @@ public class BlobCanopy extends Canopy {
         map.put(pos, new Vector2i(blockType, blockSubType));
     }
 
-    public static Map<Vector3i, Vector2i> generateCanopy(int x, int y, int z, int blockType, int blockSubType, int radius, int height) {
+    public static Map<Vector3i, Vector2i> generateCanopy(Map<Vector3i, Vector2i> blocks, int x, int y, int z, int blockType, int blockSubType, int radius, int height) {
         Map<Vector3i, Vector2i> map = new java.util.HashMap<>(Map.of());
         for (int lX = x - radius; lX <= x + radius; lX++) {
             for (int lZ = z - radius; lZ <= z + radius; lZ++) {
@@ -33,9 +33,10 @@ public class BlobCanopy extends Canopy {
                             heightmap[condensedPos] = (short) Math.max(heightmap[condensedPos], lY);
                             for (int extraY = lY; extraY >= surfaceY; extraY--) {
                                 if (extraY == surfaceY) {
+                                    Vector3i abovePos = new Vector3i(lX, extraY+1, lZ);
                                     if (BlockTypes.blockTypeMap.get(getBlock(lX, extraY, lZ).x).blockProperties.isSolid &&
-                                            !BlockTypes.blockTypeMap.get(getBlock(lX, extraY+1, lZ).x).blockProperties.isSolid) {
-                                        addToMap(map, new Vector3i(lX, extraY+1, lZ), blockType, (int) Math.abs(Math.random() * 6) + 1);
+                                            !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos)) {
+                                        addToMap(map, abovePos, blockType, (int) Math.abs(Math.random() * 6) + 1);
                                     }
                                 }
                             }

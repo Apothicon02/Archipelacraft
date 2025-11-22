@@ -10,6 +10,7 @@ import org.lwjgl.system.MemoryStack;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.Math;
 import java.nio.ByteBuffer;
 
 import static org.lwjgl.opengl.GL46.*;
@@ -163,21 +164,26 @@ public class Renderer {
         glDrawArrays(GL_TRIANGLES, 0, Models.WATER_WHEEL.verts.length*3);
         glDisableVertexAttribArray(0);
     }
-    public static void drawSun() {
+    public static void drawSunAndMoon() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(100).get(stack.mallocFloat(16)));
         }
         glUniform4f(debug.uniforms.get("color"), 1, 1, 0.05f, 10);
         drawDebug();
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(new Vector3f(sunPos).mul(-1)).scale(100).get(stack.mallocFloat(16)));
+        }
+        glUniform4f(debug.uniforms.get("color"), 0.97f, 0.92f, 1, 10);
+        drawDebug();
     }
     public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
     public static void drawStars() {
         Random starRand = new Random(911);
-        for (int i = 0; i < 1024; i++) {
+        for (int i = 0; i < Math.max(0, 256-Math.max(-1280, sunPos.y*2)); i++) {
             try(MemoryStack stack = MemoryStack.stackPush()) {
                 glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(World.size/2, 0, World.size/2).rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
-                        .translate(World.size*(starRand.nextFloat() < 0.5f ? 1 : -1), World.size*(starRand.nextFloat() < 0.5f ? 1 : -1), World.size*(starRand.nextFloat() < 0.5f ? 1 : -1))
-                        .translate(starRand.nextInt(256), starRand.nextInt(256), starRand.nextInt(256)).scale(starRand.nextInt(13)+2).get(stack.mallocFloat(16)));
+                        .translate(World.size*(starRand.nextFloat() < 0.5f ? 10 : -10), World.size*(starRand.nextFloat() < 0.5f ? 10 : -10), World.size*(starRand.nextFloat() < 0.5f ? 10 : -10))
+                        .translate(starRand.nextInt(256), starRand.nextInt(256), starRand.nextInt(256)).scale(starRand.nextInt(130)+20).get(stack.mallocFloat(16)));
             }
             Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length-1)];
             glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 10);
@@ -235,7 +241,7 @@ public class Renderer {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             debug.bind();
             updateUniforms(debug, window);
-            drawSun();
+            drawSunAndMoon();
             drawStars();
             drawCenter();
             //drawDebugWheel();

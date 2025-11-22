@@ -397,11 +397,11 @@ void main() {
         float sunHeight = sun.y/size;
         float scattering = gradient(lightPos.y, 100, 500, 1.5f, 0);
         float adjustedTime = clamp(((distance(lightPos.xz, sun.xz)/(size*1.5f))*abs(1-clamp(sunHeight, 0.05f, 0.5f)))+scattering, 0.f, 1.f);
-        float whiteness = gradient(lightPos.y, 0, 372, 0, 0.9);
+        float whiteness = isSky ? gradient(lightPos.y, 63, 450, 0, 0.9) : 0.9f;
         float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
         float sunBrightness = clamp(sunHeight+0.5, 0.2f, 1.f);
         vec3 sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, min(1.f, max(abs(sunHeight*1.5f), adjustedTime))), vec3(sunBrightness), whiteness);
-        fragColor.rgb *= max(lighting.rgb, lighting.a*sunColor);
+        fragColor.rgb *= max(lighting.rgb, min(vec3(1, 0.95f, 0.85f), lighting.a*sunColor));
         float fogginess = sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)));
         fragColor.rgb = mix(fragColor.rgb, (mix(lighting.a, 1, fogginess)*sunColor.rgb)*thickness, fogginess);
     }

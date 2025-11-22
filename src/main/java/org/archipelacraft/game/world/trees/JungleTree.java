@@ -26,7 +26,7 @@ public class JungleTree {
             int minCollisionY = y+5;
             outerLoop:
             for (Vector3i canopyPos : generatedTrunk.getSecond()) {
-                Map<Vector3i, Vector2i> canopy = JungleCanopy.generateCanopy(canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, radius, 1);
+                Map<Vector3i, Vector2i> canopy = JungleCanopy.generateCanopy(blocks, canopyPos.x, canopyPos.y, canopyPos.z, leafType, leafSubType, radius, 1);
                 for (Vector3i pos : canopy.keySet()) {
                     if (pos.y > minCollisionY && FeatureHelper.inBounds(pos) && World.getBlock(pos.x, pos.y, pos.z).x != 0) {
                         colliding = true;
