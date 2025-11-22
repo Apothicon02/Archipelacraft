@@ -390,6 +390,7 @@ void main() {
     } else {
         lighting = fromLinear(vec4(0, 0, 0, 1));
     }
+    lighting = vec4(pow(lighting.r, 3), pow(lighting.g, 3), pow(lighting.b, 3), pow(lighting.a, 3));
     if (!isSky) {
         lightPos = hitPos;
     }
@@ -402,7 +403,7 @@ void main() {
         float sunBrightness = clamp(sunHeight+0.5, 0.2f, 1.f);
         vec3 sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, min(1.f, max(abs(sunHeight*1.5f), adjustedTime))), vec3(sunBrightness), whiteness);
         fragColor.rgb *= max(lighting.rgb, min(vec3(1, 0.95f, 0.85f), lighting.a*sunColor));
-        float fogginess = sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)));
+        float fogginess = max(0, sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f;
         fragColor.rgb = mix(fragColor.rgb, (mix(lighting.a, 1, fogginess)*sunColor.rgb)*thickness, fogginess);
     }
     fragColor = toLinear(fragColor);

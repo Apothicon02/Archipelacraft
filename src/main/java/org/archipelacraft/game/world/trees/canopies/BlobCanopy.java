@@ -35,7 +35,7 @@ public class BlobCanopy extends Canopy {
                                 if (extraY == surfaceY) {
                                     Vector3i abovePos = new Vector3i(lX, extraY+1, lZ);
                                     if (BlockTypes.blockTypeMap.get(getBlock(lX, extraY, lZ).x).blockProperties.isSolid &&
-                                            !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos)) {
+                                            !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos) && !map.containsKey(abovePos)) {
                                         addToMap(map, abovePos, blockType, (int) Math.abs(Math.random() * 6) + 1);
                                     }
                                 }

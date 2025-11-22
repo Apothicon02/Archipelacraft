@@ -38,10 +38,10 @@ public class JungleCanopy extends Canopy {
                         if (extraY == surfaceY) {
                             Vector3i abovePos = new Vector3i(newX, extraY + 1, newZ);
                             if (BlockTypes.blockTypeMap.get(getBlock(newX, extraY, newZ).x).blockProperties.isSolid &&
-                                    !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos)) {
+                                    !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos) && !map.containsKey(abovePos)) {
                                 addToMap(map, abovePos, blockType, 0);
                                 Vector3i aboveAbovePos = new Vector3i(newX, extraY + 2, newZ);
-                                if (!BlockTypes.blockTypeMap.get(getBlock(aboveAbovePos).x).blockProperties.isSolid && !blocks.containsKey(aboveAbovePos)) {
+                                if (!BlockTypes.blockTypeMap.get(getBlock(aboveAbovePos).x).blockProperties.isSolid && !blocks.containsKey(aboveAbovePos) && !map.containsKey(aboveAbovePos)) {
                                     addToMap(map, new Vector3i(aboveAbovePos), blockType, (int) Math.abs(Math.random() * 6) + 1);
                                 }
                             }

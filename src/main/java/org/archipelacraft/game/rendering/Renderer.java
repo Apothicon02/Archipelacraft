@@ -116,6 +116,7 @@ public class Renderer {
     }
 
     public static Vector3f sunPos = new Vector3f(0, World.height*2, 0);
+    public static Vector3f munPos = new Vector3f(0, World.height*-2, 0);
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -136,9 +137,12 @@ public class Renderer {
         glUniform1d(program.uniforms.get("time"), time);
         glUniform1i(program.uniforms.get("shadowsEnabled"), shadowsEnabled ? 1 : 0);
         glUniform1i(program.uniforms.get("reflectionShadows"), reflectionShadows ? 1 : 0);
+        munPos.set(0, World.size*-2, 0);
+        munPos.rotateZ((float) time);
+        munPos.set(munPos.x+(World.size/2f), munPos.y-World.size, munPos.z+(World.size/2f));
         sunPos.set(0, World.size*2, 0);
         sunPos.rotateZ((float) time);
-        sunPos.set(sunPos.x + Main.player.pos.x, sunPos.y-World.size, sunPos.z + Main.player.pos.z);
+        sunPos.set(sunPos.x+(World.size/2f), sunPos.y-World.size, sunPos.z+(World.size/2f));
         glUniform3f(program.uniforms.get("sun"), sunPos.x, sunPos.y, sunPos.z);
     }
 
@@ -171,23 +175,33 @@ public class Renderer {
         glUniform4f(debug.uniforms.get("color"), 1, 1, 0.05f, 10);
         drawDebug();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(new Vector3f(sunPos).mul(-1)).scale(100).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(munPos).scale(100).get(stack.mallocFloat(16)));
         }
-        glUniform4f(debug.uniforms.get("color"), 0.97f, 0.92f, 1, 10);
+        glUniform4f(debug.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 10);
         drawDebug();
     }
     public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
+    public static int starDist = World.size+100;
     public static void drawStars() {
         Random starRand = new Random(911);
-        for (int i = 0; i < Math.max(0, 256-Math.max(-1280, sunPos.y*2)); i++) {
-            try(MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(World.size/2, 0, World.size/2).rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
-                        .translate(World.size*(starRand.nextFloat() < 0.5f ? 10 : -10), World.size*(starRand.nextFloat() < 0.5f ? 10 : -10), World.size*(starRand.nextFloat() < 0.5f ? 10 : -10))
-                        .translate(starRand.nextInt(256), starRand.nextInt(256), starRand.nextInt(256)).scale(starRand.nextInt(130)+20).get(stack.mallocFloat(16)));
+        for (int i = 0; i < 1024; i++) {
+            Vector3f starPos = new Vector3f(0, starDist * 2, 0)
+                    .rotateX(starRand.nextFloat() * 10)
+                    .rotateY(starRand.nextFloat() * 10)
+                    .rotateZ((float) time + starRand.nextFloat() * 10);
+            starPos.set(starPos.x + (starDist / 2f), starPos.y - starDist, starPos.z + (starDist / 2f));
+            float starSize = ((starRand.nextFloat()*12)+6)-Math.max(0, 30*(sunPos.y/World.size));
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f()
+                        .rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
+                        .setTranslation(starPos)
+                        .scale(starSize).get(stack.mallocFloat(16)));
             }
-            Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length-1)];
-            glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 10);
-            drawDebug();
+            Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
+            if (starSize > 0.01f) {
+                glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 10);
+                drawDebug();
+            }
         }
     }
     public static void drawCenter() {
