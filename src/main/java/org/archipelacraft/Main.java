@@ -130,7 +130,7 @@ public class Main {
 
     public void updateTime(long diffTimeMillis, float mul) {
         float inc = (diffTimeMillis/600000f)*mul;
-        Renderer.time += inc*mul;
+        Renderer.time += inc;
         float time = Renderer.timeOfDay+(inc*meridiem);
         if (time < 0f) {
             time = 0;

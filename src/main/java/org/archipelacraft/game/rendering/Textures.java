@@ -32,9 +32,19 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE,
             GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE
     }, World.size, World.height, World.size);
+    public static Texture noises = create(new int[]{
+            GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_NEAREST,
+            GL40.GL_TEXTURE_MAG_FILTER,GL40.GL_NEAREST,
+            GL40.GL_TEXTURE_WRAP_S, GL40.GL_REPEAT,
+            GL40.GL_TEXTURE_WRAP_T, GL40.GL_REPEAT
+    }, 2048, 2048);
 
     public static Texture create(int width, int height) {
         Texture texture = new Texture(defaultParameters, width, height);
+        textures.addLast(texture);
+        return texture;
+    }public static Texture create(int[] params, int width, int height) {
+        Texture texture = new Texture(params, width, height);
         textures.addLast(texture);
         return texture;
     }

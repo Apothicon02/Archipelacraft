@@ -1,6 +1,7 @@
 package org.archipelacraft.game.rendering;
 
 import org.archipelacraft.Main;
+import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
 import org.archipelacraft.engine.*;
@@ -31,7 +32,7 @@ public class Renderer {
     public static int renderDistanceMul = 8; //3
     public static int aoQuality = 2;
     public static float timeOfDay = 0.5f;
-    public static double time = 0.5d;
+    public static double time = 0.5f;
 
     public static boolean resized = false;
 
@@ -90,6 +91,18 @@ public class Renderer {
 
         glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, 0, GL_RGBA, GL_BYTE, World.lights.flip());
+
+        float[] mergedNoises = new float[(Textures.noises.width*Textures.noises.height)*4];
+        for (int x = 0; x < Textures.noises.width; x++) {
+            for (int y = 0; y < Textures.noises.height; y++) {
+                int pos = 4*((x*Textures.noises.height)+y);
+                mergedNoises[pos] = Noises.COHERERENT_NOISE.sample(x, y);
+                mergedNoises[pos+1] = Noises.WHITE_NOISE.sample(x, y);
+            }
+        }
+        glBindTexture(GL_TEXTURE_2D, Textures.noises.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Textures.noises.width, Textures.noises.height, 0, GL_RGBA, GL_FLOAT, mergedNoises);
+
     }
 
     public static void bindTextures() {
@@ -98,6 +111,7 @@ public class Renderer {
         glBindTextureUnit(2, Textures.atlas.id);
         glBindTextureUnit(3, Textures.blocks.id);
         glBindTextureUnit(4, Textures.lights.id);
+        glBindTextureUnit(5, Textures.noises.id);
     }
 
     public static void init(Window window) throws Exception {
