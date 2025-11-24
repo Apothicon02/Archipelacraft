@@ -17,6 +17,11 @@ uniform layout(binding = 3) isampler3D blocks;
 uniform layout(binding = 4) sampler3D lights;
 uniform layout(binding = 5) sampler2D noises;
 
+layout(std430, binding = 0) buffer playerSSBO
+{
+    vec3[] playerData;
+};
+
 in vec4 gl_FragCoord;
 
 out vec4 fragColor;
@@ -108,7 +113,6 @@ float noise(vec2 coords) {
     return (texture(noises, vec2(coords/1024)).r)-0.5f;
 }
 
-bool hitSelection = false;
 vec4 getVoxel(int x, int y, int z, int bX, int bY, int bZ, int blockType, int blockSubtype) {
     return texelFetch(atlas, ivec3(x+(blockType*8), ((abs(y-8)-1)*8)+z, blockSubtype), 0);
 }
@@ -181,6 +185,7 @@ vec3 normal = vec3(0);
 vec4 tint = vec4(0);
 bool underwater = false;
 bool hitCaustic = false;
+bool hitSelection = false;
 
 vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2 block) {
     rayPos *= 8;
@@ -212,6 +217,12 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2
             solidHitPos = (prevVoxelMapPos/8)+floor(mapPos)+(uv3d/8)-(normal/2);
             if (hitPos == vec3(0)) {
                 hitPos = solidHitPos;
+                vec3 voxelHitPos = mapPos+(voxelMapPos/8);
+                if (ivec2(gl_FragCoord.xy) == ivec2(res/2)) {
+                    playerData[0] = voxelHitPos;
+                    playerData[1] = solidHitPos;
+                }
+                hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0]));
             }
             if (voxelColor.a < 1) {
                 if (block.x == 1) {
@@ -348,9 +359,6 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
                     voxelColor.rgb *= 1.5f;
                 }
                 voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
-                if (selected == lod2Pos) {
-                    hitSelection = true;
-                }
                 if (normal.y >0) { //down
                     voxelColor.rgb *= 0.7f;
                 } else if (normal.y <0) { //up
@@ -391,6 +399,10 @@ vec3 worldPosFromDepth(float depth) {
     return worldSpacePosition.xyz;
 }
 
+bool inArea(int i) {
+    return gl_FragCoord.x >= (res.x/2)-i && gl_FragCoord.x < (res.x/2)+i && gl_FragCoord.y >= (res.y/2)-i && gl_FragCoord.y < (res.y/2)+i;
+}
+
 void main() {
     vec2 pos = gl_FragCoord.xy;//window space
     vec4 rasterColor = texture(raster_color, pos/res);
@@ -402,23 +414,15 @@ void main() {
     vec3 ogDir = normalize((inverse(view)*clipSpace).xyz);
     vec3 ogPos = inverse(view)[3].xyz;
     bool isSky = rasterColor.a <= 0.f;
-    if (ui && uv.x >= -0.004f && uv.x <= 0.004f && uv.y >= -0.004385f && uv.y <= 0.004385f) {
-        fragColor = fromLinear(vec4(0.9, 0.9, 1, 1));
-    } else {
-        fragColor = raytrace(ogPos, ogDir);
-        if (solidHitPos != vec3(0)) {
-            isSky = false;
-        }
-        if (isSky) {
-            solidHitPos = mapPos;
-        }
-        if (hitSelection) {
-            if (voxelBrightness > 0.5f) {
-                fragColor.rgb/=2;
-            } else {
-                fragColor.rgb*=2;
-            }
-        }
+    fragColor = raytrace(ogPos, ogDir);
+    if (solidHitPos != vec3(0)) {
+        isSky = false;
+    }
+    if (isSky) {
+        solidHitPos = mapPos;
+    }
+    if (hitSelection && ui) {
+        fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
     }
     vec4 lighting = vec4(-1);
     float tracedDepth = nearClip/dot(solidHitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
@@ -461,4 +465,7 @@ void main() {
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
     }
     fragColor = toLinear(fragColor);
+    if (inArea(2)) {
+        fragColor = vec4(1);
+    }
 }

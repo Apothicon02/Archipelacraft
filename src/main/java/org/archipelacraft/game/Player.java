@@ -8,6 +8,9 @@ import java.lang.Math;
 public class Player {
     private final Camera camera = new Camera();
     public Vector3f pos = new Vector3f();
+    public Vector3f selectedBlock = new Vector3f();
+    public Vector3f prevSelectedBlock = new Vector3f();
+
     public static float scale = 1f;
     public float speed = Math.max(0.15f, 0.15f*scale);
     public boolean sprint = false;
@@ -18,7 +21,6 @@ public class Player {
     public boolean leftward = false;
     public boolean upward = false;
     public boolean downward = false;
-    public static Vector4f voxelColor = new Vector4f(1);
 
     public Player() {}
 

@@ -25,6 +25,8 @@ public class Renderer {
 
     public static int rasterFBOId;
 
+    public static int playerSSBOId;
+
     public static boolean showUI = true;
     public static boolean shadowsEnabled = true;
     public static boolean reflectionShadows = false;
@@ -114,16 +116,36 @@ public class Renderer {
         glBindTextureUnit(5, Textures.noises.id);
     }
 
+    public static void createBuffers() {
+        playerSSBOId = glCreateBuffers();
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, playerSSBOId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, playerSSBOId);
+        glBufferStorage(GL_SHADER_STORAGE_BUFFER, new float[3], GL_CLIENT_STORAGE_BIT | GL_MAP_READ_BIT);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
+    public static void updateBuffers() {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, playerSSBOId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, playerSSBOId);
+        float[] data = new float[6];
+        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, data);
+        Main.player.selectedBlock.set(data[0], data[1], data[2]);
+        Main.player.prevSelectedBlock.set(data[3], data[4], data[5]);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
+                new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
         debug = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
         generateVaos();
 
         rasterFBOId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
+
+        createBuffers();
 
         Textures.generate();
         initiallyFillTextures(window);
@@ -139,10 +161,7 @@ public class Renderer {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(Main.player.getCameraMatrix()).get(stack.mallocFloat(16)));
         }
-        Vector3f selected = null;
-        if (selected == null) {
-            selected = new Vector3f(-1000, -1000, -1000);
-        }
+        Vector3f selected = Main.player.selectedBlock;
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
         glUniform1i(program.uniforms.get("ui"), showUI ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
@@ -268,6 +287,7 @@ public class Renderer {
             glClearDepthf(0.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             debug.bind();
+            updateBuffers();
             updateUniforms(debug, window);
             drawSunAndMoon();
             drawStars();
