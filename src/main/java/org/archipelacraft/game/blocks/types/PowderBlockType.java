@@ -21,6 +21,16 @@ public class PowderBlockType extends BlockType {
         }
     }
 
+    @Override
+    public boolean obstructingHeightmap(Vector2i block) {
+        return blockProperties.obstructsHeightmap && block.y == 0;
+    }
+
+    @Override
+    public boolean blocksLight(Vector2i block) {
+        return blockProperties.blocksLight && block.y == 0;
+    }
+
     public PowderBlockType(BlockProperties blockProperties) {
         super(blockProperties);
     }

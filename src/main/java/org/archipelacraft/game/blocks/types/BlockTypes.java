@@ -35,9 +35,9 @@ public class BlockTypes {
             TALL_GRASS = create(List.of(Tags.survivesOnGrass), new PlantBlockType(GRASS.blockProperties.copy().ttb(50).obstructsHeightmap(false).isSolid(false).blocksLight(false).isCollidable(false).isFluidReplaceable(true)
                     .needsSupport(true))),
             ROSE = create(List.of(Tags.shortFlowers, Tags.flowers, Tags.survivesOnGrass), new PlantBlockType(TALL_GRASS.blockProperties)), //5
-            TORCH = create(new LightBlockType((LightBlockProperties) new LightBlockProperties().r(20).g(15).ttb(100).obstructsHeightmap(false).isSolid(false).blocksLight(false)
+            TORCH = create(new LightBlockType((LightBlockProperties) new LightBlockProperties().r(40).g(35).ttb(100).obstructsHeightmap(false).isSolid(false).blocksLight(false)
                     .isCollidable(false).isFluidReplaceable(true).needsSupport(true))),
-            KYANITE = create(List.of(Tags.rocks, Tags.crystals, Tags.blunt), new LightBlockType((LightBlockProperties) (new LightBlockProperties().g(2).b(6)
+            KYANITE = create(List.of(Tags.rocks, Tags.crystals, Tags.blunt), new LightBlockType((LightBlockProperties) (new LightBlockProperties().g(4).b(8)
                     .blockSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1, new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1)))),
             WHITE_STONE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())),
             IGNEOUS = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())),
@@ -60,7 +60,7 @@ public class BlockTypes {
             MAHOGANY_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
             BUCKET = create(List.of(Tags.buckets, Tags.cantBreakBlocks), new BlockType(new BlockProperties().ttb(0).isSolid(false).blocksLight(false).obstructsHeightmap(false))),
             SAND = create(List.of(Tags.sediment, Tags.sand), new PowderBlockType(new BlockProperties().ttb(200).blockSFX(new SFX[]{Sounds.SAND_STEP1, Sounds.SAND_STEP2}, 0.45f, 1.33f,
-                    new SFX[]{Sounds.SAND_STEP1, Sounds.SAND_STEP2}, 0.45f, 1.33f).needsSupport(true).blocksLight(false).obstructsHeightmap(false))),
+                    new SFX[]{Sounds.SAND_STEP1, Sounds.SAND_STEP2}, 0.45f, 1.33f).needsSupport(true).blocksLight(true).obstructsHeightmap(true))),
             SANDSTONE = create(List.of(Tags.blunt), new BlockType(new BlockProperties())),
             PALM_LOG = create(new BlockType(OAK_LOG.blockProperties)), //25
             PALM_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),

@@ -152,7 +152,7 @@ ivec4 getBlock(float x, float y, float z) {
     return texelFetch(blocks, ivec3(x, y, z), 0);
 }
 vec4 getLight(float x, float y, float z) {
-    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*10;
+    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*vec4(4, 4, 4, 10);
 }
 vec3 sunColor = vec3(0);
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
@@ -208,8 +208,8 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2
                 uv3d = rayPos - voxelMapPos;
             }
 
-            solidHitPos = (prevVoxelMapPos/8)+floor(mapPos)+(uv3d/8);
             normal = ivec3(voxelMapPos - prevVoxelMapPos);
+            solidHitPos = (prevVoxelMapPos/8)+floor(mapPos)+(uv3d/8)-(normal/2);
             if (hitPos == vec3(0)) {
                 hitPos = solidHitPos;
             }

@@ -15,6 +15,7 @@ import org.joml.Vector3i;
 import org.joml.Vector4i;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Random;
 
 import static org.archipelacraft.engine.Utils.condensePos;
@@ -30,16 +31,34 @@ public class World {
     public static short[] blocksLOD2 = new short[(World.size*World.size*World.height)/16];
     public static ByteBuffer lights = ByteBuffer.allocateDirect(World.size*World.size*World.height*4);
     public static short[] heightmap = new short[World.size*World.size];
+    public static short[] surfaceHeightmap = new short[World.size*World.size];
     public static Random seededRand = new Random(35311350L);
 
     public static boolean inBounds(int x, int y, int z) {
         return (x >= 0 && x < size && y >= 0 && y < height && z >= 0 && z < size);
     }
 
+    public static void setLightNullable(int x, int y, int z, Vector4i light) {
+        if (inBounds(x, y, z)) {
+            int pos = condensePos(x, y, z)*4;
+            if (light.x != -1) {
+                lights.put(pos, (byte) (light.x));
+            }
+            if (light.y != -1) {
+                lights.put(pos + 1, (byte) (light.y));
+            }
+            if (light.z != -1) {
+                lights.put(pos + 2, (byte) (light.z));
+            }
+            if (light.w != -1) {
+                lights.put(pos + 3, (byte) (light.w));
+            }
+        }
+    }
     public static void setLight(int x, int y, int z, Vector4i light) {
         if (inBounds(x, y, z)) {
             int pos = condensePos(x, y, z)*4;
-            lights.put(pos, (byte)(light.x));
+            lights.put(pos, (byte) (light.x));
             lights.put(pos+1, (byte)(light.y));
             lights.put(pos+2, (byte)(light.z));
             lights.put(pos+3, (byte)(light.w));
@@ -148,12 +167,14 @@ public class World {
                 centDistExp *= centDistExp;
                 int surface = (int)(((200*(Math.max(0.1f, baseCellularNoise)*basePerlinNoise))+70)-(centDistExp*300));
                 surface = Math.max(8, surface);
-                heightmap[(x*size)+z] = (short)(surface);
+                heightmap[condensePos(x, z)] = (short)(surface);
                 for (int y = surface; y >= 0; y--) {
                     setBlock(x, y, z, 3, 0);
                 }
             }
         }
+
+        surfaceHeightmap = Arrays.copyOf(heightmap, heightmap.length);
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
@@ -176,7 +197,10 @@ public class World {
                             setBlock(x, y, z, 1, 15);
                         }
                     } else if (surface < seaLevel+3) {
-                        setBlock(x, surface, z, 23, 0);
+                        setBlock(x, surface, z, BlockTypes.getId(BlockTypes.SAND), 0);
+                        for (int newY = surface-1; newY >= surface-5; newY--) {
+                            setBlock(x, newY, z, BlockTypes.getId(BlockTypes.SANDSTONE), 0);
+                        }
                     } else {
                         setBlock(x, surface, z, 2, 0);
                         double flowerChance = seededRand.nextDouble();
@@ -189,11 +213,9 @@ public class World {
                             setBlock(x, y, z, 1, 15);
                         }
                     }
-                    int lowestY = surface;
                     for (int newY = surface; newY >= surface-5; newY--) {
                         setBlock(x, newY, z, 55, 0);
                     }
-                    heightmap[condensedPos] = (short)(lowestY);
                 }
             }
         }
@@ -231,35 +253,65 @@ public class World {
                     int foliageChance = seededRand.nextInt(0, 400);
                     if (foliageChance == 0) { //tree
                         PalmTree.generate(blockOn, x, surface, z, seededRand.nextInt(8, 22), 25, 0, 27, 0);
+                    } else if (randomNumber < 0.001f) {
+                        setBlock(x, surface+1, z, BlockTypes.getId(BlockTypes.TORCH), 0);
                     }
                 } else if (blockOn.x == 55) {
                     if (randomNumber < 0.08f) {
-                        Blob.generate(blockOn, x, surface, z, 8, 0, (int)(2 + (seededRand.nextFloat() * 8)));
+                        Blob.generate(blockOn, x, surface, z, randomNumber < 0.001f ? BlockTypes.getId(BlockTypes.KYANITE) : 8, 0, (int)(2 + (seededRand.nextFloat() * 8)));
                     }
                 }
             }
         }
 
+        for (int x = (size/2)-20; x < size/2; x++) {
+            for (int z = (size/2)-20; z < size/2; z++) {
+                setBlock(x, 100, z, 15, 0);
+                if (x == (size/2)-20 || x == (size/2)-1 || z == (size/2)-20 || z == (size/2)-1) {
+                    setBlock(x, 99, z, 15, 0);
+                    setBlock(x, 98, z, 15, 0);
+                    setBlock(x, 97, z, 15, 0);
+                    setBlock(x, 96, z, 15, 0);
+                }
+            }
+        }
+
+//        for (int x = 0; x < size; x++) {
+//            for (int y= 0; y < height; y++) {
+//                //setLightNullable(x, y, (size/2)+2, new Vector4i(15, 15, 0, -1));
+//                setLightNullable(x, y, (size/2)-2, new Vector4i(0, 0, 15, -1));
+//            }
+//        }
+
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                for (int y = height-1; y >= 0; y--) {
+                int minY = surfaceHeightmap[condensePos(x, z)];
+                boolean setHeightmap = false;
+                for (int y = height-1; y >= minY; y--) {
                     Vector2i block = getBlock(x, y, z);
                     BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
+                    Vector3i rgb = new Vector3i(0);
+                    if (blockType instanceof LightBlockType lBlock) {
+                        rgb.x = lBlock.lightBlockProperties().r;
+                        rgb.y = lBlock.lightBlockProperties().g;
+                        rgb.z = lBlock.lightBlockProperties().b;
+                    }
                     if (!blockType.obstructingHeightmap(block)) {
-                        setLight(x, y, z, new Vector4i(0, 0, 0, 15));
-                    } else {
-                        heightmap[(x*size)+z] = (short)(y);
-                        break;
+                        setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 15));
+                    } else if (!setHeightmap) {
+                        setHeightmap = true;
+                        heightmap[condensePos(x, z)] = (short)(y);
                     }
                 }
             }
         }
 
-
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                for (int y = seaLevel; y < heightmap[(x*size)+z]; y++) {
-                    if (getLight(x, y, z + 1, false).w() > 0 || getLight(x + 1, y, z, false).w() > 0 || getLight(x, y, z - 1, false).w() > 0 ||
+                for (int y = seaLevel; y <= heightmap[(x*size)+z]+1; y++) {
+                    Vector2i thisBlock = getBlock(x, y, z);
+                    if (BlockTypes.blockTypeMap.get(thisBlock.x) instanceof LightBlockType ||
+                            getLight(x, y, z + 1, false).w() > 0 || getLight(x + 1, y, z, false).w() > 0 || getLight(x, y, z - 1, false).w() > 0 ||
                             getLight(x - 1, y, z, false).w() > 0 || getLight(x, y + 1, z, false).w() > 0 || getLight(x, y - 1, z, false).w() > 0) {
                         LightHelper.updateLight(new Vector3i(x, y, z), getBlock(x, y, z), getLight(x, y, z));
                     }
