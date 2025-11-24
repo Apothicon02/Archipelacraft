@@ -19,7 +19,7 @@ uniform layout(binding = 5) sampler2D noises;
 
 layout(std430, binding = 0) buffer playerSSBO
 {
-    vec3[] playerData;
+    float[] playerData;
 };
 
 in vec4 gl_FragCoord;
@@ -219,10 +219,14 @@ vec4 traceVoxel(vec3 rayPos, vec3 rayDir, float prevRayLength, vec3 iMask, ivec2
                 hitPos = solidHitPos;
                 vec3 voxelHitPos = mapPos+(voxelMapPos/8);
                 if (ivec2(gl_FragCoord.xy) == ivec2(res/2)) {
-                    playerData[0] = voxelHitPos;
-                    playerData[1] = solidHitPos;
+                    playerData[0] = voxelHitPos.x;
+                    playerData[1] = voxelHitPos.y;
+                    playerData[2] = voxelHitPos.z;
+                    playerData[3] = (mapPos+(prevVoxelMapPos/8)).x;
+                    playerData[4] = (mapPos+(prevVoxelMapPos/8)).y;
+                    playerData[5] = (mapPos+(prevVoxelMapPos/8)).z;
                 }
-                hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0]));
+                hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
             }
             if (voxelColor.a < 1) {
                 if (block.x == 1) {

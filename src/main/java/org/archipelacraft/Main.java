@@ -1,7 +1,8 @@
 package org.archipelacraft;
 
 import com.google.gson.Gson;
-import org.archipelacraft.game.Player;
+import org.archipelacraft.game.gameplay.HandManager;
+import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
 import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.World;
@@ -20,7 +21,7 @@ public class Main {
     public static String mainFolder = System.getenv("APPDATA")+"/Archipelacraft/";
     public static String resourcesPath = mainFolder+"resources/";
     public static Gson gson = new Gson();
-    public static Player player = new Player();
+    public static Player player;
     private static final float MOUSE_SENSITIVITY = 0.01f;
 
     public static void main(String[] args) throws Exception {
@@ -44,6 +45,8 @@ public class Main {
         Noises.init();
         World.generate();
         Models.loadModels();
+
+        player = new Player(new Vector3f(515, 100, 515f));
     }
 
     boolean wasXDown = false;
@@ -73,6 +76,7 @@ public class Main {
             } else {
                 window.getMouseInput().input(window);
                 boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
+                boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
                 player.sprint = isShiftDown;
                 player.superSprint = window.isKeyPressed(GLFW_KEY_CAPS_LOCK, GLFW_PRESS);
                 player.forward = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
@@ -80,12 +84,15 @@ public class Main {
                 player.rightward = window.isKeyPressed(GLFW_KEY_D, GLFW_PRESS);
                 player.leftward = window.isKeyPressed(GLFW_KEY_A, GLFW_PRESS);
                 player.upward = window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS);
-                player.downward = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
+                player.downward = isCtrlDown;
+                player.crouching = isCtrlDown;
 
                 MouseInput mouseInput = window.getMouseInput();
                 Vector2f displVec = mouseInput.getDisplVec();
                 player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
                         (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
+                HandManager.useHands(timeMillis, mouseInput);
+                mouseInput.scroll.set(0.d);
 
                 if (wasF1Down && !window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS)) {
                     Renderer.showUI = !Renderer.showUI;

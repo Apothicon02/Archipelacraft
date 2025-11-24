@@ -8,11 +8,13 @@ import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.LightBlockType;
 import org.archipelacraft.game.noise.Noises;
+import org.archipelacraft.game.rendering.Textures;
 import org.archipelacraft.game.world.shapes.Blob;
 import org.archipelacraft.game.world.trees.*;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
+import org.lwjgl.opengl.GL40;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -20,6 +22,11 @@ import java.util.Random;
 
 import static org.archipelacraft.engine.Utils.condensePos;
 import static org.archipelacraft.engine.Utils.distance;
+import static org.lwjgl.opengl.GL11.GL_SHORT;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+import static org.lwjgl.opengl.GL12.GL_TEXTURE_3D;
+import static org.lwjgl.opengl.GL12.glTexSubImage3D;
+import static org.lwjgl.opengl.GL30.*;
 
 public class World {
     public static int size = 1024;
@@ -134,8 +141,40 @@ public class World {
             int pos = condensePos(x, y, z)*2;
             blocks[pos] = (short)(block);
             blocks[pos+1] = (short)(blockSubType);
-            blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(block);
-            blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(block);
+            if (Main.player != null) {
+                glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
+                glTexSubImage3D(GL_TEXTURE_3D, 0, x, y, z, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
+                boolean clear = true;
+                loop:
+                for (int cX = (int)(x/4)*4; cX < ((int)(x/4)*4)+4; cX++) {
+                    for (int cY = (int)(y/4)*4; cY < ((int)(y/4)*4)+4; cY++) {
+                        for (int cZ = (int)(z/4)*4; cZ < ((int)(z/4)*4)+4; cZ++) {
+                            if (getBlock(cX, cY, cZ).x > 0) {
+                                clear = false;
+                                break loop;
+                            }
+                        }
+                    }
+                }
+                glTexSubImage3D(GL_TEXTURE_3D, 2, x/4, y/4, z/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+                blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(clear ? 0 : 1);
+                loop:
+                for (int cX = (int)(x/16)*16; cX < ((int)(x/16)*16)+16; cX++) {
+                    for (int cY = (int)(y/16)*16; cY < ((int)(y/16)*16)+16; cY++) {
+                        for (int cZ = (int)(z/16)*16; cZ < ((int)(z/16)*16)+16; cZ++) {
+                            if (getBlock(cX, cY, cZ).x > 0) {
+                                clear = false;
+                                break loop;
+                            }
+                        }
+                    }
+                }
+                glTexSubImage3D(GL_TEXTURE_3D, 4, x/16, y/16, z/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+                blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(clear ? 0 : 1);
+            } else {
+                blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(block);
+                blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(block);
+            }
         }
     }
     public static void setBlock(float x, float y, float z, int block, int blockSubType) {
