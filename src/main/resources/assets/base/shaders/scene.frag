@@ -167,7 +167,7 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
     float sunBrightness = clamp(sunHeight+0.5, 0.2f, 1.f);
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
-    float whiteness = mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1));
+    float whiteness = isSky ? mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1)) : 0.9f;
     sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, sunSetness), vec3(sunBrightness), whiteness);
     return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
 }
@@ -359,9 +359,6 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
             vec4 voxelColor = traceLOD(uv3d, rayDir, lodDist*16, mask);
             if (voxelColor.a >= 1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
-                if (block.x == 31) {
-                    voxelColor.rgb *= 1.5f;
-                }
                 voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
                 if (normal.y >0) { //down
                     voxelColor.rgb *= 0.7f;
