@@ -98,9 +98,11 @@ public class BlockType {
         for (Vector3i nPos : new Vector3i[]{new Vector3i(pos.x, pos.y - 1, pos.z), new Vector3i(pos.x, pos.y + 1, pos.z), new Vector3i(pos.x - 1, pos.y, pos.z),
                 new Vector3i(pos.x + 1, pos.y, pos.z), new Vector3i(pos.x, pos.y, pos.z - 1), new Vector3i(pos.x, pos.y, pos.z + 1)}) {
             Vector2i nBlock = World.getBlock(nPos.x, nPos.y, nPos.z);
-            BlockType blockType = BlockTypes.blockTypeMap.get(nBlock.x);
-            if (blockType instanceof WaterBlockType) {
-                ((WaterBlockType) blockType).moisturize(nPos);
+            if (nBlock != null) {
+                BlockType blockType = BlockTypes.blockTypeMap.get(nBlock.x);
+                if (blockType instanceof WaterBlockType) {
+                    ((WaterBlockType) blockType).moisturize(nPos);
+                }
             }
         }
     }

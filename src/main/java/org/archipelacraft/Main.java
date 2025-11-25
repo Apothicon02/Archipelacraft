@@ -46,7 +46,7 @@ public class Main {
         World.generate();
         Models.loadModels();
 
-        player = new Player(new Vector3f(515, 100, 515f));
+        player = new Player(new Vector3f(512, 128, 1000));
     }
 
     boolean wasXDown = false;
