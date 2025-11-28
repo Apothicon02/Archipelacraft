@@ -249,16 +249,7 @@ public class World {
             for (int z = 0; z < size; z++) {
                 int surface = heightmap[(x*size)+z];
                 Vector2i blockOn = getBlock(x, surface, z);
-                int condensedPos = condensePos(x, z);
                 float basePerlinNoise = Noises.COHERERENT_NOISE.sample(x, z);
-                int cloudScale = (int)(4+(basePerlinNoise*4));
-                if (Noises.CLOUD_NOISE.sample(x*cloudScale, z*cloudScale) > 0.1f && Math.random() > 0.95f && heightmap[condensedPos] < 166) {
-                    boolean isRainCloud = (distance(x, z, size/2, size/2) / size < 0.2f && (Math.random() < 0.001f));
-                    Blob.generate(new Vector2i(0), x, 216+(int)Math.abs(Noises.CELLULAR_NOISE.sample(x, z)*32), z, isRainCloud ? 32 : 31, 0, (isRainCloud ? 10 : 0) +(int)(2+(Math.random()*8)), true);
-                    if (isRainCloud) {
-                        Mud.generate(new Vector2i(0), x, surface, z, 33, 0, 16 + (int) (2 + (Math.random() * 8)), true);
-                    }
-                }
                 float randomNumber = seededRand.nextFloat();
                 if (blockOn.x == 2) {
                     float foliageChanceExp = basePerlinNoise * basePerlinNoise;

@@ -186,6 +186,7 @@ vec4 tint = vec4(0);
 bool underwater = false;
 bool hitCaustic = false;
 bool hitSelection = false;
+bool isInfiniteSea = false;
 
 vec3 lod2Pos = vec3(0);
 vec3 lodPos = vec3(0);
@@ -210,7 +211,7 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask) {
     for (int i = 0; blockPos.x < 4.0 && blockPos.x >= 0.0 && blockPos.y < 4.0 && blockPos.y >= 0.0 && blockPos.z < 4.0 && blockPos.z >= 0.0 && i < (4*8)*3; i++) {
         if (steppingBlock) {
             mapPos = (lod2Pos*16)+(lodPos*4)+blockPos;
-            block = inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : ivec4(0);
+            block = isInfiniteSea ? ivec4(1, 15, 0, 0) : (inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : ivec4(0));
             if (block.x > 0 && !(block.x == 1 && underwater)) {
                 steppingBlock = false;
                 vec3 mini = ((blockPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
@@ -243,6 +244,21 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask) {
                 solidHitPos = (prevVoxelPos/8)+floor(mapPos)+(uv3d/8)-(normal/2);
                 if (hitPos == vec3(0)) {
                     hitPos = solidHitPos;
+                }
+                if (voxelColor.a < 1) {
+                    if (block.x == 1) {
+                        bool topVoxel = voxelPos.y >= 7;
+                        if (!underwater && (isInfiniteSea || getVoxel(voxelPos.x, topVoxel ? 0 : voxelPos.y+1, voxelPos.z, mapPos.x, mapPos.y + (topVoxel ? 1 : 0), mapPos.z, block.x, block.y).a <= 0)) {
+                            if (isCaustic(vec2(mapPos.x, mapPos.z)+(voxelPos.xz/8)+voxelPos.y)) {
+                                hitCaustic = true;
+                                return vec4((isInfiniteSea ? 2 : 1) * fromLinear(vec3(1)), 1);
+                            }
+                        }
+                        underwater = true;
+                        steppingBlock = true;
+                    }
+                    tint += voxelColor;
+                } else {
                     vec3 voxelHitPos = mapPos+(voxelPos/8);
                     if (ivec2(gl_FragCoord.xy) == ivec2(res/2)) {
                         playerData[0] = voxelHitPos.x;
@@ -253,21 +269,10 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask) {
                         playerData[5] = (mapPos+(prevVoxelPos/8)).z;
                     }
                     hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
-                }
-                if (voxelColor.a < 1) {
-                    if (block.x == 1) {
-                        if (!underwater) {
-                            if (isCaustic(vec2(mapPos.x, mapPos.z)+(voxelPos.xz/8)+voxelPos.y)) {
-                                hitCaustic = true;
-                                return vec4(fromLinear(vec3(1)), 1);
-                            }
-                        }
-                        underwater = true;
-                        steppingBlock = true;
-                    }
-                    tint += voxelColor;
-                } else {
                     return vec4(voxelColor.rgb, 1);
+                }
+                if (isInfiniteSea) {
+                    return vec4(-1);
                 }
             }
             if (!steppingBlock) {
@@ -300,7 +305,7 @@ vec4 traceLOD(vec3 rayPos, vec3 rayDir, vec3 iMask) {
 
     for (int i = 0; lodPos.x < 4.0 && lodPos.x >= 0.0 && lodPos.y < 4.0 && lodPos.y >= 0.0 && lodPos.z < 4.0 && lodPos.z >= 0.0 && i < 4*3; i++) {
         mapPos = (lod2Pos*16)+(lodPos*4);
-        int lod = inBounds(lodPos, lodSize) ? texelFetch(blocks, ivec3(lodPos.x, lodPos.y, lodPos.z), 2).x : (lodPos.y <= 4 ? 1 : 0);
+        int lod = isInfiniteSea ? 1 : texelFetch(blocks, ivec3(lodPos.x, lodPos.y, lodPos.z), 2).x;
         if (lod > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
@@ -313,7 +318,7 @@ vec4 traceLOD(vec3 rayPos, vec3 rayDir, vec3 iMask) {
                 uv3d = rayPos - lodPos;
             }
             vec4 voxelColor = traceBlock(uv3d, rayDir, mask);
-            if (voxelColor.a >= 1) {
+            if (voxelColor.a >= 1 || voxelColor.a <= -1) {
                 return voxelColor;
             }
         }
@@ -336,9 +341,11 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     vec3 sideDist = ((lod2Pos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
     vec3 mask = stepMask(sideDist);
 
-    for (int i = 0; i < size/8; i++) { //distance(ogPos, mapPos) < size &&
+    for (int i = 0; distance(rayPos, lod2Pos) < size/16 && i < size/8; i++) {
         mapPos = lod2Pos*16;
-        int lod = inBounds(rayPos, lod2Size) ? texelFetch(blocks, ivec3(lod2Pos.x, lod2Pos.y, lod2Pos.z), 4).x : (rayPos.y <= 4 ? 1 : 0);
+        bool inBound = inBounds(lod2Pos, lod2Size);
+        isInfiniteSea = !inBound && (lod2Pos.y == 3) && ogPos.y > 63;
+        int lod = isInfiniteSea ? 1 : (inBound ? texelFetch(blocks, ivec3(lod2Pos.x, lod2Pos.y, lod2Pos.z), 4).x : 0);
         if (lod > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
@@ -351,7 +358,7 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
                 uv3d = rayPos - lod2Pos;
             }
             vec4 voxelColor = traceLOD(uv3d, rayDir, mask);
-            if (voxelColor.a >= 1) {
+            if (voxelColor.a >= 1 || voxelColor.a <= -1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
                 voxelBrightness = max(voxelColor.r, max(voxelColor.g, voxelColor.b));
                 if (normal.y >0) { //down
@@ -409,6 +416,7 @@ void main() {
     vec3 ogDir = normalize((inverse(view)*clipSpace).xyz);
     vec3 ogPos = inverse(view)[3].xyz;
     bool isSky = rasterColor.a <= 0.f;
+    ivec4 blockIn = getBlock(ogPos.x, ogPos.y, ogPos.z);
     fragColor = raytrace(ogPos, ogDir);
     if (solidHitPos != vec3(0)) {
         isSky = false;
@@ -457,7 +465,7 @@ void main() {
         vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
         normalizedTint.rgb *= lightingColor.rgb*lighting.a;
         normalizedTint.rgb = mix(normalizedTint.rgb, lightingColor.rgb*lighting.a, fogginess);
-        fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
+        fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a*0.75f);
     }
     fragColor = toLinear(fragColor);
     if (inArea(2)) {
