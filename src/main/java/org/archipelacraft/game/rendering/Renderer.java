@@ -93,7 +93,8 @@ public class Renderer {
         glTexSubImage3D(GL_TEXTURE_3D, 4, 0, 0, 0, Textures.blocks.width/16, Textures.blocks.height/16, ((Texture3D)Textures.blocks).depth/16, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
 
         glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, 0, GL_RGBA, GL_BYTE, World.lights.flip());
+        glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth);
+        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(World.lights.length).put(World.lights).flip());
 
         float[] mergedNoises = new float[(Textures.noises.width*Textures.noises.height)*4];
         for (int x = 0; x < Textures.noises.width; x++) {

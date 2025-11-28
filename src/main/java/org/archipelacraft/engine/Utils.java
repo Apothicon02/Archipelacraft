@@ -153,10 +153,10 @@ public class Utils {
         return new Vector4i(0xFF & color >> 16, 0xFF & color >> 8, 0xFF & color, 0xFF & color >> 24);
     }
     public static int condensePos(int x, int y, int z) {
-        return ((((x*World.height)+y)*World.size)+z);
+        return ((((z*World.height)+y)*World.size)+x);
     }
     public static int condensePos(Vector3i pos) {
-        return ((((pos.x*World.height)+pos.y)*World.size)+pos.z);
+        return ((((pos.z*World.height)+pos.y)*World.size)+pos.x);
     }
     public static int condensePos(int x, int z) {
         return (x * World.size) + z;

@@ -7,7 +7,6 @@ import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
 
-import static org.archipelacraft.Main.player;
 import static org.archipelacraft.game.world.World.inBounds;
 
 public class WaterBlockType extends BlockType {
@@ -32,7 +31,7 @@ public class WaterBlockType extends BlockType {
                 if (Math.random() < 0.33f) { //33% chance to generate a flower
                     blockType = Tags.shortFlowers.tagged.get((int) (Math.random() * Tags.shortFlowers.tagged.size()));
                 }
-                fluid.x = -1;
+                fluid.x = 0;
                 World.setBlock(pos.x, pos.y, pos.z, blockType, (int) (Math.random() * 4), true, false, 3, false);
             }
             if (BlockTypes.blockTypeMap.get(fluid.x).blockProperties.isFluid && fluid.y >= 1) {

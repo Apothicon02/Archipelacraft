@@ -156,7 +156,7 @@ ivec4 getBlock(float x, float y, float z) {
     return texelFetch(blocks, ivec3(x, y, z), 0);
 }
 vec4 getLight(float x, float y, float z) {
-    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*vec4(4, 4, 4, 10);
+    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
 }
 vec3 sunColor = vec3(0);
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
@@ -172,7 +172,7 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
     return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
 }
 vec4 powLighting(vec4 lighting) {
-    return vec4(pow(lighting.r, 2), pow(lighting.g, 2), pow(lighting.b, 2), pow(lighting.a, 2));
+    return vec4(lighting.r, lighting.g, lighting.b, pow(lighting.a, 2));
 }
 
 bool didntTraceAnything = true;
@@ -226,10 +226,6 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask) {
                 voxelSideDist = ((voxelPos - voxelRayPos) + 0.5 + raySign * 0.5) * deltaDist;
                 voxelMask = mask;
                 prevVoxelPos = voxelPos+(stepMask(voxelSideDist+(voxelMask*(-raySign)*deltaDist))*(-raySign));
-            } else {
-                mask = stepMask(sideDist);
-                blockPos += mask * raySign;
-                sideDist += mask * raySign * deltaDist;
             }
         } else if (voxelPos.x < 8.0 && voxelPos.x >= 0.0 && voxelPos.y < 8.0 && voxelPos.y >= 0.0 && voxelPos.z < 8.0 && voxelPos.z >= 0.0) {
             vec4 voxelColor = getVoxel(voxelPos.x, voxelPos.y, voxelPos.z, mapPos.x, mapPos.y, mapPos.z, block.x, block.y);
@@ -266,21 +262,24 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask) {
                                 return vec4(fromLinear(vec3(1)), 1);
                             }
                         }
-                        tint += voxelColor;
                         underwater = true;
-                        return vec4(0);
+                        steppingBlock = true;
                     }
                     tint += voxelColor;
                 } else {
                     return vec4(voxelColor.rgb, 1);
                 }
             }
-            voxelMask = stepMask(voxelSideDist);
-            prevVoxelPos = voxelPos;
-            voxelPos += voxelMask * raySign;
-            voxelSideDist += voxelMask * raySign * deltaDist;
+            if (!steppingBlock) {
+                voxelMask = stepMask(voxelSideDist);
+                prevVoxelPos = voxelPos;
+                voxelPos += voxelMask * raySign;
+                voxelSideDist += voxelMask * raySign * deltaDist;
+            }
         } else {
             steppingBlock = true;
+        }
+        if (steppingBlock) {
             mask = stepMask(sideDist);
             blockPos += mask * raySign;
             sideDist += mask * raySign * deltaDist;

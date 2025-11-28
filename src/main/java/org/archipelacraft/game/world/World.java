@@ -15,7 +15,6 @@ import org.archipelacraft.game.world.trees.*;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
-import org.lwjgl.opengl.GL40;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -23,7 +22,6 @@ import java.util.Random;
 
 import static org.archipelacraft.engine.Utils.condensePos;
 import static org.archipelacraft.engine.Utils.distance;
-import static org.lwjgl.opengl.GL11.GL_SHORT;
 import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_3D;
 import static org.lwjgl.opengl.GL12.glTexSubImage3D;
@@ -34,10 +32,10 @@ public class World {
     public static int halfSize = 1024/2;
     public static int height = 320;
     public static int seaLevel = 63;
-    public static short[] blocks = new short[World.size*World.size*World.height*2];
+    public static short[] blocks = new short[(World.size*World.size*World.height)*2];
     public static short[] blocksLOD = new short[(World.size*World.size*World.height)/4];
     public static short[] blocksLOD2 = new short[(World.size*World.size*World.height)/16];
-    public static ByteBuffer lights = ByteBuffer.allocateDirect(World.size*World.size*World.height*4);
+    public static byte[] lights = new byte[(World.size*World.size*World.height)*4];
     public static short[] heightmap = new short[World.size*World.size];
     public static short[] surfaceHeightmap = new short[World.size*World.size];
     public static Random seededRand = new Random(35311350L);
@@ -46,36 +44,26 @@ public class World {
         return (x >= 0 && x < size && y >= 0 && y < height && z >= 0 && z < size);
     }
 
-    public static void setLightNullable(int x, int y, int z, Vector4i light) {
+    public static void setLight(int x, int y, int z, int r, int b, int g, int s) {
         if (inBounds(x, y, z)) {
             int pos = condensePos(x, y, z)*4;
-            if (light.x != -1) {
-                lights.put(pos, (byte) (light.x));
-            }
-            if (light.y != -1) {
-                lights.put(pos + 1, (byte) (light.y));
-            }
-            if (light.z != -1) {
-                lights.put(pos + 2, (byte) (light.z));
-            }
-            if (light.w != -1) {
-                lights.put(pos + 3, (byte) (light.w));
+            lights[pos] = (byte)r;
+            lights[pos+1] = (byte)b;
+            lights[pos+2] = (byte)g;
+            lights[pos+3] = (byte)s;
+            if (Main.player != null) {
+                glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
+                glTexSubImage3D(GL_TEXTURE_3D, 0, x, y, z, 1, 1, 1, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(4).put((byte)r).put((byte)b).put((byte)g).put((byte)s).flip());
             }
         }
     }
     public static void setLight(int x, int y, int z, Vector4i light) {
-        if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z)*4;
-            lights.put(pos, (byte) (light.x));
-            lights.put(pos+1, (byte)(light.y));
-            lights.put(pos+2, (byte)(light.z));
-            lights.put(pos+3, (byte)(light.w));
-        }
+        setLight(x, y, z, light.x, light.y, light.z, light.w);
     }
     public static Vector4i getLight(int x, int y, int z, boolean returnNull) {
         if (inBounds(x, y, z)) {
             int pos = condensePos(x, y, z)*4;
-            return new Vector4i(lights.get(pos), lights.get(pos+1), lights.get(pos+2), lights.get(pos+3));
+            return new Vector4i(lights[pos], lights[pos+1], lights[pos+2], lights[pos+3]);
         }
         return returnNull ? null : new Vector4i(0);
     }
@@ -90,49 +78,46 @@ public class World {
     }
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType, boolean replace, boolean priority, int tickDelay, boolean silent) {
-        if (inBounds(x, y, z)) {
-            Vector2i existing = getBlock(x, y, z);
-            if (replace || existing.x() == 0) {
-                Vector3i pos = new Vector3i(x, y, z);
-                Vector4i oldLight = new Vector4i(0);//getLight(pos);
-                byte r = 0;
-                byte g = 0;
-                byte b = 0;
-                Vector2i newBlock = new Vector2i(block, blockSubType);
-                BlockType blockType = BlockTypes.blockTypeMap.get(block);
-                boolean lightChanged = false;
-                if (blockType instanceof LightBlockType lType) {
-                    lightChanged = true;
-                    r = lType.lightBlockProperties().r;
-                    g = lType.lightBlockProperties().g;
-                    b = lType.lightBlockProperties().b;
-                }
-                Vector2i oldBlock = getBlock(x, y, z);
-                BlockType oldBlockType = BlockTypes.blockTypeMap.get(oldBlock.x);
-                setBlock(x, y, z, block, blockSubType);
-                if (tickDelay > 0) {
-                    ScheduledTicker.scheduleTick(Main.currentTick+tickDelay, pos, 0);
-                }
-                if (!lightChanged) {
-                    lightChanged = blockType.blocksLight(newBlock) != oldBlockType.blocksLight(newBlock);
-                }
-                if (lightChanged) {
-                    //setLight(x, y, z, r, g, b, 0, pos);
-                }
+        Vector2i existing = getBlock(x, y, z);
+        if (existing != null && (replace || existing.x() == 0)) {
+            Vector3i pos = new Vector3i(x, y, z);
+            Vector4i oldLight = getLight(pos);
+            byte r = 0;
+            byte g = 0;
+            byte b = 0;
+            Vector2i newBlock = new Vector2i(block, blockSubType);
+            BlockType blockType = BlockTypes.blockTypeMap.get(block);
+            boolean lightChanged = BlockTypes.blockTypeMap.get(existing.x) instanceof LightBlockType;
+            if (blockType instanceof LightBlockType lType) {
+                lightChanged = true;
+                r = lType.lightBlockProperties().r;
+                g = lType.lightBlockProperties().g;
+                b = lType.lightBlockProperties().b;
+            }
+            BlockType oldBlockType = BlockTypes.blockTypeMap.get(existing.x);
+            setBlock(x, y, z, block, blockSubType);
+            if (tickDelay > 0) {
+                ScheduledTicker.scheduleTick(Main.currentTick+tickDelay, pos, 0);
+            }
+            if (!lightChanged) {
+                lightChanged = blockType.blocksLight(newBlock) != oldBlockType.blocksLight(newBlock);
+            }
+            if (lightChanged) {
+                setLight(x, y, z, r, g, b, 0);
+            }
 
-//                if (blockType.obstructingHeightmap(new Vector2i(block, blockSubType)) != oldBlockType.obstructingHeightmap(oldBlock)) {
-//                    updateHeightmap(x, z, true);
-//                }
+            if (blockType.obstructingHeightmap(new Vector2i(block, blockSubType)) != oldBlockType.obstructingHeightmap(existing)) {
+                updateHeightmap(x, z);
+            }
 
-                if (lightChanged) {
-                    //recalculateLight(pos, org.joml.Math.max(oldLight.x, r), org.joml.Math.max(oldLight.y, g), org.joml.Math.max(oldLight.z, b), oldLight.w);
-                }
+            if (lightChanged) {
+                LightHelper.recalculateLight(pos, org.joml.Math.max(oldLight.x, r), org.joml.Math.max(oldLight.y, g), org.joml.Math.max(oldLight.z, b), oldLight.w);
+            }
 
-                if (block == 0) {
-                    BlockTypes.blockTypeMap.get(existing.x).onPlace(pos, existing, silent);
-                } else {
-                    BlockTypes.blockTypeMap.get(block).onPlace(pos, new Vector2i(block, blockSubType), silent);
-                }
+            if (block == 0) {
+                BlockTypes.blockTypeMap.get(existing.x).onPlace(pos, existing, silent);
+            } else {
+                BlockTypes.blockTypeMap.get(block).onPlace(pos, new Vector2i(block, blockSubType), silent);
             }
         }
     }
@@ -147,10 +132,10 @@ public class World {
                 glTexSubImage3D(GL_TEXTURE_3D, 0, x, y, z, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
                 boolean clear = true;
                 loop:
-                for (int cX = (int)(x/4)*4; cX < ((int)(x/4)*4)+4; cX++) {
-                    for (int cY = (int)(y/4)*4; cY < ((int)(y/4)*4)+4; cY++) {
-                        for (int cZ = (int)(z/4)*4; cZ < ((int)(z/4)*4)+4; cZ++) {
-                            if (getBlock(cX, cY, cZ).x > 0) {
+                for (int cX = (int) Math.floor(x/4f)*4; cX < (Math.floor(x/4f)*4)+4; cX++) {
+                    for (int cY = (int) Math.floor(y/4f)*4; cY < (Math.floor(y/4f)*4)+4; cY++) {
+                        for (int cZ = (int) Math.floor(z/4f)*4; cZ < (Math.floor(z/4f)*4)+4; cZ++) {
+                            if (blocks[condensePos(cX, cY, cZ)*2] > 0) {
                                 clear = false;
                                 break loop;
                             }
@@ -158,12 +143,12 @@ public class World {
                     }
                 }
                 glTexSubImage3D(GL_TEXTURE_3D, 2, x/4, y/4, z/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(clear ? 0 : 1);
+                blocksLOD[(((((z/4)*(World.height/4))+(y/4))*(World.size/4))+(x/4))] = (short)(clear ? 0 : 1);
                 loop:
-                for (int cX = (int)(x/16)*16; cX < ((int)(x/16)*16)+16; cX++) {
-                    for (int cY = (int)(y/16)*16; cY < ((int)(y/16)*16)+16; cY++) {
-                        for (int cZ = (int)(z/16)*16; cZ < ((int)(z/16)*16)+16; cZ++) {
-                            if (getBlock(cX, cY, cZ).x > 0) {
+                for (int cX = (int) Math.floor(x/16f)*16; cX < (Math.floor(x/16f)*16)+16; cX++) {
+                    for (int cY = (int) Math.floor(y/16f)*16; cY < (Math.floor(y/16f)*16)+16; cY++) {
+                        for (int cZ = (int) Math.floor(z/16f)*16; cZ < (Math.floor(z/16f)*16)+16; cZ++) {
+                            if (blocks[condensePos(cX, cY, cZ)*2] > 0) {
                                 clear = false;
                                 break loop;
                             }
@@ -171,10 +156,10 @@ public class World {
                     }
                 }
                 glTexSubImage3D(GL_TEXTURE_3D, 4, x/16, y/16, z/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(clear ? 0 : 1);
-            } else {
-                blocksLOD[(((((x/4)*(World.height/4))+(y/4))*(World.size/4))+(z/4))] = (short)(block);
-                blocksLOD2[(((((x/16)*(World.height/16))+(y/16))*(World.size/16))+(z/16))] = (short)(block);
+                blocksLOD2[(((((z/16)*(World.height/16))+(y/16))*(World.size/16))+(x/16))] = (short)(clear ? 0 : 1);
+            } else if (block > 0) {
+                blocksLOD[(((((z/4)*(World.height/4))+(y/4))*(World.size/4))+(x/4))] = (short)(block);
+                blocksLOD2[(((((z/16)*(World.height/16))+(y/16))*(World.size/16))+(x/16))] = (short)(block);
             }
         }
     }
@@ -334,24 +319,7 @@ public class World {
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                int minY = surfaceHeightmap[condensePos(x, z)];
-                boolean setHeightmap = false;
-                for (int y = height-1; y >= minY; y--) {
-                    Vector2i block = getBlock(x, y, z);
-                    BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
-                    Vector3i rgb = new Vector3i(0);
-                    if (blockType instanceof LightBlockType lBlock) {
-                        rgb.x = lBlock.lightBlockProperties().r;
-                        rgb.y = lBlock.lightBlockProperties().g;
-                        rgb.z = lBlock.lightBlockProperties().b;
-                    }
-                    if (!blockType.obstructingHeightmap(block)) {
-                        setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 15));
-                    } else if (!setHeightmap) {
-                        setHeightmap = true;
-                        heightmap[condensePos(x, z)] = (short)(y);
-                    }
-                }
+                updateHeightmap(x, z);
             }
         }
 
@@ -365,6 +333,30 @@ public class World {
                         LightHelper.updateLight(new Vector3i(x, y, z), getBlock(x, y, z), getLight(x, y, z));
                     }
                 }
+            }
+        }
+    }
+
+    public static void updateHeightmap(int x, int z) {
+        boolean setHeightmap = false;
+        for (int y = height-1; y >= 0; y--) {
+            Vector2i block = getBlock(x, y, z);
+            BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
+            Vector3i rgb = new Vector3i(0);
+            if (blockType instanceof LightBlockType lBlock) {
+                rgb.x = lBlock.lightBlockProperties().r;
+                rgb.y = lBlock.lightBlockProperties().g;
+                rgb.z = lBlock.lightBlockProperties().b;
+            }
+            if (!setHeightmap) {
+                if (!blockType.obstructingHeightmap(block)) {
+                    setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 15));
+                } else {
+                    setHeightmap = true;
+                    heightmap[condensePos(x, z)] = (short) (y);
+                }
+            } else {
+                setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 0));
             }
         }
     }

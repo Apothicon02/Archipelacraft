@@ -80,6 +80,7 @@ public class Engine {
                 if (framesUntilUpdate <= 0) {
                     double avgMS = 1000000000d/ArchipelacraftMath.averageLongs(frameTimes);
                     GLFW.glfwSetWindowTitle(window.getWindowHandle(), "Archipelacraft | " +
+                            (int)Main.player.pos.x+"x,"+(int)Main.player.pos.y+"y,"+(int)Main.player.pos.z+"z | " +
                             (long)(avgMS) + "fps " +
                             String.format("%.1f", 1000d/(avgMS)) + "ms");
                     framesUntilUpdate = 40;

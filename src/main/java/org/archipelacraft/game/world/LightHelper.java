@@ -8,9 +8,30 @@ import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
 
+import java.util.ArrayList;
+
 import static org.archipelacraft.game.world.World.*;
 
 public class LightHelper {
+    public static ArrayList<Vector3i> lightQueue = new ArrayList<>();
+
+    public static boolean queueLightUpdate(Vector3i pos) {
+        boolean exists = lightQueue.contains(pos);
+        if (!exists) {
+            lightQueue.add(pos);
+            return true;
+        }
+        return false;
+    }
+
+    public static void iterateLightQueue() {
+        while (!lightQueue.isEmpty()) {
+            Vector3i pos = lightQueue.getFirst();
+            lightQueue.removeFirst();
+            updateLight(pos, getBlock(pos), getLight(pos));
+        }
+    }
+
     public static void updateLight(Vector3i pos, Vector2i block, Vector4i light, int stack) {
         stack++;
         BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
@@ -81,6 +102,40 @@ public class LightHelper {
                 return true;
             } else {
                 return false;
+            }
+        }
+    }
+
+    public static void recalculateLight(Vector3i pos, int r, int g, int b, int s) {
+        for (Vector3i neighborPos : new Vector3i[]{
+                new Vector3i(pos.x, pos.y, pos.z + 1),
+                new Vector3i(pos.x + 1, pos.y, pos.z),
+                new Vector3i(pos.x, pos.y, pos.z - 1),
+                new Vector3i(pos.x - 1, pos.y, pos.z),
+                new Vector3i(pos.x, pos.y + 1, pos.z),
+                new Vector3i(pos.x, pos.y - 1, pos.z)
+        }) {
+            Vector2i neighbor = World.getBlock(neighborPos);
+            if (neighbor != null) {
+                BlockType neighborBlockType = BlockTypes.blockTypeMap.get(neighbor.x);
+                if (!blocksLight(neighbor, getCorner(neighborPos.x, neighborPos.y, neighborPos.z)) || neighborBlockType instanceof LightBlockType) {
+                    Vector4i neighborLight = World.getLight(neighborPos);
+                    if (neighborLight != null) {
+                        if ((neighborLight.x() > 0 && neighborLight.x() < r) || (neighborLight.y() > 0 && neighborLight.y() < g) || (neighborLight.z() > 0 && neighborLight.z() < b) || (neighborLight.w() > 0 && neighborLight.w() < s)) {
+                            byte nr = 0;
+                            byte ng = 0;
+                            byte nb = 0;
+                            if (neighborBlockType instanceof LightBlockType lBlock) {
+                                nr = lBlock.lightBlockProperties().r;
+                                ng = lBlock.lightBlockProperties().g;
+                                nb = lBlock.lightBlockProperties().b;
+                            }
+                            World.setLight(neighborPos.x, neighborPos.y, neighborPos.z, nr, ng, nb, (byte) (neighborLight.w() == 20 ? 20 : 0));
+                            recalculateLight(neighborPos, neighborLight.x(), neighborLight.y(), neighborLight.z(), neighborLight.w());
+                        }
+                        queueLightUpdate(pos);
+                    }
+                }
             }
         }
     }
