@@ -145,9 +145,9 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
+                new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         debug = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun"});
+                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         generateVaos();
 
         rasterFBOId = glGenFramebuffers();
@@ -178,13 +178,14 @@ public class Renderer {
         glUniform1d(program.uniforms.get("time"), time);
         glUniform1i(program.uniforms.get("shadowsEnabled"), shadowsEnabled ? 1 : 0);
         glUniform1i(program.uniforms.get("reflectionShadows"), reflectionShadows ? 1 : 0);
-        munPos.set(0, World.size*-2, 0);
-        munPos.rotateZ((float) time);
-        munPos.set(munPos.x+(World.size/2f), munPos.y-World.size, munPos.z+(World.size/2f));
         sunPos.set(0, World.size*2, 0);
         sunPos.rotateZ((float) time);
         sunPos.set(sunPos.x+(World.size/2f), sunPos.y-World.size, sunPos.z+(World.size/2f));
         glUniform3f(program.uniforms.get("sun"), sunPos.x, sunPos.y, sunPos.z);
+        munPos.set(0, World.size*-2, 0);
+        munPos.rotateZ((float) time);
+        munPos.set(munPos.x+(World.size/2f), munPos.y-World.size, munPos.z+(World.size/2f));
+        glUniform3f(program.uniforms.get("mun"), munPos.x, munPos.y, munPos.z);
     }
 
     public static void draw() {
