@@ -2,14 +2,12 @@ package org.archipelacraft.game.world;
 
 import org.archipelacraft.Main;
 import org.archipelacraft.engine.ArchipelacraftMath;
-import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.LightBlockType;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Textures;
-import org.archipelacraft.game.world.cover.Mud;
 import org.archipelacraft.game.world.shapes.Blob;
 import org.archipelacraft.game.world.trees.*;
 import org.joml.Vector2i;
@@ -180,6 +178,10 @@ public class World {
     }
     public static Vector2i getBlock(float x, float y, float z) {
         return getBlock((int) x, (int) y, (int) z);
+    }
+    public static Vector2i getBlockNotNull(float x, float y, float z) {
+        Vector2i block = getBlock((int) x, (int) y, (int) z);
+        return block == null ? new Vector2i(0) : block;
     }
 
     public static void generate() {

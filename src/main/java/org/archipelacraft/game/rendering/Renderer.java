@@ -9,6 +9,7 @@ import org.archipelacraft.engine.Window;
 import org.lwjgl.system.MemoryStack;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.Math;
@@ -72,6 +73,7 @@ public class Renderer {
         glBufferData(GL_ARRAY_BUFFER, Models.WATER_WHEEL.verts, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
     }
+    public static boolean[] collisionData = new boolean[(1024*1024)+1024];
 
     public static void initiallyFillTextures(Window window) throws IOException {
         glBindTexture(GL_TEXTURE_2D, Textures.rasterColor.id);
@@ -83,6 +85,12 @@ public class Renderer {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
 
         BufferedImage atlasImage = ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/textures/atlas.png"));
+        for (int x = 0; x < Textures.atlas.width; x++) {
+            for (int y = 0; y < 1024; y++) {
+                Color color = new Color(atlasImage.getRGB(x, y), true);
+                collisionData[(x*1024) + y] = color.getAlpha() != 0;
+            }
+        }
         glBindTexture(GL_TEXTURE_3D, Textures.atlas.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.atlas.width, Textures.atlas.height, ((Texture3D)Textures.atlas).depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, Utils.imageToBuffer(atlasImage));
 

@@ -49,6 +49,7 @@ public class Main {
         Models.loadModels();
 
         player = new Player(new Vector3f(512, 128, 1000));
+        player.setCameraMatrix(new Matrix4f().get(new float[16]));
     }
 
     boolean wasXDown = false;
@@ -88,6 +89,9 @@ public class Main {
                 player.upward = window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS);
                 player.downward = isCtrlDown;
                 player.crouching = isCtrlDown;
+                if (window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
+                    player.jump = timeMillis;
+                }
 
                 MouseInput mouseInput = window.getMouseInput();
                 Vector2f displVec = mouseInput.getDisplVec();
@@ -96,6 +100,9 @@ public class Main {
                 HandManager.useHands(timeMillis, mouseInput);
                 mouseInput.scroll.set(0.d);
 
+                if (wasXDown && !window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS)) {
+                    player.flying = !player.flying;
+                }
                 if (wasF1Down && !window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS)) {
                     Renderer.showUI = !Renderer.showUI;
                 }
