@@ -114,6 +114,10 @@ float noise(vec2 coords) {
     return (texture(noises, vec2(coords/1024)).r)-0.5f;
 }
 
+bool castsFullShadow(ivec4 block) {
+    return block.x != 4 && block.x != 5 && block.x != 14 && block.x != 18 && block.x != 30 && block.x != 52 && block.x != 53 && block.x != 17;
+}
+
 vec4 getVoxel(int x, int y, int z, int bX, int bY, int bZ, int blockType, int blockSubtype) {
     return texelFetch(atlas, ivec3(x+(blockType*8), ((abs(y-8)-1)*8)+z, blockSubtype), 0);
 }
@@ -186,6 +190,8 @@ bool underwater = false;
 bool hitCaustic = false;
 bool hitSelection = false;
 bool isInfiniteSea = false;
+bool isShadow = false;
+float shade = 0.f;
 
 vec3 ogRayPos = vec3(0);
 vec3 prevPos = vec3(0);
@@ -195,6 +201,7 @@ ivec4 block = ivec4(0);
 vec3 worldSize = vec3(size, height, size);
 
 void clearVars() {
+    shade = 0.f;
     hitPos = vec3(0);
     solidHitPos = vec3(0);
     mapPos = vec3(0);
@@ -299,6 +306,10 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                     }
                     tint += voxelColor;
                 } else {
+                    shade += 0.1f;
+                    if (shade > 0.33f) {
+                        shade = 0.33f;
+                    }
                     if (isFirstRay) {
                         vec3 voxelHitPos = mapPos+(voxelPos/8);
                         if (ivec2(gl_FragCoord.xy) == ivec2(res/2)) {
@@ -311,7 +322,9 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                         }
                         hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     }
-                    return vec4(voxelColor.rgb, 1);
+                    if (!isShadow || shade >= 0.33f || castsFullShadow(block)) {
+                        return vec4(voxelColor.rgb, 1);
+                    }
                 }
                 if (isInfiniteSea) {
                     return vec4(-1);
@@ -522,24 +535,31 @@ void main() {
     float shadowFactor = 1.f;
     if (!isSky) {
         lightPos = solidHitPos;
-        vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
-        vec3 sunDir = vec3(normalize(max((sun.y >= 0 ? sun.xy : mun.xy), vec2(-1000000, 1)) - shadowPos.xy), 0.1f);
-        vec4 prevTint = tint;
-        vec3 prevHitPos = hitPos;
-        clearVars();
-        if (raytrace(shadowPos, sunDir).a >= 1.f) {
-            shadowFactor *= min(1, mix(0.66f, 0.9f, min(1, distance(shadowPos, hitPos)/420)));
+        if (sun.y > 63 || mun.y > 63) {
+            vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
+            vec3 sunDir = vec3(normalize(max((sun.y >= 63 ? sun.xy : mun.xy), vec2(-1000000, 1)) - shadowPos.xy), 0.1f);
+            vec4 prevTint = tint;
+            vec3 prevHitPos = hitPos;
+            clearVars();
+            isShadow = true;
+            bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
+            if (shade > 0.f) {
+                shadowFactor *= solidCaster ? min(0.9f, mix(0.66f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
+            }
+            isShadow = false;
+            tint = prevTint;
+            hitPos = prevHitPos;
+        } else {
+            shadowFactor = 0.66f;
         }
-        tint = prevTint;
-        hitPos = prevHitPos;
     }
     float fogginess = max(0, sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f;
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
     if (fragColor.a < 2) {
         vec4 lightingColor = getLightingColor(lightPos, lighting, isSky);
-        fragColor.rgb *= lightingColor.rgb*lighting.a;
-        fragColor.rgb = mix(fragColor.rgb, lightingColor.rgb*lighting.a, fogginess);
+        fragColor.rgb *= lightingColor.rgb;
+        fragColor.rgb = mix(fragColor.rgb, lightingColor.rgb, fogginess);
     }
     if (tint.a > 0) {
         fogginess = max(0, sqrt(sqrt(clamp(distance(ogPos, hitPos)/size, 0, 1)))-0.25f)*1.34f;
