@@ -164,7 +164,7 @@ vec4 getLight(float x, float y, float z) {
     return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
 }
 vec3 sunColor = vec3(0);
-vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
+vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess) {
     float sunHeight = sun.y/size;
     float scattering = gradient(lightPos.y, 0, 500, 1.5f, -0.5f);
     float sunDist = (distance(lightPos.xz, sun.xz)/(size*1.5f));
@@ -172,7 +172,8 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky) {
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
     float sunBrightness = clamp(sunHeight+0.5, 0.2f, 1.f);
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
-    float whiteness = isSky ? mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1)) : 0.9f;
+    float skyWhiteness = mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1));
+    float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
     sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, sunSetness), vec3(sunBrightness), whiteness);
     return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
 }
@@ -310,8 +311,8 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                     if (shade > 0.33f) {
                         shade = 0.33f;
                     }
+                    vec3 voxelHitPos = mapPos+(voxelPos/8);
                     if (isFirstRay) {
-                        vec3 voxelHitPos = mapPos+(voxelPos/8);
                         if (ivec2(gl_FragCoord.xy) == ivec2(res/2)) {
                             playerData[0] = voxelHitPos.x;
                             playerData[1] = voxelHitPos.y;
@@ -320,8 +321,8 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                             playerData[4] = (mapPos+(prevVoxelPos/8)).y;
                             playerData[5] = (mapPos+(prevVoxelPos/8)).z;
                         }
-                        hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     }
+                    hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     if (!isShadow || shade >= 0.33f || castsFullShadow(block)) {
                         return vec4(voxelColor.rgb, 1);
                     }
@@ -553,20 +554,20 @@ void main() {
             shadowFactor = 0.66f;
         }
     }
-    float fogginess = max(0, sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f;
+    float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
     if (fragColor.a < 2) {
-        vec4 lightingColor = getLightingColor(lightPos, lighting, isSky);
+        vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
         fragColor.rgb *= lightingColor.rgb;
-        fragColor.rgb = mix(fragColor.rgb, lightingColor.rgb, fogginess);
+        fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
     }
     if (tint.a > 0) {
-        fogginess = max(0, sqrt(sqrt(clamp(distance(ogPos, hitPos)/size, 0, 1)))-0.25f)*1.34f;
+        fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, hitPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
         lighting = fromLinear(getLight(hitPos.x, hitPos.y, hitPos.z));
         lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
         lighting = powLighting(lighting);
-        vec4 lightingColor = getLightingColor(hitPos, lighting, true);
+        vec4 lightingColor = getLightingColor(hitPos, lighting, isSky, fogginess);
         vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
         normalizedTint.rgb *= lightingColor.rgb*lighting.a;
         normalizedTint.rgb = mix(normalizedTint.rgb, lightingColor.rgb*lighting.a, pow(fogginess, 2));
