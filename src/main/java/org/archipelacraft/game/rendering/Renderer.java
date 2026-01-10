@@ -202,7 +202,7 @@ public class Renderer {
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(0);
     }
-    public static void drawDebug() {
+    public static void drawCube() {
         glBindVertexArray(debugVaoId);
         glEnableVertexAttribArray(0);
         glDrawArrays(GL_TRIANGLES, 0, Models.CUBE.verts.length*3);
@@ -223,12 +223,12 @@ public class Renderer {
             glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(100).get(stack.mallocFloat(16)));
         }
         glUniform4f(debug.uniforms.get("color"), 1, 1, 0.05f, 10);
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(munPos).scale(100).get(stack.mallocFloat(16)));
         }
         glUniform4f(debug.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 10);
-        drawDebug();
+        drawCube();
     }
     public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
     public static int starDist = World.size+100;
@@ -250,52 +250,52 @@ public class Renderer {
             Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
             if (starSize > 0.01f) {
                 glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 10);
-                drawDebug();
+                drawCube();
             }
         }
     }
     public static void drawCenter() {
         glUniform4f(debug.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 319.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 319.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 269.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 269.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 219.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 219.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 169.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 169.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 119.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 119.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 513.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 512.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 516.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 516.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 519.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 519.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 522.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 522.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(513.5f, 69.5f, 525.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 525.5f).get(stack.mallocFloat(16)));
         }
-        drawDebug();
+        drawCube();
     }
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {

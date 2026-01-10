@@ -2,6 +2,7 @@ package org.archipelacraft.game.gameplay;
 
 import org.archipelacraft.Main;
 import org.archipelacraft.engine.Camera;
+import org.archipelacraft.engine.Constants;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.audio.Source;
 import org.archipelacraft.game.blocks.Tags;
@@ -19,14 +20,20 @@ public class Player {
     public Vector3f prevSelectedBlock = new Vector3f();
     public int[] stack = new int[32];
 
-    public static float scale = 1f;
-    public static float baseEyeHeight = 1.625f*scale;
-    public static float eyeHeight = baseEyeHeight;
-    public static float baseHeight = eyeHeight+(0.175f*scale);
-    public static float height = baseHeight;
-    public static float width = 0.4f*scale;
+    public boolean bobbingDir = true;
+    public float bobbing = 0f;
+    public float dynamicSpeedOld = 0;
+    public float dynamicSpeed = 0;
+    public float scale = 1f;
+    public float baseEyeHeight = 1.625f*scale;
+    public float eyeHeight = baseEyeHeight;
+    public float baseHeight = eyeHeight+(0.175f*scale);
+    public float height = baseHeight;
+    public float width = 0.4f*scale;
     public float baseSpeed = Math.max(0.15f, 0.15f*scale);
     public float speed = baseSpeed;
+    public float sprintSpeed = 1.5f;
+    public boolean onGround = false;
     public boolean crawling = false;
     public boolean crouching = false;
     public boolean sprint = false;
@@ -146,8 +153,9 @@ public class Player {
             flying = false;
         }
         friction = 1f;
-        boolean onGround = solid(pos.x, pos.y-0.125f, pos.z, width, 0.125f, true, false);
+        onGround = solid(pos.x, pos.y-0.125f, pos.z, width, 0.125f, true, false);
         if (flying || !onGround) {
+            onGround = false;
             crouching = false;
             crawling = false;
         }
@@ -223,11 +231,11 @@ public class Player {
         Vector3f newMovement = new Vector3f(0f);
         boolean canMove = (flying || onGround || blockIn.x == 1);
         if (forward || backward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (backward ? (superSprint && sprint ? 100 : (superSprint ? 10 : 1)) : (flying ? (superSprint ? 100 : 10) : 2)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (backward ? (superSprint && sprint ? 100 : (superSprint ? 10 : 1)) : (flying ? (superSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x,0, pos.z - translatedPos.z);
         }
         if (rightward || leftward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (flying ? (superSprint ? 100 : 10) : 2) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (flying ? (superSprint ? 100 : 10) : sprintSpeed) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x, 0, pos.z - translatedPos.z);
         }
         if (upward || downward) {
@@ -311,31 +319,8 @@ public class Player {
             }
         }
         setPos(hitPos);
-//        new Matrix4f(camera.getViewMatrix()).getTranslation(oldCamOffset);
-//        float modifiedSpeed = speed;
-//        if (sprint) {
-//            modifiedSpeed *= 10;
-//        }
-//        if (superSprint) {
-//            modifiedSpeed *= 100;
-//        }
-//        Vector3f newPos = new Vector3f(pos);
-//        if (forward) {
-//            newPos.add(modifiedSpeed, 0, 0);
-//        } else if (backward) {
-//            newPos.sub(modifiedSpeed, 0, 0);
-//        }
-//        if (rightward) {
-//            newPos.add(0, 0, modifiedSpeed);
-//        } else if (leftward) {
-//            newPos.sub(0, 0, modifiedSpeed);
-//        }
-//        if (upward) {
-//            newPos.add(0, modifiedSpeed, 0);
-//        } else if (downward) {
-//            newPos.sub(0, modifiedSpeed, 0);
-//        }
-//        setPos(newPos);
+        dynamicSpeedOld = dynamicSpeed;
+        dynamicSpeed = Math.min(1.f, Math.max(Math.abs(mX), Math.abs(mZ)));
     }
 
     public void setPos(Vector3f newPos) {
@@ -360,7 +345,7 @@ public class Player {
         camMatrix.getTranslation(camOffset);
         camOffset = Utils.getInterpolatedVec(oldCamOffset, camOffset);
         Vector3f interpolatedPos = Utils.getInterpolatedVec(oldPos, pos);
-        return camMatrix.setTranslation(camOffset.x+interpolatedPos.x, camOffset.y+eyeHeight+interpolatedPos.y, camOffset.z+interpolatedPos.z).invert();
+        return camMatrix.setTranslation(camOffset.x+interpolatedPos.x, camOffset.y+eyeHeight+interpolatedPos.y+bobbing, camOffset.z+interpolatedPos.z).invert();
     }
 
     public void rotate(float pitch, float yaw) {

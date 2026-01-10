@@ -492,14 +492,12 @@ void main() {
     vec2 pos = gl_FragCoord.xy;//window space
     vec4 rasterColor = texture(raster_color, pos/res);
     float rasterDepth = texture(raster_depth, pos/res).r;
-    //    fragColor = vec4(linearizeDepth(rasterDepth));
     vec2 uv = ((pos / res)*2.f)-1.f;//ndc clip space
     vec4 clipSpace = (inverse(projection) * vec4(uv, -1.f, 1.f));//world space
     clipSpace.w = 0;
     vec3 ogDir = normalize((inverse(view)*clipSpace).xyz);
     vec3 ogPos = inverse(view)[3].xyz;
     bool isSky = rasterColor.a <= 0.f;
-    ivec4 blockIn = getBlock(ogPos.x, ogPos.y, ogPos.z);
     fragColor = raytrace(ogPos, ogDir);
     isFirstRay = false;
     if (solidHitPos != vec3(0)) {
@@ -515,14 +513,15 @@ void main() {
         fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
     }
     vec4 lighting = vec4(-1);
-    float tracedDepth = nearClip/dot(solidHitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1);
-    float depth = tracedDepth;
     vec3 lightPos = ogPos + ogDir * size;
+    float tracedDepth = (nearClip/(1+max(0.f, dot(solidHitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1))));
+    //fragColor = pos.y > res.y/2 ? vec4(tracedDepth) : vec4(rasterDepth);
+    float depth = tracedDepth;
     if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
         fragColor = fromLinear(rasterColor);
         depth = rasterDepth;
-        prevPos = worldPosFromDepth(rasterDepth-0.001f);
         solidHitPos = worldPosFromDepth(rasterDepth);
+        prevPos = solidHitPos;
         if (fragColor.a > 0) {
             tint = vec4(0);
             isSky = false;

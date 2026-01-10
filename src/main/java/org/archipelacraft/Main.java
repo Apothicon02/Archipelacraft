@@ -48,7 +48,7 @@ public class Main {
         World.generate();
         Models.loadModels();
 
-        player = new Player(new Vector3f(512, 128, 1000));
+        player = new Player(new Vector3f(513, 93, 513));
         player.setCameraMatrix(new Matrix4f().get(new float[16]));
     }
 
@@ -179,6 +179,7 @@ public class Main {
             if (renderingEnabled) {
                 updateTime(diffTimeMillis, (float) timeMul);
                 int ticksDone = 0;
+                float factor = (float) (0.0002f*timePassed);
                 while (timePassed >= tickTime) {
                     ticksDone++;
                     currentTick++;
@@ -190,6 +191,26 @@ public class Main {
                     }
                 }
                 interpolationTime = timePassed/tickTime;
+                float speed = Utils.getInterpolatedFloat(player.dynamicSpeedOld, player.dynamicSpeed);
+                float dFOV = (float) Math.toRadians(65+(30*Math.min(0.3f, speed*1.5f)));
+                Constants.FOV = Constants.FOV > dFOV ? Math.max(dFOV, Constants.FOV-(factor*1.5f)) : (Constants.FOV < dFOV ? Math.min(dFOV, Constants.FOV+(factor*1.5f)) : Constants.FOV);
+                if (player.onGround) {
+                    float bobbingInc = Math.min(0.009f, 1.5f*speed*(player.height*((float) (factor*(1.5f+Math.random())))));
+                    if (player.bobbingDir) {
+                        player.bobbing += bobbingInc;
+                        if (player.bobbing >= 0) {
+                            player.bobbing = 0;
+                            player.bobbingDir = false;
+                        }
+                    } else {
+                        player.bobbing -= bobbingInc;
+                        if (player.bobbing <= player.height*-0.05f) {
+                            player.bobbing = player.height*-0.05f;
+                            player.bobbingDir = true;
+                        }
+                    }
+                }
+                Renderer.render(window);
                 LightHelper.iterateLightQueue();
                 timePassed += diffTimeMillis;
             }

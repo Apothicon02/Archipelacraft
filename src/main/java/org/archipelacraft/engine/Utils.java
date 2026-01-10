@@ -109,6 +109,9 @@ public class Utils {
     public static Vector3f getInterpolatedVec(Vector3f old, Vector3f current) {
         return new Vector3f(ArchipelacraftMath.mix(old.x, current.x, (float) Main.interpolationTime), ArchipelacraftMath.mix(old.y, current.y, (float) Main.interpolationTime), ArchipelacraftMath.mix(old.z, current.z, (float) Main.interpolationTime));
     }
+    public static float getInterpolatedFloat(float old, float current) {
+        return ArchipelacraftMath.mix(old, current, (float) Main.interpolationTime);
+    }
 
     public static int packInts(int first4, int last4) {
         return (first4 << 16) | last4;
