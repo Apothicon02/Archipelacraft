@@ -518,10 +518,11 @@ void main() {
     //fragColor = pos.y > res.y/2 ? vec4(tracedDepth) : vec4(rasterDepth);
     float depth = tracedDepth;
     if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
-        fragColor = fromLinear(rasterColor);
+        fragColor.rgb = fromLinear(rasterColor).rgb;
+        fragColor.a = rasterColor.a;
         depth = rasterDepth;
+        prevPos = worldPosFromDepth(rasterDepth-0.0001f);
         solidHitPos = worldPosFromDepth(rasterDepth);
-        prevPos = solidHitPos;
         if (fragColor.a > 0) {
             tint = vec4(0);
             isSky = false;
@@ -535,9 +536,11 @@ void main() {
     float shadowFactor = 1.f;
     if (!isSky) {
         lightPos = solidHitPos;
-        if (sun.y > 63 || mun.y > 63) {
+        if (fragColor.a < 2) {
             vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
-            vec3 sunDir = vec3(normalize(max((sun.y >= 63 ? sun.xy : mun.xy), vec2(-1000000, 1)) - shadowPos.xy), 0.1f);
+            vec3 source = mun.y > sun.y ? mun : sun;
+            source.y = max(source.y, 72);
+            vec3 sunDir = vec3(normalize(source.xy - shadowPos.xy), 0.1f);
             vec4 prevTint = tint;
             vec3 prevHitPos = hitPos;
             clearVars();
@@ -549,7 +552,8 @@ void main() {
             isShadow = false;
             tint = prevTint;
             hitPos = prevHitPos;
-        } else {
+        } else if (fragColor.a >= 10) {
+            fragColor.a -= 10;
             shadowFactor = 0.66f;
         }
     }

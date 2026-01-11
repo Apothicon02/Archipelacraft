@@ -1,9 +1,11 @@
 package org.archipelacraft.game.rendering;
 
 public class Model {
-    public float[] verts;
+    public float[] positions;
+    public float[] normals;
 
-    public Model(float[] verts) {
-        this.verts = verts;
+    public Model(float[] verts, float[] normals) {
+        this.positions = verts;
+        this.normals = normals;
     }
 }
