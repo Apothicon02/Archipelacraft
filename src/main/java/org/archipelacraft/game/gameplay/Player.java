@@ -4,6 +4,7 @@ import org.archipelacraft.Main;
 import org.archipelacraft.engine.Camera;
 import org.archipelacraft.engine.Constants;
 import org.archipelacraft.engine.Utils;
+import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.audio.Source;
 import org.archipelacraft.game.blocks.Tags;
 import org.archipelacraft.game.blocks.types.BlockTypes;
@@ -148,16 +149,42 @@ public class Player {
     public Vector3i blockPos;
     public Vector3f vel = new Vector3f(0f);
     public Vector3f movement = new Vector3f(0f);
+    public float prevStrafe = 0.f;
+    public float strafe = 0.f;
+    public float prevTilt = 0.f;
+    public float tilt = 0.f;
     public void tick() {
         if (!creative) {
             flying = false;
         }
         friction = 1f;
+        boolean prevOnGround = onGround;
         onGround = solid(pos.x, pos.y-0.125f, pos.z, width, 0.125f, true, false);
         if (flying || !onGround) {
             onGround = false;
             crouching = false;
             crawling = false;
+        } else if (!prevOnGround) { //when landing from a fall
+            bobbing = height*-0.05f;
+            bobbingDir = false;
+        }
+        prevStrafe = strafe;
+        prevTilt = tilt;
+        if (onGround) {
+            if (rightward) {
+                strafe = sprint ? -0.02f : -0.01f;
+            } else if (leftward) {
+                strafe = sprint ? 0.02f : 0.01f;
+            } else {
+                strafe = 0.f;
+            }
+            if (forward) {
+                tilt = sprint ? -0.02f : -0.01f;
+            } else if (backward) {
+                tilt = sprint ? 0.02f : 0.01f;
+            } else {
+                tilt = 0.f;
+            }
         }
         new Matrix4f(camera.getViewMatrix()).getTranslation(oldCamOffset);
         blockBreathing = World.getBlockNotNull(blockPos.x, blockPos.y+eyeHeight, blockPos.z);
@@ -231,7 +258,7 @@ public class Player {
         Vector3f newMovement = new Vector3f(0f);
         boolean canMove = (flying || onGround || blockIn.x == 1);
         if (forward || backward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (backward ? (superSprint && sprint ? 100 : (superSprint ? 10 : 1)) : (flying ? (superSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (backward ? (superSprint && sprint ? 100 : (superSprint ? 10 : 1.25f)) : (flying ? (superSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x,0, pos.z - translatedPos.z);
         }
         if (rightward || leftward) {
@@ -256,6 +283,8 @@ public class Player {
 
         if (Main.timeMS-jump < 100 && !flying) { //prevent jumping when space bar was pressed longer than 0.1s ago or when flying
             if ((onGround || (blockIn.x == 1 && solid(pos.x, pos.y, pos.z, width*1.125f, height, false, false))) && !submerged) {
+                bobbing = height*-0.05f;
+                bobbingDir = false;
                 jump = 1000;
                 lastJump = Main.timeMS;
                 vel.y = Math.max(vel.y, jumpStrength);
@@ -327,6 +356,31 @@ public class Player {
         oldPos = pos;
         pos = newPos;
         blockPos = new Vector3i((int) newPos.x, (int) newPos.y, (int) newPos.z);
+        doSounds();
+    }
+
+    public long timeSinceAmbientSoundAttempt = 0;
+    public float windGain = 0f;
+    int ambientWind = 0;
+    public void doSounds() {
+        long currentTime = System.currentTimeMillis();
+        if (currentTime-timeSinceAmbientSoundAttempt >= 1000) {
+            timeSinceAmbientSoundAttempt = currentTime;
+            if (windSource.soundPlaying == -1) {
+                windSource.play(Sounds.WIND);
+            }
+            if (World.inBounds(blockPos.x, blockPos.y, blockPos.z)) {
+                int sunLight = World.getLight(blockPos).w;
+                if (waterFlowingSource.soundPlaying == -1) {
+                    waterFlowingSource.play(Sounds.FLOW);
+                }
+                ambientWind = Math.min(333, ambientWind + sunLight);
+                windGain = ambientWind/333f;
+            }
+        }
+        float velocity = (Math.max(Math.abs(vel.x+movement.x), Math.max(Math.abs(vel.y+movement.y), Math.abs(vel.z+movement.z))));
+        windSource.setGain(Math.clamp(windGain+(Math.max(0.05f, velocity/10)-0.05f), 0, 1));
+        ambientWind = Math.max(0, ambientWind-1);
     }
 
     public void setCameraMatrix(float[] matrix) {
@@ -345,7 +399,8 @@ public class Player {
         camMatrix.getTranslation(camOffset);
         camOffset = Utils.getInterpolatedVec(oldCamOffset, camOffset);
         Vector3f interpolatedPos = Utils.getInterpolatedVec(oldPos, pos);
-        return camMatrix.setTranslation(camOffset.x+interpolatedPos.x, camOffset.y+eyeHeight+interpolatedPos.y+bobbing, camOffset.z+interpolatedPos.z).invert();
+        return camMatrix.setTranslation(camOffset.x+interpolatedPos.x, camOffset.y+eyeHeight+interpolatedPos.y+bobbing, camOffset.z+interpolatedPos.z)
+                .rotateX(Utils.getInterpolatedFloat(prevTilt, tilt)).rotateZ(Utils.getInterpolatedFloat(prevStrafe, strafe)).invert();
     }
 
     public void rotate(float pitch, float yaw) {

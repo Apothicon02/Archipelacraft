@@ -2,6 +2,9 @@ package org.archipelacraft;
 
 import com.google.gson.Gson;
 import org.archipelacraft.game.ScheduledTicker;
+import org.archipelacraft.game.audio.BlockSFX;
+import org.archipelacraft.game.audio.Source;
+import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
@@ -186,6 +189,7 @@ public class Main {
                     timePassed -= tickTime;
                     player.tick();
                     ScheduledTicker.tick();
+                    AudioController.disposeSources();
                     if (ticksDone >= 3) {
                         timePassed = tickTime-1;
                     }
@@ -207,6 +211,13 @@ public class Main {
                         if (player.bobbing <= player.height*-0.05f) {
                             player.bobbing = player.height*-0.05f;
                             player.bobbingDir = true;
+                            if (player.onGround) {
+                                BlockSFX stepSFX = BlockTypes.blockTypeMap.get(player.blockOn.x).blockProperties.blockSFX;
+                                Source stepSource = new Source(player.oldPos, (float) (stepSFX.stepGain+((stepSFX.stepGain*Math.random())/3)), (float) (stepSFX.stepPitch+((stepSFX.stepPitch*Math.random())/3)), 0, 0);
+                                AudioController.disposableSources.add(stepSource);
+                                stepSource.setVel(new Vector3f(player.vel).add(player.movement));
+                                stepSource.play((stepSFX.stepIds[(int) (Math.random() * stepSFX.stepIds.length)]), true);
+                            }
                         }
                     }
                 }
