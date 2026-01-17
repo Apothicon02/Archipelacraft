@@ -5,15 +5,30 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.lwjgl.opengl.GL11.GL_FLOAT;
+import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
+import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
 
 public class Models {
+    public static List<Model> models = new ArrayList<>(List.of());
 
+    public static Model SCREEN_TRIANGLE;
+    public static Model QUAD;
     public static Model CUBE;
     public static Model TORUS;
 
     public static void loadModels() {
-        CUBE = loadObj("cube");
-        TORUS = loadObj("torus");
+        SCREEN_TRIANGLE = new Model(new float[]{-1, -1, 0, 3, -1, 0, -1, 3, 0});
+        createVao(SCREEN_TRIANGLE);
+        QUAD = loadObj("generic/model/quad");
+        CUBE = loadObj("generic/model/cube");
+        TORUS = loadObj("generic/model/torus");
     }
 
     public static FloatArrayList verts = new FloatArrayList();
@@ -27,9 +42,23 @@ public class Models {
         vertNormals.clear();
     }
 
+    public static void createVao(Model model) {
+        int vaoId = glGenVertexArrays();
+        glBindVertexArray(vaoId);
+        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
+        glBufferData(GL_ARRAY_BUFFER, model.positions, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
+        if (model.normals != null) {
+            glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
+            glBufferData(GL_ARRAY_BUFFER, model.normals, GL_STATIC_DRAW);
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
+        }
+        model.vaoId = vaoId;
+    }
+
     public static Model loadObj(String name) {
         clearArrays();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(Renderer.class.getClassLoader().getResourceAsStream("assets/base/models/"+name+".obj")));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(Renderer.class.getClassLoader().getResourceAsStream("assets/base/"+name+".obj")));
         reader.lines().forEach((String line) -> {
             String[] parts = line.split("\\s+");
             if (parts[0].equals("v")) {
@@ -46,7 +75,10 @@ public class Models {
                 createVertex(parts[3].split("//"));
             }
         });
-        return new Model(vertPositions.toFloatArray(), vertNormals.toFloatArray());
+        Model model = new Model(vertPositions.toFloatArray(), vertNormals.toFloatArray());
+        createVao(model);
+        models.addLast(model);
+        return model;
     }
     public static void createVertex(String[] vertex) {
         int vertId = (Integer.parseInt(vertex[0])-1)*3;

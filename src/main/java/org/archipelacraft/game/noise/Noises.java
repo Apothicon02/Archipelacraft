@@ -18,12 +18,12 @@ public class Noises {
     public static Noise SPIRAL_NOISE;
 
     public static void init() throws IOException {
-        COHERERENT_NOISE = create(new Noise(loadImage("coherent_noise")));
-        CELLULAR_NOISE = create(new Noise(loadImage("cellular_noise")));
-        WHITE_NOISE = create(new Noise(loadImage("white_noise")));
-        NOODLE_NOISE = create(new Noise(loadImage("noodle_noise")));
-        CLOUD_NOISE = create(new Noise(loadImage("cloud_noise")));
-        SPIRAL_NOISE = create(new Noise(loadImage("spiral_noise")));
+        COHERERENT_NOISE = create(new Noise(loadImage("generic/texture/coherent_noise")));
+        CELLULAR_NOISE = create(new Noise(loadImage("generic/texture/cellular_noise")));
+        WHITE_NOISE = create(new Noise(loadImage("generic/texture/white_noise")));
+        NOODLE_NOISE = create(new Noise(loadImage("generic/texture/noodle_noise")));
+        CLOUD_NOISE = create(new Noise(loadImage("generic/texture/cloud_noise")));
+        SPIRAL_NOISE = create(new Noise(loadImage("generic/texture/spiral_noise")));
     }
 
     private static Noise create(Noise type) {
@@ -32,6 +32,6 @@ public class Noises {
     }
 
     private static BufferedImage loadImage(String name) throws IOException {
-        return ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/textures/"+name+".png"));
+        return ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/"+name+".png"));
     }
 }

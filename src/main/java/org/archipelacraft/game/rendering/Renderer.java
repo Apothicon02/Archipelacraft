@@ -19,10 +19,7 @@ import static org.lwjgl.opengl.GL46.*;
 
 public class Renderer {
     public static ShaderProgram scene;
-    public static ShaderProgram debug;
-    public static int sceneVaoId;
-    public static int debugVaoId;
-    public static int debugWheelVaoId;
+    public static ShaderProgram raster;
 
     public static int rasterFBOId;
 
@@ -50,35 +47,6 @@ public class Renderer {
         }, 0);
     }
 
-    public static void generateVaos() {
-        sceneVaoId = glGenVertexArrays();
-        glBindVertexArray(sceneVaoId);
-        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, new float[]{
-                -1, -1, 0,
-                3, -1, 0,
-                -1, 3, 0
-        }, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-
-        debugVaoId = glGenVertexArrays();
-        glBindVertexArray(debugVaoId);
-        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, Models.CUBE.positions, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, Models.CUBE.normals, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-
-        debugWheelVaoId = glGenVertexArrays();
-        glBindVertexArray(debugWheelVaoId);
-        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, Models.TORUS.positions, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, glGenBuffers());
-        glBufferData(GL_ARRAY_BUFFER, Models.TORUS.normals, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
-    }
     public static boolean[] collisionData = new boolean[(1024*1024)+1024];
 
     public static void initiallyFillTextures(Window window) throws IOException {
@@ -90,7 +58,7 @@ public class Renderer {
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight());
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
 
-        BufferedImage atlasImage = ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/textures/atlas.png"));
+        BufferedImage atlasImage = ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/generic/texture/atlas.png"));
         for (int x = 0; x < Textures.atlas.width; x++) {
             for (int y = 0; y < 1024; y++) {
                 Color color = new Color(atlasImage.getRGB(x, y), true);
@@ -128,12 +96,6 @@ public class Renderer {
         glBindTextureUnit(1, Textures.rasterDepth.id);
         glBindTextureUnit(2, Textures.atlas.id);
         glBindTextureUnit(3, Textures.blocks.id);
-//        long startTime = System.currentTimeMillis();
-//        glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
-//        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, 0, GL_RG_INTEGER, GL_SHORT, World.blocks);
-//        glTexImage3D(GL_TEXTURE_3D, 2, GL_RGBA16I, Textures.blocks.width/4, Textures.blocks.height/4, ((Texture3D)Textures.blocks).depth/4, 0, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
-//        glTexImage3D(GL_TEXTURE_3D, 4, GL_RGBA16I, Textures.blocks.width/16, Textures.blocks.height/16, ((Texture3D)Textures.blocks).depth/16, 0, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
-//        System.out.print(System.currentTimeMillis()-startTime);
         glBindTextureUnit(4, Textures.lights.id);
         glBindTextureUnit(5, Textures.noises.id);
     }
@@ -160,9 +122,8 @@ public class Renderer {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
                 new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
-        debug = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
-        generateVaos();
+        raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
+                new String[]{"res", "projection", "view", "model", "screenSpace", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
 
         rasterFBOId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
@@ -184,6 +145,9 @@ public class Renderer {
             glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(Main.player.getCameraMatrix()).get(stack.mallocFloat(16)));
         }
         Vector3f selected = Main.player.selectedBlock;
+        if (program == raster) {
+            glUniform1i(program.uniforms.get("screenSpace"), 0);
+        }
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
         glUniform1i(program.uniforms.get("ui"), showUI ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
@@ -203,13 +167,13 @@ public class Renderer {
     }
 
     public static void draw() {
-        glBindVertexArray(sceneVaoId);
+        glBindVertexArray(Models.SCREEN_TRIANGLE.vaoId);
         glEnableVertexAttribArray(0);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(0);
     }
     public static void drawCube() {
-        glBindVertexArray(debugVaoId);
+        glBindVertexArray(Models.CUBE.vaoId);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glDrawArrays(GL_TRIANGLES, 0, Models.CUBE.positions.length);
@@ -218,10 +182,10 @@ public class Renderer {
     }
     public static void drawDebugWheel() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512, 86, 512).scale(10).get(stack.mallocFloat(16)));//.translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512, 86, 512).scale(10).get(stack.mallocFloat(16)));//.translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
         }
-        glUniform4f(debug.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
-        glBindVertexArray(debugWheelVaoId);
+        glUniform4f(raster.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
+        glBindVertexArray(Models.TORUS.vaoId);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glDrawArrays(GL_TRIANGLES, 0, Models.TORUS.positions.length);
@@ -230,14 +194,14 @@ public class Renderer {
     }
     public static void drawSunAndMoon() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(80).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(80).get(stack.mallocFloat(16)));
         }
-        glUniform4f(debug.uniforms.get("color"), 1, 1, 0.05f, 2);
+        glUniform4f(raster.uniforms.get("color"), 1, 1, 0.05f, 2);
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(munPos).scale(50).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(munPos).scale(50).get(stack.mallocFloat(16)));
         }
-        glUniform4f(debug.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 2);
+        glUniform4f(raster.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 2);
         drawCube();
     }
     public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
@@ -252,58 +216,58 @@ public class Renderer {
             starPos.set(starPos.x + (starDist / 2f), starPos.y - starDist, starPos.z + (starDist / 2f));
             float starSize = ((starRand.nextFloat()*6)+3)-Math.max(0, 15*(sunPos.y/World.size));
             try (MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f()
+                glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f()
                         .rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
                         .setTranslation(starPos)
                         .scale(starSize).get(stack.mallocFloat(16)));
             }
             Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
             if (starSize > 0.01f) {
-                glUniform4f(debug.uniforms.get("color"), color.x, color.y, color.z, 2);
+                glUniform4f(raster.uniforms.get("color"), color.x, color.y, color.z, 2);
                 drawCube();
             }
         }
     }
     public static void drawCenter() {
-        glUniform4f(debug.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
+        glUniform4f(raster.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 319.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 319.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 269.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 269.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 219.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 219.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 169.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 169.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 119.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 119.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 512.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 516.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 516.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 519.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 519.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 522.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 522.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(debug.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 525.5f).scale(0.5f).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512.5f, 95.5f, 525.5f).scale(0.5f).get(stack.mallocFloat(16)));
         }
         drawCube();
     }
@@ -313,13 +277,16 @@ public class Renderer {
             glClearColor(0, 0, 0, 0);
             glClearDepthf(0.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            debug.bind();
+            raster.bind();
             updateBuffers();
-            updateUniforms(debug, window);
+            updateUniforms(raster, window);
             drawSunAndMoon();
             drawStars();
             drawCenter();
             drawDebugWheel();
+            if (showUI) {
+                GUI.draw(window, raster);
+            }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearColor(0, 0, 0, 0);

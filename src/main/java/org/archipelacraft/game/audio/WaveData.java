@@ -55,7 +55,7 @@ public class WaveData {
     }
 
     public static WaveData create(String file){
-        InputStream stream = WaveData.class.getClassLoader().getResourceAsStream("assets/base/sounds/"+file);
+        InputStream stream = WaveData.class.getClassLoader().getResourceAsStream("assets/base/" +file);
         if(stream==null){
             System.err.println("Couldn't find file: "+file);
             return null;

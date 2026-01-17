@@ -19,10 +19,10 @@ public class ShaderProgram {
         if (programId == 0) {
             throw new Exception("Could not create Shader");
         }
-        createVertexShader("#version 460 \n" + readFile("assets/base/shaders/"+vertPath));
+        createVertexShader("#version 460 \n" + readFile("assets/base/shader/"+vertPath));
         String fragment = "#version 460 \n";
         for (String str : fragPaths) {
-            fragment += readFile("assets/base/shaders/"+str);
+            fragment += readFile("assets/base/shader/"+str);
         }
         createFragmentShader(fragment);
         link();
