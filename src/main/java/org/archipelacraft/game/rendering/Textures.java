@@ -1,5 +1,6 @@
 package org.archipelacraft.game.rendering;
 
+import org.archipelacraft.engine.Constants;
 import org.archipelacraft.game.world.World;
 import org.lwjgl.opengl.GL40;
 
@@ -15,8 +16,8 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE};
 
     public static List<Texture> textures = new ArrayList<>(List.of());
-    public static Texture rasterColor = create(1920, 1080);
-    public static Texture rasterDepth = create(1920, 1080);
+    public static Texture rasterColor = create(Constants.width, Constants.height);
+    public static Texture rasterDepth = create(Constants.width, Constants.height);
     public static Texture atlas = create(544, 64, 1024/64);
     public static Texture blocks = create(new int[]{
             GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_LINEAR,
@@ -38,12 +39,15 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_S, GL40.GL_REPEAT,
             GL40.GL_TEXTURE_WRAP_T, GL40.GL_REPEAT
     }, 2048, 2048);
+    public static Texture sceneColor = create(Constants.width, Constants.height);
+    public static Texture gui = create(256, 32, 2);
 
     public static Texture create(int width, int height) {
         Texture texture = new Texture(defaultParameters, width, height);
         textures.addLast(texture);
         return texture;
-    }public static Texture create(int[] params, int width, int height) {
+    }
+    public static Texture create(int[] params, int width, int height) {
         Texture texture = new Texture(params, width, height);
         textures.addLast(texture);
         return texture;

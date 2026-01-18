@@ -20,8 +20,10 @@ import static org.lwjgl.opengl.GL46.*;
 public class Renderer {
     public static ShaderProgram scene;
     public static ShaderProgram raster;
+    public static ShaderProgram gui;
 
     public static int rasterFBOId;
+    public static int sceneFBOId;
 
     public static int playerSSBOId;
 
@@ -89,6 +91,12 @@ public class Renderer {
         glBindTexture(GL_TEXTURE_2D, Textures.noises.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Textures.noises.width, Textures.noises.height, 0, GL_RGBA, GL_FLOAT, mergedNoises);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
+        glBindTexture(GL_TEXTURE_2D, Textures.sceneColor.id);
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, window.getWidth(), window.getHeight());
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.sceneColor.id, 0);
+
+        GUI.fillTexture();
     }
 
     public static void bindTextures() {
@@ -123,13 +131,14 @@ public class Renderer {
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
                 new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "screenSpace", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
-
+                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+        gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
+                new String[]{"res", "model", "color", "layer", "offset", "size", "scale"});
         rasterFBOId = glGenFramebuffers();
+        sceneFBOId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
 
         createBuffers();
-
         Textures.generate();
         initiallyFillTextures(window);
     }
@@ -145,9 +154,6 @@ public class Renderer {
             glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(Main.player.getCameraMatrix()).get(stack.mallocFloat(16)));
         }
         Vector3f selected = Main.player.selectedBlock;
-        if (program == raster) {
-            glUniform1i(program.uniforms.get("screenSpace"), 0);
-        }
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
         glUniform1i(program.uniforms.get("ui"), showUI ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
@@ -284,20 +290,32 @@ public class Renderer {
             drawStars();
             drawCenter();
             drawDebugWheel();
-            if (showUI) {
-                GUI.draw(window, raster);
-            }
 
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             glClearColor(0, 0, 0, 0);
             glClearDepthf(0.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             scene.bind();
             updateUniforms(scene, window);
             bindTextures();
+            glBindTextureUnit(6, Textures.sceneColor.id);
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
 
             draw();
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearDepthf(0.f);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            gui.bind();
+            glUniform2i(gui.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform4f(gui.uniforms.get("color"), -1f, -1f, -1f, -1f);
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(Renderer.gui.uniforms.get("model"), false, new Matrix4f().get(stack.mallocFloat(16)));
+            }
+            glBindTextureUnit(0, Textures.sceneColor.id);
+            draw();
+            if (showUI) {
+                GUI.draw(window);
+            }
         }
     }
 }

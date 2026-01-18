@@ -8,6 +8,7 @@ import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
+import org.archipelacraft.game.rendering.GUI;
 import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.LightHelper;
 import org.archipelacraft.game.world.World;
@@ -55,6 +56,7 @@ public class Main {
         player.setCameraMatrix(new Matrix4f().get(new float[16]));
     }
 
+    boolean wasTabDown = false;
     boolean wasXDown = false;
     boolean wasTDown = false;
     boolean wasGDown = false;
@@ -103,6 +105,9 @@ public class Main {
                 HandManager.useHands(timeMillis, mouseInput);
                 mouseInput.scroll.set(0.d);
 
+                if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
+                    GUI.isInventoryOpen = !GUI.isInventoryOpen;
+                }
                 if (wasXDown && !window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS)) {
                     player.flying = !player.flying;
                 }
@@ -137,6 +142,7 @@ public class Main {
                 wasWDown = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
                 wasTDown = window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS);
                 wasXDown = window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS);
+                wasTabDown = window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS);
                 wasGDown = window.isKeyPressed(GLFW_KEY_G, GLFW_PRESS);
                 wasLDown = window.isKeyPressed(GLFW_KEY_L, GLFW_PRESS);
                 wasUpDown = window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS);

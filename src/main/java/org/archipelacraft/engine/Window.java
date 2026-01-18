@@ -49,8 +49,8 @@ public class Window {
         } else {
             glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
             GLFWVidMode vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-            width = 2240;
-            height = 1260;
+            width = Constants.width;
+            height = Constants.height;
         }
 
         windowHandle = glfwCreateWindow(width, height, title, NULL, NULL);
