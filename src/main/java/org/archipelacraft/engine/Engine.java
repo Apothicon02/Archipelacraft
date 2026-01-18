@@ -71,9 +71,6 @@ public class Engine {
             }
 
             if (targetFps <= 0 || deltaFps >= 1) {
-                if (Main.renderingEnabled) {
-                    Renderer.render(window);
-                }
                 deltaFps--;
                 window.update();
                 framesUntilUpdate--;

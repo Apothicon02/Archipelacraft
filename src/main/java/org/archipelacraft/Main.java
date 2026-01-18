@@ -85,50 +85,64 @@ public class Main {
                 window.getMouseInput().input(window);
                 boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
                 boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
-                player.sprint = isShiftDown;
-                player.superSprint = window.isKeyPressed(GLFW_KEY_CAPS_LOCK, GLFW_PRESS);
-                player.forward = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
-                player.backward = window.isKeyPressed(GLFW_KEY_S, GLFW_PRESS);
-                player.rightward = window.isKeyPressed(GLFW_KEY_D, GLFW_PRESS);
-                player.leftward = window.isKeyPressed(GLFW_KEY_A, GLFW_PRESS);
-                player.upward = window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS);
-                player.downward = isCtrlDown;
-                player.crouching = isCtrlDown;
-                if (window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
-                    player.jump = timeMillis;
-                }
 
                 MouseInput mouseInput = window.getMouseInput();
-                Vector2f displVec = mouseInput.getDisplVec();
-                player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
-                        (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
-                HandManager.useHands(timeMillis, mouseInput);
                 mouseInput.scroll.set(0.d);
 
                 if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
                     GUI.isInventoryOpen = !GUI.isInventoryOpen;
                 }
-                if (wasXDown && !window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS)) {
-                    player.flying = !player.flying;
-                }
-                if (wasF1Down && !window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS)) {
-                    Renderer.showUI = !Renderer.showUI;
-                }
 
-                if (window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS)) {
-                    glfwSetWindowPos(window.getWindowHandle(), 0, 0);
-                    glfwSetWindowSize(window.getWindowHandle(), 2560, 1440);
-                    //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
-                }
+                if (GUI.isInventoryOpen) {
+                    player.clearVars();
+                    if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
+                        //drop item mouse cursor is holding or hovering over.
+                    }
+                } else {
+                    Vector2f displVec = mouseInput.getDisplVec();
+                    player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
+                            (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
+                    HandManager.useHands(timeMillis, mouseInput);
 
-                if (wasTDown && !window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS)) {
-                    updateTime(100000L, 1);
-                }
-                if (wasUpDown && !window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS)) {
-                    timeMul = Math.min(100, timeMul+(isShiftDown ? 10.f : 0.25f));
-                }
-                if (wasDownDown && !window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS)) {
-                    timeMul = Math.max(0, timeMul-(isShiftDown ? 10.f : 0.25f));
+                    player.sprint = isShiftDown;
+                    player.superSprint = window.isKeyPressed(GLFW_KEY_CAPS_LOCK, GLFW_PRESS);
+                    player.forward = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
+                    player.backward = window.isKeyPressed(GLFW_KEY_S, GLFW_PRESS);
+                    player.rightward = window.isKeyPressed(GLFW_KEY_D, GLFW_PRESS);
+                    player.leftward = window.isKeyPressed(GLFW_KEY_A, GLFW_PRESS);
+                    player.upward = window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS);
+                    player.downward = isCtrlDown;
+                    player.crouching = isCtrlDown;
+                    if (window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
+                        player.jump = timeMillis;
+                    }
+                    if (wasXDown && !window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS)) {
+                        player.flying = !player.flying;
+                    }
+
+                    if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
+                        //drop item in hand.
+                    }
+
+                    if (wasF1Down && !window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS)) {
+                        Renderer.showUI = !Renderer.showUI;
+                    }
+
+                    if (window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS)) {
+                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
+                        glfwSetWindowSize(window.getWindowHandle(), 2560, 1440);
+                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                    }
+
+                    if (wasTDown && !window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS)) {
+                        updateTime(100000L, 1);
+                    }
+                    if (wasUpDown && !window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS)) {
+                        timeMul = Math.min(100, timeMul + (isShiftDown ? 10.f : 0.25f));
+                    }
+                    if (wasDownDown && !window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS)) {
+                        timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
+                    }
                 }
 
                 wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
@@ -205,7 +219,7 @@ public class Main {
                 float dFOV = (float) Math.toRadians(65+(30*Math.min(0.3f, speed*1.5f)));
                 Constants.FOV = Constants.FOV > dFOV ? Math.max(dFOV, Constants.FOV-(factor*1.5f)) : (Constants.FOV < dFOV ? Math.min(dFOV, Constants.FOV+(factor*1.5f)) : Constants.FOV);
                 if (player.onGround) {
-                    float bobbingInc = Math.min(0.009f, 1.5f*speed*(player.height*((float) (factor*(1.5f+Math.random())))));
+                    float bobbingInc = Math.min(0.009f, 0.75f*speed*(player.height*((float) (factor*(1.5f+Math.random())))));
                     if (player.bobbingDir) {
                         player.bobbing += bobbingInc;
                         if (player.bobbing >= 0) {

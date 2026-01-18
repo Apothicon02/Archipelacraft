@@ -1,5 +1,6 @@
 package org.archipelacraft.engine;
 
+import org.archipelacraft.game.rendering.GUI;
 import org.joml.Vector2d;
 import org.joml.Vector2f;
 
@@ -68,8 +69,14 @@ public class MouseInput {
                 displVec.x = deltay;
             }
         }
-        previousPos = new Vector2f(window.getWidth()/2f, window.getHeight()/2f);
-        glfwSetCursorPos(window.getWindowHandle(), previousPos.x, previousPos.y);
+        if (!GUI.isInventoryOpen) {
+            previousPos = new Vector2f(window.getWidth() / 2f, window.getHeight() / 2f);
+            glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            glfwSetCursorPos(window.getWindowHandle(), previousPos.x, previousPos.y);
+        } else {
+            previousPos = currentPos;
+            glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
     }
 
     public boolean isLeftButtonPressed() {

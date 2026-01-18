@@ -72,6 +72,15 @@ public class Player {
         oldPos = newPos;
     }
 
+    public void clearVars() {
+        forward = false;
+        backward = false;
+        rightward = false;
+        leftward = false;
+        upward = false;
+        downward = false;
+    }
+
     public Vector2i blockOn = new Vector2i(0);
     public Vector2i blockIn = new Vector2i(0);
     public Vector2i blockBreathing = new Vector2i(0);
@@ -197,6 +206,8 @@ public class Player {
         } else {
             mightBeCrawling = true;
         }
+        boolean realSprint = sprint;
+        boolean realSuperSprint = superSprint;
         if (crouching || mightBeCrawling) {
             if (sprint) {
                 crawling = true;
@@ -223,12 +234,12 @@ public class Player {
                 eyeHeight = Math.max(eyeHeight-0.125f, baseEyeHeight*0.5f);
             }
 
-            sprint = false;
-            superSprint = false;
+            realSprint = false;
+            realSuperSprint = false;
         }
         blockIn = World.getBlockNotNull(blockPos.x, blockPos.y, blockPos.z);
         submerged = BlockTypes.blockTypeMap.get(blockBreathing.x).blockProperties.isFluid;
-        if (blockIn.x == 0 && onGround && sprint) {
+        if (blockIn.x == 0 && onGround && realSprint) {
             Vector2i blockBelow = World.getBlockNotNull(blockPos.x, blockPos.y-1, blockPos.z);
             if (blockBelow.x == BlockTypes.getId(BlockTypes.GRASS)) {
                 World.setBlock(blockPos.x, blockPos.y-1, blockPos.z, BlockTypes.getId(BlockTypes.DIRT), 0, true, false, 1, false);
@@ -258,16 +269,16 @@ public class Player {
         Vector3f newMovement = new Vector3f(0f);
         boolean canMove = (flying || onGround || blockIn.x == 1);
         if (forward || backward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (backward ? (superSprint && sprint ? 100 : (superSprint ? 10 : 1.25f)) : (flying ? (superSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (backward ? (realSuperSprint && realSprint ? 100 : (realSuperSprint ? 10 : 1.25f)) : (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x,0, pos.z - translatedPos.z);
         }
         if (rightward || leftward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (sprint || superSprint ? (flying ? (superSprint ? 100 : 10) : sprintSpeed) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x, 0, pos.z - translatedPos.z);
         }
         if (upward || downward) {
             if (flying) {
-                Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, speed * (downward ? (sprint || superSprint ? (superSprint ? 50 : 5) : 1f) : -1.2f * (sprint || superSprint ? (superSprint ? 50 : 5) : 1)), 0).getTranslation(new Vector3f());
+                Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, speed * (downward ? (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1f) : -1.2f * (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1)), 0).getTranslation(new Vector3f());
                 newMovement.add(0, pos.y - translatedPos.y, 0);
             } else if (blockIn.x == 1 && submerged) {
                 Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, speed * (upward ? -2 : downward ? 1 : 0), 0).getTranslation(new Vector3f());
