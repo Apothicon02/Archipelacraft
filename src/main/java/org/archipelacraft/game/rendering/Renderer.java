@@ -133,7 +133,7 @@ public class Renderer {
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
-                new String[]{"res", "model", "color", "layer", "offset", "size", "scale"});
+                new String[]{"res", "model", "color", "layer", "atlasOffset", "offset", "size", "scale"});
         rasterFBOId = glGenFramebuffers();
         sceneFBOId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);

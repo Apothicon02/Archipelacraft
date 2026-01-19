@@ -45,8 +45,8 @@ public class HandManager {
         }
         if ((!player.creative || (timeMillis - lastBlockBrokenOrPlaced >= 200)) && (!rmbDown || timeMillis - lastBlockPlaced >= 200)) { //two tenth second minimum delay between breaking blocks in creative or when placing blocks
             if (lmbDown || mmbDown || rmbDown) {
-                int blockTypeId = player.stack[0]+0;
-                int blockSubtypeId = player.stack[1]+0;
+                int blockTypeId = 0;//player.stack[0]+0;
+                int blockSubtypeId = 0;//player.stack[1]+0;
                 Vector2i handBlock = new Vector2i(blockTypeId, blockSubtypeId);
                 BlockType handType = BlockTypes.blockTypeMap.get(blockTypeId);
                 Vector3f pos = lmbDown || mmbDown ? player.selectedBlock : player.prevSelectedBlock;
@@ -58,9 +58,9 @@ public class HandManager {
                                 block.x = Fluids.fluidBucketMap.get(block.x);
                             }
                             if (player.creative) {
-                                StackManager.setFirstEntryInStack(block);
+                                //StackManager.setFirstEntryInStack(block);
                             } else {
-                                StackManager.cycleToEntryInStack(block);
+                                //StackManager.cycleToEntryInStack(block);
                             }
                         }
                     } else  {
@@ -95,13 +95,13 @@ public class HandManager {
                                         }
                                     }
                                     if (canBreak) {
-                                        if (player.creative ? true : StackManager.addToStack(blockBreaking)) {
-                                            blockStartedBreaking.set(0, 0, 0, 0);
-                                            player.breakingSource.stop();
-                                            //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, 0);
-                                            World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, 0, 0, true, false, 1, false);
-                                            BlockBreaking.blockBroken(blockBreaking, handBlock);
-                                        }
+//                                        if (player.creative ? true : StackManager.addToStack(blockBreaking)) {
+//                                            blockStartedBreaking.set(0, 0, 0, 0);
+//                                            player.breakingSource.stop();
+//                                            //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, 0);
+//                                            World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, 0, 0, true, false, 1, false);
+//                                            BlockBreaking.blockBroken(blockBreaking, handBlock);
+//                                        }
                                     }
                                 }
                             } else if (breakingType.blockProperties.isSolid) {
@@ -112,7 +112,7 @@ public class HandManager {
                             if (cornerData != 0) {
                                 cornerData &= (~(1 << (cornerIndex - 1)));
                                 //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, cornerData);
-                            } else if (player.stack[0] > 0) {
+                            } else if (false) {//player.stack[0] > 0) {
                                 Vector2i oldBlock = World.getBlock((int) pos.x, (int) pos.y, (int) pos.z);
                                 BlockProperties oldType = BlockTypes.blockTypeMap.get(oldBlock.x).blockProperties;
                                 BlockType blockType = BlockTypes.blockTypeMap.get(blockTypeId);
@@ -126,9 +126,9 @@ public class HandManager {
                                         if (blockType.blockProperties.isFluid) {
                                             blockTypeId = BlockTypes.getId(BlockTypes.BUCKET);
                                             blockSubtypeId = 0;
-                                            StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
+                                            //StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
                                         } else {
-                                            StackManager.removeFirstEntryInStack();
+                                            //StackManager.removeFirstEntryInStack();
                                         }
                                     }
                                 } else if (oldType.isFluid && blockTypeId == oldBlock.x) { //merge liquid
@@ -141,7 +141,7 @@ public class HandManager {
                                             blockTypeId = BlockTypes.getId(BlockTypes.BUCKET);
                                             blockSubtypeId = 0;
                                         }
-                                        StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
+                                        //StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
                                     }
                                 }
                             }

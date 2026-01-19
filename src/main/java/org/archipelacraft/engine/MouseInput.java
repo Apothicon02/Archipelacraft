@@ -1,5 +1,6 @@
 package org.archipelacraft.engine;
 
+import org.archipelacraft.Main;
 import org.archipelacraft.game.rendering.GUI;
 import org.joml.Vector2d;
 import org.joml.Vector2f;
@@ -69,7 +70,7 @@ public class MouseInput {
                 displVec.x = deltay;
             }
         }
-        if (!GUI.isInventoryOpen) {
+        if (!Main.player.inv.open) {
             previousPos = new Vector2f(window.getWidth() / 2f, window.getHeight() / 2f);
             glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             glfwSetCursorPos(window.getWindowHandle(), previousPos.x, previousPos.y);

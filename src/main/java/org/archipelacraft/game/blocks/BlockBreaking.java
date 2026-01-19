@@ -19,8 +19,8 @@ public class BlockBreaking {
             for (Recipe recipe : recipes) {
                 Vector2i product = recipe.craftRecipe(blockBreaking, handBlock);
                 if (product != null) {
-                    player.stack[0] = product.x;
-                    player.stack[1] = product.y;
+//                    player.stack[0] = product.x;
+//                    player.stack[1] = product.y;
                     break;
                 }
             }

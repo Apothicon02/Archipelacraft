@@ -89,10 +89,10 @@ public class Main {
                 boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
 
                 if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
-                    GUI.isInventoryOpen = !GUI.isInventoryOpen;
+                    player.inv.open = !player.inv.open;
                 }
 
-                if (GUI.isInventoryOpen) {
+                if (player.inv.open) {
                     player.clearVars();
                     if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
                         //drop item mouse cursor is holding or hovering over.

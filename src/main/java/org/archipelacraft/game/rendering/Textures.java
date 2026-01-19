@@ -41,6 +41,7 @@ public class Textures {
     }, 2048, 2048);
     public static Texture sceneColor = create(Constants.width, Constants.height);
     public static Texture gui = create(256, 32, 2);
+    public static Texture items = create(16, 16, 1);
 
     public static Texture create(int width, int height) {
         Texture texture = new Texture(defaultParameters, width, height);

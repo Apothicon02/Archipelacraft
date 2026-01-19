@@ -2,12 +2,13 @@ package org.archipelacraft.game.gameplay;
 
 import org.archipelacraft.Main;
 import org.archipelacraft.engine.Camera;
-import org.archipelacraft.engine.Constants;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.audio.Source;
 import org.archipelacraft.game.blocks.Tags;
 import org.archipelacraft.game.blocks.types.BlockTypes;
+import org.archipelacraft.game.items.Item;
+import org.archipelacraft.game.items.ItemTypes;
 import org.archipelacraft.game.rendering.Renderer;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
@@ -19,7 +20,7 @@ public class Player {
     public Vector3f pos = new Vector3f();
     public Vector3f selectedBlock = new Vector3f();
     public Vector3f prevSelectedBlock = new Vector3f();
-    public int[] stack = new int[32];
+    public Inventory inv = new Inventory();
 
     public boolean bobbingDir = true;
     public float bobbing = 0f;
@@ -70,6 +71,18 @@ public class Player {
         magmaSource = new Source(newPos, 0, 1, 0, 1);
         setPos(newPos);
         oldPos = newPos;
+
+        inv.setItem(0, 0, new Item().type(ItemTypes.STEEL_SCYTHE));
+        inv.setItem(1, 0, new Item().type(ItemTypes.STEEL_PICK));
+        inv.setItem(2, 0, new Item().type(ItemTypes.STEEL_HATCHET));
+        inv.setItem(3, 0, new Item().type(ItemTypes.STEEL_SPADE));
+        inv.setItem(4, 0, new Item().type(ItemTypes.STEEL_HOE));
+        inv.setItem(7, 0, new Item().type(ItemTypes.APPLE).amount(1));
+        inv.setItem(8, 0, new Item().type(ItemTypes.ORANGE).amount(2));
+        inv.setItem(8, 1, new Item().type(ItemTypes.ORANGE).amount(1));
+        inv.setItem(2, 3, new Item().type(ItemTypes.STICK).amount(6));
+        inv.setItem(1, 3, new Item().type(ItemTypes.OAK_LOG).amount(54));
+        inv.setItem(0, 3, new Item().type(ItemTypes.STONE).amount(64));
     }
 
     public void clearVars() {
