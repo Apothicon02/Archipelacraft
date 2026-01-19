@@ -56,6 +56,7 @@ public class Main {
         player.setCameraMatrix(new Matrix4f().get(new float[16]));
     }
 
+    public static MouseInput mouseInput = null;
     boolean wasTabDown = false;
     boolean wasXDown = false;
     boolean wasTDown = false;
@@ -83,11 +84,9 @@ public class Main {
                 isClosing = true;
             } else {
                 window.getMouseInput().input(window);
+                mouseInput = window.getMouseInput();
                 boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
                 boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
-
-                MouseInput mouseInput = window.getMouseInput();
-                mouseInput.scroll.set(0.d);
 
                 if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
                     GUI.isInventoryOpen = !GUI.isInventoryOpen;
@@ -145,6 +144,7 @@ public class Main {
                     }
                 }
 
+                mouseInput.scroll.set(0.d);
                 wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
                 wasF4Down = window.isKeyPressed(GLFW_KEY_F4, GLFW_PRESS);
                 wasF5Down = window.isKeyPressed(GLFW_KEY_F5, GLFW_PRESS);

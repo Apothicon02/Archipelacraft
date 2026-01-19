@@ -40,6 +40,9 @@ public class Engine {
     public List<Long> frameTimes = new ArrayList<>(List.of());
 
     private void run() throws Exception {
+        window.getMouseInput().input(window);
+        Main.mouseInput = window.getMouseInput();
+
         long initialNanoTime = System.nanoTime();
         long initialTime = System.currentTimeMillis();
         float timeU = 1000.0f / targetUps;

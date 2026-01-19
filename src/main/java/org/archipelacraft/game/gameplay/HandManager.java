@@ -20,16 +20,20 @@ public class HandManager {
     public static long lastBlockBrokenOrPlaced = 0L;
     public static long lastBlockPlaced = 0L;
     public static long lastBlockBreakCheck = 0;
+    public static int hotbarSlot = 0;
+    public static Vector2i selectedSlot = new Vector2i(0);
     public static Vector4i blockStartedBreaking = new Vector4i();
 
     public static void useHands(long timeMillis, MouseInput mouseInput) {
         if (mouseInput.scroll.y > 0) {
-            for (int i = 0; i < mouseInput.scroll.y; i++) {
-                StackManager.cycleStackForward();
+            hotbarSlot++;
+            if (hotbarSlot > 8) {
+                hotbarSlot = 0;
             }
         } else if (mouseInput.scroll.y < 0) {
-            for (int i = 0; i < -1*mouseInput.scroll.y; i++) {
-                StackManager.cycleStackBackward();
+            hotbarSlot--;
+            if (hotbarSlot < 0) {
+                hotbarSlot = 8;
             }
         }
         boolean lmbDown = mouseInput.isLeftButtonPressed();
