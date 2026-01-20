@@ -26,16 +26,20 @@ public class Inventory {
         if (cursorItem == null && interactCD <= 0) {
             if (Main.isLMBClick) {
                 int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-                cursorItem = items[selSlotId].clone();
-                items[selSlotId] = null;
-                interactCD = 20;
+                cursorItem = items[selSlotId];
+                if (cursorItem != null) {
+                    items[selSlotId] = null;
+                    interactCD = 20;
+                }
             } else if (Main.isRMBClick) {
                 int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-                cursorItem = items[selSlotId].clone();
-                float splitAmt = cursorItem.amount/2.f;
-                items[selSlotId].amount = (int)Math.ceil(splitAmt);
-                cursorItem.amount = (int)Math.floor(splitAmt);
-                interactCD = 20;
+                cursorItem = items[selSlotId];
+                if (cursorItem != null) {
+                    float splitAmt = cursorItem.amount / 2.f;
+                    items[selSlotId].amount = (int) Math.ceil(splitAmt);
+                    cursorItem.amount = (int) Math.floor(splitAmt);
+                    interactCD = 20;
+                }
             }
         }
         if (cursorItem != null) {

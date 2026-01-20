@@ -40,7 +40,7 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_T, GL40.GL_REPEAT
     }, 2048, 2048);
     public static Texture sceneColor = create(Constants.width, Constants.height);
-    public static Texture gui = create(256, 32, 2);
+    public static Texture gui = create(1024, 32, 3);
     public static Texture items = create(16, 16, 1);
 
     public static Texture create(int width, int height) {
