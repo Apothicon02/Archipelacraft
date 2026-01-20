@@ -2,9 +2,9 @@ package org.archipelacraft.game.gameplay;
 
 import org.archipelacraft.engine.MouseInput;
 import org.archipelacraft.game.audio.BlockSFX;
-import org.archipelacraft.game.blocks.BlockBreaking;
 import org.archipelacraft.game.blocks.Fluids;
 import org.archipelacraft.game.blocks.Tags;
+import org.archipelacraft.game.blocks.drops.BlockDrops;
 import org.archipelacraft.game.blocks.types.BlockProperties;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
@@ -21,7 +21,6 @@ public class HandManager {
     public static long lastBlockPlaced = 0L;
     public static long lastBlockBreakCheck = 0;
     public static int hotbarSlot = 0;
-    public static Vector2i selectedSlot = new Vector2i(0);
     public static Vector4i blockStartedBreaking = new Vector4i();
 
     public static void useHands(long timeMillis, MouseInput mouseInput) {
@@ -95,13 +94,12 @@ public class HandManager {
                                         }
                                     }
                                     if (canBreak) {
-//                                        if (player.creative ? true : StackManager.addToStack(blockBreaking)) {
-//                                            blockStartedBreaking.set(0, 0, 0, 0);
-//                                            player.breakingSource.stop();
-//                                            //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, 0);
-//                                            World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, 0, 0, true, false, 1, false);
-//                                            BlockBreaking.blockBroken(blockBreaking, handBlock);
-//                                        }
+                                        player.inv.addToInventory(BlockDrops.getDrops(blockBreaking));
+                                        blockStartedBreaking.set(0, 0, 0, 0);
+                                        player.breakingSource.stop();
+                                        //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, 0);
+                                        World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, 0, 0, true, false, 1, false);
+                                        //BlockBreaking.blockBroken(blockBreaking, handBlock);
                                     }
                                 }
                             } else if (breakingType.blockProperties.isSolid) {

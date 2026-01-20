@@ -57,6 +57,10 @@ public class Main {
     }
 
     public static MouseInput mouseInput = null;
+    public static boolean isLMBClick = false;
+    public static boolean isRMBClick = false;
+    public static boolean wasLMBDown = false;
+    public static boolean wasRMBDown = false;
     boolean wasTabDown = false;
     boolean wasXDown = false;
     boolean wasTDown = false;
@@ -85,6 +89,10 @@ public class Main {
             } else {
                 window.getMouseInput().input(window);
                 mouseInput = window.getMouseInput();
+                boolean isLMBDown = mouseInput.isLeftButtonPressed();
+                boolean isRMBDown = mouseInput.isRightButtonPressed();
+                isLMBClick = wasLMBDown && !isLMBDown;
+                isRMBClick = wasRMBDown & !isRMBDown;
                 boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
                 boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
 
@@ -94,6 +102,7 @@ public class Main {
 
                 if (player.inv.open) {
                     player.clearVars();
+                    player.inv.tick(mouseInput);
                     if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
                         //drop item mouse cursor is holding or hovering over.
                     }
@@ -145,6 +154,8 @@ public class Main {
                 }
 
                 mouseInput.scroll.set(0.d);
+                wasLMBDown = isLMBDown;
+                wasRMBDown = isRMBDown;
                 wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
                 wasF4Down = window.isKeyPressed(GLFW_KEY_F4, GLFW_PRESS);
                 wasF5Down = window.isKeyPressed(GLFW_KEY_F5, GLFW_PRESS);

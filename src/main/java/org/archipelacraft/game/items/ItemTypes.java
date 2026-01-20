@@ -41,6 +41,7 @@ public class ItemTypes {
             STEEL_HOE = create(new ItemType("tool/steel/texture/hoe").maxStackSize(1)),
             APPLE = create(new ItemType("food/texture/apple").maxStackSize(2)),
             ORANGE = create(new ItemType("food/texture/orange").maxStackSize(2)),
+            CHERRY = create(new ItemType("food/texture/cherry").maxStackSize(2)),
             OAK_LOG = create(new ItemType("resource/texture/oak_log").maxStackSize(64)),
             STICK = create(new ItemType("resource/texture/stick").maxStackSize(64)),
             STONE = create(new ItemType("resource/texture/stone").maxStackSize(64));

@@ -57,8 +57,8 @@ public class GUI {
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 1); //selector
         Vector2f clampedPos = confineToMenu(hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY*4);
-        HandManager.selectedSlot = Main.player.inv.open ? new Vector2i((int)(clampedPos.x()*9), (int)(clampedPos.y()*4)) : new Vector2i(HandManager.hotbarSlot, 0);
-        drawSlot(0, -1, HandManager.selectedSlot.x(), HandManager.selectedSlot.y(), enlargedSlotSize, 1.f);
+        Main.player.inv.selectedSlot = Main.player.inv.open ? new Vector2i((int)(clampedPos.x()*9), (int)(clampedPos.y()*4)) : new Vector2i(HandManager.hotbarSlot, 0);
+        drawSlot(0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, 1.f);
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //items
         glBindTextureUnit(1, Textures.items.id);
@@ -80,9 +80,14 @@ public class GUI {
                 }
             }
         }
+        if (Main.player.inv.cursorItem != null) { //cursor item
+            ItemType itemType = Main.player.inv.cursorItem.type;
+            glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
+            drawQuad(true, true, Main.mouseInput.getCurrentPos().x()/width, Math.abs(1-(Main.mouseInput.getCurrentPos().y()/height)), ItemTypes.itemTexSize, ItemTypes.itemTexSize, 1.f);
+        }
     }
 
-    public static void drawSlot(int offsetX, int offsetY, int x, int y, int size, float quadScale) {
+    public static void drawSlot(float offsetX, float offsetY, int x, int y, int size, float quadScale) {
         float selectedPosX = x*(slotSize/guiScale);
         float selectedPosY = y*((slotSizeY/guiScale)*aspectRatio);
         drawQuad(false, false, selectedPosX+hotbarPosX+(offsetX/guiScale), selectedPosY+(hotbarPosY-(3.f/height))+((offsetY/guiScale)*aspectRatio), size, size, quadScale);
