@@ -31,7 +31,7 @@ public class Inventory {
                     if (Main.isLMBClick) {
                         cursorItem = selItem.clone();
                         selItem = null;
-                        interactCD = 20;
+                        interactCD = 5;
                     } else if (Main.isRMBClick) {
                         cursorItem = selItem.clone();
                         float splitAmt = cursorItem.amount / 2.f;
@@ -42,7 +42,7 @@ public class Inventory {
                             selItem.amount = existAmt;
                         }
                         cursorItem.amount = (int) Math.ceil(splitAmt);
-                        interactCD = 20;
+                        interactCD = 5;
                     }
                     items[selSlotId] = selItem;
                 }
@@ -58,7 +58,7 @@ public class Inventory {
                 } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
                     cursorItem = null;
                 }
-                interactCD = 20;
+                interactCD = 5;
             }
         }
         if (cursorItem != null) {
@@ -70,12 +70,12 @@ public class Inventory {
 //                    if (addToSlot(slotId, cursorItem, cursorItem.amount, false) == null) {
 //                        cursorItem = null;
 //                    }
-//                    interactCD = 60;
+//                    interactCD = 20;
                 } else if (Main.wasRMBDown && prevRMBDeposit != slotId) {
                     if (addToSlot(slotId, cursorItem, 1) == null) {
                         cursorItem = null;
                     }
-                    interactCD = 60;
+                    interactCD = 20;
                 }
             }
         }
@@ -105,9 +105,30 @@ public class Inventory {
     }
 
     public void addToInventory(Item item) {
-        for (int i = items.length - 1; i >= 0; i--) {
-            if (addToSlot(i, item, item.amount) == null) {
-                break;
+        loop:
+        for (int y = 3; y >= 0; y--) { //first try merging with existing stacks
+            for (int x = 0; x < 9; x++) {
+                int i = (y*9)+x;
+                Item slotItem = items[i];
+                if (slotItem != null && slotItem.type == item.type) {
+                    if (addToSlot(i, item, item.amount) == null) {
+                        item = null;
+                        break loop;
+                    }
+                }
+            }
+        }
+        if (item != null) {
+            loop:
+            for (int y = 3; y >= 0; y--) { //then try adding to an empty slot
+                for (int x = 0; x < 9; x++) {
+                    int i = (y*9)+x;
+                    Item slotItem = items[i];
+                    if (slotItem == null || slotItem.type == ItemTypes.AIR) {
+                        items[i] = item.clone();
+                        break loop;
+                    }
+                }
             }
         }
     }
