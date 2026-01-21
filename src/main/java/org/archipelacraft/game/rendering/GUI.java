@@ -25,7 +25,7 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL45.glBindTextureUnit;
 
 public class GUI {
-    public static float guiScale = 600f;
+    public static float guiScale = 1;
     public static float aspectRatio = 0f;
     public static int width = 0;
     public static int height = 0;
@@ -42,6 +42,7 @@ public class GUI {
         glBindTextureUnit(1, Textures.gui.id);
         width = window.getWidth();
         height = window.getHeight();
+        guiScale = width/4f;
         aspectRatio = (float) width / height;
         hotbarPosX = (0.5f-((182/2f)/guiScale));
         hotbarPosY = 5.f/height;
