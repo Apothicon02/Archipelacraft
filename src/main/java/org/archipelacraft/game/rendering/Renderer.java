@@ -221,16 +221,19 @@ public class Renderer {
                     .rotateZ((float) time + starRand.nextFloat() * 10);
             starPos.set(starPos.x + (starDist / 2f), starPos.y - starDist, starPos.z + (starDist / 2f));
             float starSize = ((starRand.nextFloat()*6)+3)-Math.max(0, 15*(sunPos.y/World.size));
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f()
+            if (starSize > 0.01f) {
+                Matrix4f starMatrix = new Matrix4f()
                         .rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
                         .setTranslation(starPos)
-                        .scale(starSize).get(stack.mallocFloat(16)));
-            }
-            Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
-            if (starSize > 0.01f) {
-                glUniform4f(raster.uniforms.get("color"), color.x, color.y, color.z, 2);
-                drawCube();
+                        .scale(starSize);
+                if (starMatrix.getTranslation(new Vector3f()).y > 0) {
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, starMatrix.get(stack.mallocFloat(16)));
+                    }
+                    Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
+                    glUniform4f(raster.uniforms.get("color"), color.x, color.y, color.z, 2);
+                    drawCube();
+                }
             }
         }
     }

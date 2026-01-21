@@ -518,14 +518,17 @@ void main() {
     //fragColor = pos.y > res.y/2 ? vec4(tracedDepth) : vec4(rasterDepth);
     float depth = tracedDepth;
     if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
-        fragColor.rgb = fromLinear(rasterColor).rgb;
-        fragColor.a = rasterColor.a;
-        depth = rasterDepth;
-        prevPos = worldPosFromDepth(rasterDepth-0.0001f);
-        solidHitPos = worldPosFromDepth(rasterDepth);
-        if (fragColor.a > 0) {
-            tint = vec4(0);
-            isSky = false;
+        vec3 rasterPos = worldPosFromDepth(rasterDepth);
+        if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
+            fragColor.rgb = fromLinear(rasterColor).rgb;
+            fragColor.a = rasterColor.a;
+            depth = rasterDepth;
+            prevPos = worldPosFromDepth(rasterDepth-0.0001f);
+            solidHitPos = rasterPos;
+            if (fragColor.a > 0) {
+                tint = vec4(0);
+                isSky = false;
+            }
         }
     }
     if (inBounds(solidHitPos, worldSize)) {
