@@ -12,14 +12,14 @@ uniform ivec2 scale;
 uniform ivec2 res;
 
 in vec3 pos;
-in vec3 norm;
+
 out vec4 fragColor;
 
 void main() {
     if (color.a == -1f) {
         fragColor = texture(scene_color, pos.xy, 0);
     } else {
-        vec4 guiColor = texelFetch(tex == 0 ? gui : item, ivec3(atlasOffset.x+(pos.x*size.x), atlasOffset.y+(abs(1-pos.y)*size.y), layer), 0)*color;
+        vec4 guiColor = texelFetch(tex == 0 ? gui : item, ivec3(atlasOffset.x+(pos.x*(size.x-0.01f)), atlasOffset.y+(abs(1-pos.y)*(size.y-0.01f)), layer), 0)*color;
         if (guiColor.a > 0) {
             vec4 sceneColor = texelFetch(scene_color, ivec2(pos.xy*scale)+offset, 0);
             fragColor = vec4(mix(sceneColor.rgb, guiColor.rgb, guiColor.a), 1.f);

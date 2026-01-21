@@ -23,23 +23,38 @@ public class Inventory {
         if (!Main.wasRMBDown) {
             prevRMBDeposit = -1;
         }
-        if (cursorItem == null && interactCD <= 0) {
-            if (Main.isLMBClick) {
-                int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-                cursorItem = items[selSlotId];
-                if (cursorItem != null) {
-                    items[selSlotId] = null;
-                    interactCD = 20;
+        if (interactCD <= 0) {
+            int selSlotId = selectedSlot.x+(selectedSlot.y*9);
+            if (cursorItem == null) {
+                if (Main.isLMBClick) {
+                    cursorItem = items[selSlotId];
+                    if (cursorItem != null) {
+                        items[selSlotId] = null;
+                        interactCD = 20;
+                    }
+                } else if (Main.isRMBClick) {
+                    cursorItem = items[selSlotId];
+                    if (cursorItem != null) {
+                        float splitAmt = cursorItem.amount / 2.f;
+                        int existAmt = (int) Math.floor(splitAmt);
+                        if (existAmt <= 0) {
+                            items[selSlotId] = null;
+                        } else {
+                            items[selSlotId].amount = existAmt;
+                        }
+                        cursorItem.amount = (int) Math.ceil(splitAmt);
+                        interactCD = 20;
+                    }
                 }
-            } else if (Main.isRMBClick) {
-                int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-                cursorItem = items[selSlotId];
-                if (cursorItem != null) {
-                    float splitAmt = cursorItem.amount / 2.f;
-                    items[selSlotId].amount = (int) Math.ceil(splitAmt);
-                    cursorItem.amount = (int) Math.floor(splitAmt);
-                    interactCD = 20;
-                }
+            } else if (Main.isLMBClick && cursorItem.amount < cursorItem.type.maxStackSize && cursorItem.type == items[selSlotId].type) {
+//                int space = Math.min(items[selSlotId].amount, cursorItem.type.maxStackSize - cursorItem.amount);
+//                if (space > 0) {
+//                    cursorItem.amount += space;
+//                    items[selSlotId].amount -= space;
+//                    if (items[selSlotId].amount <= 0) {
+//                        items[selSlotId] = null;
+//                    }
+//                } fix it replacing at the same time
             }
         }
         if (cursorItem != null) {
