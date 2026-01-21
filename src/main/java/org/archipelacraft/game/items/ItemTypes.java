@@ -52,8 +52,6 @@ public class ItemTypes {
     }
 
     public static void fillTexture() throws IOException {
-        Textures.items.width = Math.min(4096, itemTypeMap.size()*itemTexSize);
-        Textures.items.height = (int)(Math.ceil((itemTypeMap.size()*itemTexSize)/4096f))*itemTexSize;
         glBindTexture(GL_TEXTURE_3D, Textures.items.id);
         glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.items.width, Textures.items.height, ((Texture3D)(Textures.items)).depth, 0, GL_RGBA, GL_FLOAT,
                 new float[Textures.items.width*Textures.items.height*((Texture3D)(Textures.items)).depth*4]);
