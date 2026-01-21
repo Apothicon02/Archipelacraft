@@ -61,7 +61,7 @@ public class GUI {
         glUniform1i(Renderer.gui.uniforms.get("layer"), 2); //selector
         Vector2f clampedPos = confineToMenu(hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY*4);
         Main.player.inv.selectedSlot = Main.player.inv.open ? new Vector2i((int)(clampedPos.x()*9), (int)(clampedPos.y()*4)) : new Vector2i(HandManager.hotbarSlot, 0);
-        drawSlot(0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, enlargedSlotSize);
+        drawSlot(hotbarPosX, hotbarPosY, 0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, enlargedSlotSize);
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //items
         glBindTextureUnit(2, Textures.items.id);
@@ -75,7 +75,7 @@ public class GUI {
                         glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
                         int offX = 3 + (x * slotSize);
                         int offY = 3 + (y * slotSizeY);
-                        drawSlot(offX, offY, 0, 0, ItemTypes.itemTexSize, ItemTypes.itemTexSize);
+                        drawSlot(hotbarPosX, hotbarPosY, offX, offY, 0, 0, ItemTypes.itemTexSize, ItemTypes.itemTexSize);
                         if (item.amount > 1) {
                             glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                             char[] chars = String.valueOf(item.amount).toCharArray();
@@ -83,7 +83,7 @@ public class GUI {
                             for (char character : chars) {
                                 int charAtlasOffset = getCharAtlasOffset(character);
                                 glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
-                                drawSlot(offX+startOffset, offY+1, 0, 0, charWidth, charHeight);
+                                drawSlot(hotbarPosX, hotbarPosY, offX+startOffset, offY+1, 0, 0, charWidth, charHeight);
                                 startOffset += charWidth*0.8f;
                             }
                         }
@@ -95,14 +95,27 @@ public class GUI {
         if (Main.player.inv.cursorItem != null) { //cursor item
             ItemType itemType = Main.player.inv.cursorItem.type;
             glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
-            drawQuad(true, true, Main.mouseInput.getCurrentPos().x()/width, Math.abs(1-(Main.mouseInput.getCurrentPos().y()/height)), ItemTypes.itemTexSize, ItemTypes.itemTexSize);
+            float offX = Main.mouseInput.getCurrentPos().x()/width;
+            float offY = Math.abs(height-(Main.mouseInput.getCurrentPos().y()))/height;
+            drawQuad(true, true, offX, offY, ItemTypes.itemTexSize, ItemTypes.itemTexSize);
+            if (Main.player.inv.cursorItem.amount > 1) {
+                glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
+                char[] chars = String.valueOf(Main.player.inv.cursorItem.amount).toCharArray();
+                float startOffset = 16-(chars.length*(charWidth*0.8f));
+                for (char character : chars) {
+                    int charAtlasOffset = getCharAtlasOffset(character);
+                    glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
+                    drawSlot(offX, offY, 1+startOffset-(charWidth*1.5f), 1-charHeight, 0, 0, charWidth, charHeight);
+                    startOffset += charWidth*0.8f;
+                }
+            }
         }
     }
 
-    public static void drawSlot(float offsetX, float offsetY, int x, int y, int sizeX, int sizeY) {
+    public static void drawSlot(float offsetX, float offsetY, float offPxX, float offPxY, int x, int y, int sizeX, int sizeY) {
         float selectedPosX = x*(slotSize/guiScale);
         float selectedPosY = y*((slotSizeY/guiScale)*aspectRatio);
-        drawQuad(false, false, selectedPosX+hotbarPosX+(offsetX/guiScale), selectedPosY+(hotbarPosY-(3.f/height))+((offsetY/guiScale)*aspectRatio), sizeX, sizeY);
+        drawQuad(false, false, selectedPosX+offsetX+(offPxX/guiScale), selectedPosY+(offsetY-(3.f/height))+((offPxY/guiScale)*aspectRatio), sizeX, sizeY);
     }
 
     public static Vector2f confineToMenu(float posX, float posY, int sizeX, int sizeY) {
@@ -143,7 +156,7 @@ public class GUI {
     public static int charWidth = 6;
     public static int charHeight = 7;
     public static char[] alphabet = """
-                01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.!?$:,;`'"()[]{}*=+-/\\^%&#~<>|
+                0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.!?$:,;`'"()[]{}*=+-/\\^%&#~<>|
                 """.toCharArray();
     public static Map<Character, Integer> charAtlasOffsetIndex = new HashMap<>();
     public static int getCharAtlasOffset(char character) {

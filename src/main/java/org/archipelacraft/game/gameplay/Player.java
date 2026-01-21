@@ -81,7 +81,7 @@ public class Player {
         inv.setItem(8, 0, new Item().type(ItemTypes.ORANGE).amount(2));
         inv.setItem(8, 1, new Item().type(ItemTypes.ORANGE).amount(1));
         inv.setItem(8, 2, new Item().type(ItemTypes.CHERRY).amount(2));
-//        inv.setItem(2, 3, new Item().type(ItemTypes.STICK).amount(6));
+        inv.setItem(2, 3, new Item().type(ItemTypes.STICK).amount(60));
 //        inv.setItem(1, 3, new Item().type(ItemTypes.OAK_LOG).amount(54));
 //        inv.setItem(0, 3, new Item().type(ItemTypes.STONE).amount(64));
     }

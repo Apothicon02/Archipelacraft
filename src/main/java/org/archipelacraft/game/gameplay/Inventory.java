@@ -25,54 +25,57 @@ public class Inventory {
         }
         if (interactCD <= 0) {
             int selSlotId = selectedSlot.x+(selectedSlot.y*9);
+            Item selItem = items[selSlotId];
             if (cursorItem == null) {
-                if (Main.isLMBClick) {
-                    cursorItem = items[selSlotId];
-                    if (cursorItem != null) {
-                        items[selSlotId] = null;
+                if (selItem != null) {
+                    if (Main.isLMBClick) {
+                        cursorItem = selItem.clone();
+                        selItem = null;
                         interactCD = 20;
-                    }
-                } else if (Main.isRMBClick) {
-                    cursorItem = items[selSlotId];
-                    if (cursorItem != null) {
+                    } else if (Main.isRMBClick) {
+                        cursorItem = selItem.clone();
                         float splitAmt = cursorItem.amount / 2.f;
                         int existAmt = (int) Math.floor(splitAmt);
                         if (existAmt <= 0) {
-                            items[selSlotId] = null;
+                            selItem = null;
                         } else {
-                            items[selSlotId].amount = existAmt;
+                            selItem.amount = existAmt;
                         }
                         cursorItem.amount = (int) Math.ceil(splitAmt);
                         interactCD = 20;
                     }
+                    items[selSlotId] = selItem;
                 }
-            } else if (Main.isLMBClick && cursorItem.amount < cursorItem.type.maxStackSize && cursorItem.type == items[selSlotId].type) {
-//                int space = Math.min(items[selSlotId].amount, cursorItem.type.maxStackSize - cursorItem.amount);
-//                if (space > 0) {
-//                    cursorItem.amount += space;
-//                    items[selSlotId].amount -= space;
-//                    if (items[selSlotId].amount <= 0) {
-//                        items[selSlotId] = null;
-//                    }
-//                } fix it replacing at the same time
+            } else if (Main.isLMBClick) {
+                if (selItem != null) {
+                    if (cursorItem.type != selItem.type) { //swap item with slot
+                        Item oldCursorItem = cursorItem.clone();
+                        cursorItem = selItem.clone();
+                        items[selSlotId] = oldCursorItem;
+                    } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
+                        cursorItem = null;
+                    }
+                } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
+                    cursorItem = null;
+                }
+                interactCD = 20;
             }
         }
         if (cursorItem != null) {
             if (cursorItem == null || cursorItem.amount <= 0 || cursorItem.type == ItemTypes.AIR) {
                 cursorItem = null;
-                interactCD = 20;
             } else if (interactCD <= 0) {
                 int slotId = selectedSlot.x+(selectedSlot.y*9);
-                if (Main.wasLMBDown) {
-                    if (addToSlot(slotId, cursorItem, cursorItem.amount, true) == null) {
-                        cursorItem = null;
-                    }
-                    interactCD = 20;
+                if (Main.wasLMBDown) { //split evenly across several slots
+//                    if (addToSlot(slotId, cursorItem, cursorItem.amount, false) == null) {
+//                        cursorItem = null;
+//                    }
+//                    interactCD = 60;
                 } else if (Main.wasRMBDown && prevRMBDeposit != slotId) {
-                    if (addToSlot(slotId, cursorItem, 1, false) == null) {
+                    if (addToSlot(slotId, cursorItem, 1) == null) {
                         cursorItem = null;
                     }
-                    interactCD = 20;
+                    interactCD = 60;
                 }
             }
         }
@@ -103,36 +106,27 @@ public class Inventory {
 
     public void addToInventory(Item item) {
         for (int i = items.length - 1; i >= 0; i--) {
-            if (addToSlot(i, item, item.amount, false) == null) {
+            if (addToSlot(i, item, item.amount) == null) {
                 break;
             }
         }
     }
 
-    public Item addToSlot(int existingId, Item item, int amount, boolean replace) {
+    public Item addToSlot(int existingId, Item item, int amount) {
         Item existing = items[existingId];
-        boolean changedAnything = false;
         if (existing == null || existing.amount <= 0 || existing.type == ItemTypes.AIR) {
             existing = item.clone();
             existing.amount = amount;
             item.amount -= amount;
-            changedAnything = true;
         } else if (existing.type == item.type && existing.amount < existing.type.maxStackSize) {
             int space = Math.min(amount, Math.min(item.amount, existing.type.maxStackSize - existing.amount));
             if (space > 0) {
                 existing.amount += space;
                 item.amount -= space;
-                changedAnything = true;
             }
         }
         if (item.amount <= 0) {
             item = null;
-            changedAnything = true;
-        }
-        if (replace && !changedAnything) {
-            Item tempExisting = existing.clone();
-            existing = item.clone();
-            item = tempExisting;
         }
         items[existingId] = existing;
         return item;
