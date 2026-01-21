@@ -14,7 +14,6 @@ import org.lwjgl.system.MemoryStack;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,17 +50,17 @@ public class GUI {
         glUniform1i(Renderer.gui.uniforms.get("layer"), 1); //inventory
         if (Main.player.inv.open) {
             glUniform4f(Renderer.gui.uniforms.get("color"), 0.85f, 0.85f, 0.85f, 0.85f);
-            drawQuad(false, false, hotbarPosX, hotbarPosY + ((hotbarSizeY / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY, 1);
-            drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*2) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY, 1);
-            drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*3) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY, 1);
+            drawQuad(false, false, hotbarPosX, hotbarPosY + ((hotbarSizeY / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
+            drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*2) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
+            drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*3) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
         }
         glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 1.f); //hotbar
-        drawQuad(false, false, hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY, 1);
+        drawQuad(false, false, hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY);
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 2); //selector
         Vector2f clampedPos = confineToMenu(hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY*4);
         Main.player.inv.selectedSlot = Main.player.inv.open ? new Vector2i((int)(clampedPos.x()*9), (int)(clampedPos.y()*4)) : new Vector2i(HandManager.hotbarSlot, 0);
-        drawSlot(0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, enlargedSlotSize, 1.f);
+        drawSlot(0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, enlargedSlotSize);
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //items
         glBindTextureUnit(2, Textures.items.id);
@@ -75,7 +74,7 @@ public class GUI {
                         glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
                         int offX = 3 + (x * slotSize);
                         int offY = 3 + (y * slotSizeY);
-                        drawSlot(offX, offY, 0, 0, ItemTypes.itemTexSize, ItemTypes.itemTexSize, 1.f);
+                        drawSlot(offX, offY, 0, 0, ItemTypes.itemTexSize, ItemTypes.itemTexSize);
                         if (item.amount > 1) {
                             glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                             char[] chars = String.valueOf(item.amount).toCharArray();
@@ -83,7 +82,7 @@ public class GUI {
                             for (char character : chars) {
                                 int charAtlasOffset = getCharAtlasOffset(character);
                                 glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
-                                drawSlot(offX+startOffset, offY+1, 0, 0, charWidth, charHeight, 0.8f);
+                                drawSlot(offX+startOffset, offY+1, 0, 0, charWidth, charHeight);
                                 startOffset += charWidth*0.8f;
                             }
                         }
@@ -95,14 +94,14 @@ public class GUI {
         if (Main.player.inv.cursorItem != null) { //cursor item
             ItemType itemType = Main.player.inv.cursorItem.type;
             glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
-            drawQuad(true, true, Main.mouseInput.getCurrentPos().x()/width, Math.abs(1-(Main.mouseInput.getCurrentPos().y()/height)), ItemTypes.itemTexSize, ItemTypes.itemTexSize, 1.f);
+            drawQuad(true, true, Main.mouseInput.getCurrentPos().x()/width, Math.abs(1-(Main.mouseInput.getCurrentPos().y()/height)), ItemTypes.itemTexSize, ItemTypes.itemTexSize);
         }
     }
 
-    public static void drawSlot(float offsetX, float offsetY, int x, int y, int sizeX, int sizeY, float quadScale) {
+    public static void drawSlot(float offsetX, float offsetY, int x, int y, int sizeX, int sizeY) {
         float selectedPosX = x*(slotSize/guiScale);
         float selectedPosY = y*((slotSizeY/guiScale)*aspectRatio);
-        drawQuad(false, false, selectedPosX+hotbarPosX+(offsetX/guiScale), selectedPosY+(hotbarPosY-(3.f/height))+((offsetY/guiScale)*aspectRatio), sizeX, sizeY, quadScale);
+        drawQuad(false, false, selectedPosX+hotbarPosX+(offsetX/guiScale), selectedPosY+(hotbarPosY-(3.f/height))+((offsetY/guiScale)*aspectRatio), sizeX, sizeY);
     }
 
     public static Vector2f confineToMenu(float posX, float posY, int sizeX, int sizeY) {
@@ -121,7 +120,7 @@ public class GUI {
         return Math.abs(height-Main.mouseInput.getCurrentPos().y())/height;
     }
 
-    public static void drawQuad(boolean centeredX, boolean centeredY, float x, float y, int scaleX, int scaleY, float quadScale) {
+    public static void drawQuad(boolean centeredX, boolean centeredY, float x, float y, int scaleX, int scaleY) {
         float xScale = (scaleX/guiScale);
         float yScale = (scaleY/guiScale)*aspectRatio;
         float xOffset = ((x*2)-1)+(centeredX ? 0 : xScale);
@@ -130,7 +129,7 @@ public class GUI {
         glUniform2i(Renderer.gui.uniforms.get("size"), scaleX, scaleY);
         glUniform2i(Renderer.gui.uniforms.get("scale"), (int)(xScale*width), (int)(yScale*height));
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(Renderer.gui.uniforms.get("model"), false, new Matrix4f().translate(xOffset, yOffset, 0.f).scale(xScale*quadScale, yScale*quadScale, 1).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(Renderer.gui.uniforms.get("model"), false, new Matrix4f().translate(xOffset, yOffset, 0.f).scale(xScale, yScale, 1).get(stack.mallocFloat(16)));
         }
         glBindVertexArray(Models.CUBE.vaoId);
         glEnableVertexAttribArray(0);
