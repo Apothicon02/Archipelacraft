@@ -29,4 +29,6 @@ public class Sounds {
     public static SFX WOOD_STEP2 = AudioController.loadSound("generic/sound/wood_step2.wav");
     public static SFX GLASS_STEP1 = AudioController.loadSound("generic/sound/glass_step1.wav");
     public static SFX GLASS_STEP2 = AudioController.loadSound("generic/sound/glass_step2.wav");
+    public static SFX METAL_SMALL_PLACE1 = AudioController.loadSound("generic/sound/metal_small_place1.wav");
+    public static SFX METAL_SMALL_PLACE2 = AudioController.loadSound("generic/sound/metal_small_place2.wav");
 }

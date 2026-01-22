@@ -1,6 +1,8 @@
 package org.archipelacraft.game.items;
 
 import org.archipelacraft.engine.Utils;
+import org.archipelacraft.game.audio.SFX;
+import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.rendering.Renderer;
 import org.archipelacraft.game.rendering.Texture3D;
 import org.archipelacraft.game.rendering.Textures;
@@ -34,17 +36,19 @@ public class ItemTypes {
 
     public static ItemType
             AIR = create(new ItemType("misc/texture/air").maxStackSize(1)),
-            STEEL_SCYTHE = create(new ItemType("tool/steel/texture/scythe").maxStackSize(1)),
-            STEEL_PICK = create(new ItemType("tool/steel/texture/pick").maxStackSize(1)),
-            STEEL_HATCHET = create(new ItemType("tool/steel/texture/hatchet").maxStackSize(1)),
-            STEEL_SPADE = create(new ItemType("tool/steel/texture/spade").maxStackSize(1)),
-            STEEL_HOE = create(new ItemType("tool/steel/texture/hoe").maxStackSize(1)),
+            STEEL_SCYTHE = create(new ItemType("tool/steel/texture/scythe").maxStackSize(1)).sfx(new ItemSFX(new SFX[]{Sounds.METAL_SMALL_PLACE1, Sounds.METAL_SMALL_PLACE2}, 0.3f, 0.7f)),
+            STEEL_PICK = create(new ItemType("tool/steel/texture/pick").maxStackSize(1)).sfx(new ItemSFX(new SFX[]{Sounds.METAL_SMALL_PLACE1, Sounds.METAL_SMALL_PLACE2}, 0.3f, 0.7f)),
+            STEEL_HATCHET = create(new ItemType("tool/steel/texture/hatchet").maxStackSize(1)).sfx(new ItemSFX(new SFX[]{Sounds.METAL_SMALL_PLACE1, Sounds.METAL_SMALL_PLACE2}, 0.3f, 0.7f)),
+            STEEL_SPADE = create(new ItemType("tool/steel/texture/spade").maxStackSize(1)).sfx(new ItemSFX(new SFX[]{Sounds.METAL_SMALL_PLACE1, Sounds.METAL_SMALL_PLACE2}, 0.3f, 0.7f)),
+            STEEL_HOE = create(new ItemType("tool/steel/texture/hoe").maxStackSize(1)).sfx(new ItemSFX(new SFX[]{Sounds.METAL_SMALL_PLACE1, Sounds.METAL_SMALL_PLACE2}, 0.3f, 0.7f)),
             APPLE = create(new ItemType("food/texture/apple").maxStackSize(2)),
             ORANGE = create(new ItemType("food/texture/orange").maxStackSize(2)),
             CHERRY = create(new ItemType("food/texture/cherry").maxStackSize(2)),
-            OAK_LOG = create(new ItemType("resource/texture/oak_log").maxStackSize(64)),
-            STICK = create(new ItemType("resource/texture/stick").maxStackSize(64)),
-            STONE = create(new ItemType("resource/texture/stone").maxStackSize(64));
+            OAK_LOG = create(new ItemType("resource/texture/oak_log").maxStackSize(64)).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1)),
+            STICK = create(new ItemType("resource/texture/stick").maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.33f, 1.33f))),
+            STONE = create(new ItemType("resource/texture/stone").maxStackSize(64)).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.5f, 0.75f)),
+            MARBLE = create(new ItemType("resource/texture/marble").maxStackSize(64)).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.45f, 0.85f)),
+            GLASS = create(new ItemType("component/texture/glass").maxStackSize(64)).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f));
 
     private static ItemType create(ItemType type) {
         itemTypeMap.put(itemTypeMap.size(), type);

@@ -71,19 +71,6 @@ public class Player {
         magmaSource = new Source(newPos, 0, 1, 0, 1);
         setPos(newPos);
         oldPos = newPos;
-
-        inv.setItem(0, 0, new Item().type(ItemTypes.STEEL_SCYTHE));
-        inv.setItem(1, 0, new Item().type(ItemTypes.STEEL_PICK));
-        inv.setItem(2, 0, new Item().type(ItemTypes.STEEL_HATCHET));
-        inv.setItem(3, 0, new Item().type(ItemTypes.STEEL_SPADE));
-        inv.setItem(4, 0, new Item().type(ItemTypes.STEEL_HOE));
-//        inv.setItem(7, 0, new Item().type(ItemTypes.APPLE).amount(1));
-        inv.setItem(8, 0, new Item().type(ItemTypes.ORANGE).amount(2));
-        inv.setItem(8, 1, new Item().type(ItemTypes.ORANGE).amount(1));
-        inv.setItem(8, 2, new Item().type(ItemTypes.CHERRY).amount(2));
-        inv.setItem(2, 3, new Item().type(ItemTypes.STICK).amount(60));
-//        inv.setItem(1, 3, new Item().type(ItemTypes.OAK_LOG).amount(54));
-//        inv.setItem(0, 3, new Item().type(ItemTypes.STONE).amount(64));
     }
 
     public void clearVars() {

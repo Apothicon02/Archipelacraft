@@ -12,6 +12,7 @@ import java.util.Map;
 public class BlockDrops {
     public static Map<BlockType, Map<Pair<Float, Integer>[], Item>> blockTypeDropTable = Map.ofEntries(
             Map.entry(BlockTypes.STONE, LootTables.STONE),
+            Map.entry(BlockTypes.MARBLE, LootTables.MARBLE),
             Map.entry(BlockTypes.OAK_LOG, LootTables.OAK_LOG),
             Map.entry(BlockTypes.SPRUCE_LEAVES, LootTables.LEAVES), Map.entry(BlockTypes.REDWOOD_LEAVES, LootTables.LEAVES),
             Map.entry(BlockTypes.OAK_LEAVES, LootTables.APPLE_LEAVES), Map.entry(BlockTypes.BIRCH_LEAVES, LootTables.APPLE_LEAVES), Map.entry(BlockTypes.WILLOW_LEAVES, LootTables.APPLE_LEAVES),

@@ -54,6 +54,7 @@ public class Main {
 
         player = new Player(new Vector3f(513, 93, 513));
         player.setCameraMatrix(new Matrix4f().get(new float[16]));
+        player.inv.init();
     }
 
     public static MouseInput mouseInput = null;

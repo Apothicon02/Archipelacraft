@@ -79,12 +79,12 @@ public class GUI {
                         if (item.amount > 1) {
                             glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                             char[] chars = String.valueOf(item.amount).toCharArray();
-                            float startOffset = 16-(chars.length*(charWidth*0.8f));
+                            float startOffset = 16-(chars.length*charWidth);
                             for (char character : chars) {
                                 int charAtlasOffset = getCharAtlasOffset(character);
                                 glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
                                 drawSlot(hotbarPosX, hotbarPosY, offX+startOffset, offY+1, 0, 0, charWidth, charHeight);
-                                startOffset += charWidth*0.8f;
+                                startOffset += charWidth;
                             }
                         }
                     }
@@ -101,12 +101,12 @@ public class GUI {
             if (Main.player.inv.cursorItem.amount > 1) {
                 glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                 char[] chars = String.valueOf(Main.player.inv.cursorItem.amount).toCharArray();
-                float startOffset = 16-(chars.length*(charWidth*0.8f));
+                float startOffset = 16-(chars.length*charWidth);
                 for (char character : chars) {
                     int charAtlasOffset = getCharAtlasOffset(character);
                     glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
                     drawSlot(offX, offY, 1+startOffset-(charWidth*1.5f), 1-charHeight, 0, 0, charWidth, charHeight);
-                    startOffset += charWidth*0.8f;
+                    startOffset += charWidth;
                 }
             }
         }
@@ -154,7 +154,7 @@ public class GUI {
     }
 
     public static int charWidth = 6;
-    public static int charHeight = 7;
+    public static int charHeight = 8;
     public static char[] alphabet = """
                 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.!?$:,;`'"()[]{}*=+-/\\^%&#~<>|
                 """.toCharArray();

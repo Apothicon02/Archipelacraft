@@ -1,5 +1,7 @@
 package org.archipelacraft.game.items;
 
+import org.joml.Vector3f;
+
 public class Item implements Cloneable {
     public int amount = 1;
     public ItemType type = ItemTypes.AIR;
@@ -20,5 +22,9 @@ public class Item implements Cloneable {
         } catch (CloneNotSupportedException e) {
             throw new AssertionError();
         }
+    }
+
+    public void playSound(Vector3f pos) {
+        type.sound.placed(pos);
     }
 }

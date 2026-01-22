@@ -39,7 +39,8 @@ public class BlockTypes {
                     .isCollidable(false).isFluidReplaceable(true).needsSupport(true))),
             KYANITE = create(List.of(Tags.rocks, Tags.crystals, Tags.blunt), new LightBlockType((LightBlockProperties) (new LightBlockProperties().g(2).b(4)
                     .blockSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1, new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1)))),
-            WHITE_STONE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())),
+            MARBLE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties()
+                    .blockSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 1f, 0.6f, new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 1f, 0.5f))),
             IGNEOUS = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())),
             STONE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())), //10
             GLASS = create(List.of(Tags.blunt), new BlockType(new BlockProperties().blockSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1,

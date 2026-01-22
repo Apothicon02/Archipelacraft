@@ -25,33 +25,34 @@ public class Inventory {
         }
         if (interactCD <= 0) {
             int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-            Item selItem = items[selSlotId];
+            Item selItem = getItem(selSlotId);
             if (cursorItem == null) {
                 if (selItem != null) {
+                    Item newSelItem = selItem.clone();
                     if (Main.isLMBClick) {
-                        cursorItem = selItem.clone();
-                        selItem = null;
+                        cursorItem = newSelItem.clone();
+                        newSelItem = null;
                         interactCD = 5;
                     } else if (Main.isRMBClick) {
-                        cursorItem = selItem.clone();
+                        cursorItem = newSelItem.clone();
                         float splitAmt = cursorItem.amount / 2.f;
                         int existAmt = (int) Math.floor(splitAmt);
                         if (existAmt <= 0) {
-                            selItem = null;
+                            newSelItem = null;
                         } else {
-                            selItem.amount = existAmt;
+                            newSelItem.amount = existAmt;
                         }
                         cursorItem.amount = (int) Math.ceil(splitAmt);
                         interactCD = 5;
                     }
-                    items[selSlotId] = selItem;
+                    setItem(selSlotId, newSelItem);
                 }
             } else if (Main.isLMBClick) {
                 if (selItem != null) {
                     if (cursorItem.type != selItem.type) { //swap item with slot
                         Item oldCursorItem = cursorItem.clone();
                         cursorItem = selItem.clone();
-                        items[selSlotId] = oldCursorItem;
+                        setItem(selSlotId, oldCursorItem);
                     } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
                         cursorItem = null;
                     }
@@ -86,14 +87,43 @@ public class Inventory {
         }
     }
 
+    public void init() {
+        setItem(0, 0, new Item().type(ItemTypes.STEEL_SCYTHE));
+        setItem(1, 0, new Item().type(ItemTypes.STEEL_PICK));
+        setItem(2, 0, new Item().type(ItemTypes.STEEL_HATCHET));
+        setItem(3, 0, new Item().type(ItemTypes.STEEL_SPADE));
+        setItem(4, 0, new Item().type(ItemTypes.STEEL_HOE));
+        setItem(7, 0, new Item().type(ItemTypes.APPLE).amount(1));
+        setItem(8, 0, new Item().type(ItemTypes.ORANGE).amount(2));
+        setItem(8, 1, new Item().type(ItemTypes.ORANGE).amount(1));
+        setItem(8, 2, new Item().type(ItemTypes.CHERRY).amount(2));
+        setItem(3, 3, new Item().type(ItemTypes.GLASS).amount(37));
+        setItem(3, 2, new Item().type(ItemTypes.GLASS).amount(1));
+        setItem(2, 3, new Item().type(ItemTypes.STICK).amount(60));
+        setItem(1, 3, new Item().type(ItemTypes.OAK_LOG).amount(54));
+        setItem(0, 3, new Item().type(ItemTypes.STONE).amount(64));
+        setItem(0, 2, new Item().type(ItemTypes.MARBLE).amount(64));
+    }
+
     public Item getItem(int index) {
         return items[index];
     }
     public Item getItem(int x, int y) {
-        return items[(y*9)+x];
+        return getItem((y*9)+x);
+    }
+    public void setItem(int slotId, Item item) {
+        Item existing = items[slotId];
+        if (item != null) {
+            if (existing == null || item.type != existing.type || item.amount != existing.amount) {
+                item.playSound(Main.player.pos);
+            }
+        } else if (existing != null) {
+            existing.playSound(Main.player.pos);
+        }
+        items[slotId] = item;
     }
     public void setItem(int x, int y, Item item) {
-        items[(y*9)+x] = item;
+        setItem((y*9)+x, item);
     }
 
     public void addToInventory(ArrayList<Item> items) {
@@ -109,7 +139,7 @@ public class Inventory {
         for (int y = 3; y >= 0; y--) { //first try merging with existing stacks
             for (int x = 0; x < 9; x++) {
                 int i = (y*9)+x;
-                Item slotItem = items[i];
+                Item slotItem = getItem(i);
                 if (slotItem != null && slotItem.type == item.type) {
                     if (addToSlot(i, item, item.amount) == null) {
                         item = null;
@@ -123,9 +153,9 @@ public class Inventory {
             for (int y = 3; y >= 0; y--) { //then try adding to an empty slot
                 for (int x = 0; x < 9; x++) {
                     int i = (y*9)+x;
-                    Item slotItem = items[i];
+                    Item slotItem = getItem(i);
                     if (slotItem == null || slotItem.type == ItemTypes.AIR) {
-                        items[i] = item.clone();
+                        setItem(i, item.clone());
                         break loop;
                     }
                 }
@@ -134,12 +164,13 @@ public class Inventory {
     }
 
     public Item addToSlot(int existingId, Item item, int amount) {
-        Item existing = items[existingId];
+        Item existing = getItem(existingId);
         if (existing == null || existing.amount <= 0 || existing.type == ItemTypes.AIR) {
             existing = item.clone();
             existing.amount = amount;
             item.amount -= amount;
         } else if (existing.type == item.type && existing.amount < existing.type.maxStackSize) {
+            existing = existing.clone();
             int space = Math.min(amount, Math.min(item.amount, existing.type.maxStackSize - existing.amount));
             if (space > 0) {
                 existing.amount += space;
@@ -149,7 +180,7 @@ public class Inventory {
         if (item.amount <= 0) {
             item = null;
         }
-        items[existingId] = existing;
+        setItem(existingId, existing);
         return item;
     }
 
@@ -161,7 +192,7 @@ public class Inventory {
                 if (row >= 4) {
                     row = 0;
                 }
-                newItems[(y*9)+x] = items[(row*9)+x];
+                newItems[(y*9)+x] = getItem(x, row);
             }
         }
         items = newItems;
@@ -174,7 +205,7 @@ public class Inventory {
                 if (row < 0) {
                     row = 3;
                 }
-                newItems[(y*9)+x] = items[(row*9)+x];
+                newItems[(y*9)+x] = getItem(x, row);
             }
         }
         items = newItems;
