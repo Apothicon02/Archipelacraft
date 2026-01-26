@@ -101,6 +101,12 @@ public class Main {
                     player.inv.open = !player.inv.open;
                 }
 
+                if (window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS)) {
+                    glfwSetWindowPos(window.getWindowHandle(), 0, 0);
+                    glfwSetWindowSize(window.getWindowHandle(), 2560, 1440);
+                    //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                }
+
                 if (player.inv.open) {
                     player.clearVars();
                     player.inv.tick(mouseInput);
@@ -137,12 +143,6 @@ public class Main {
                         Renderer.showUI = !Renderer.showUI;
                     }
 
-                    if (window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS)) {
-                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
-                        glfwSetWindowSize(window.getWindowHandle(), 2560, 1440);
-                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
-                    }
-
                     if (wasTDown && !window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS)) {
                         updateTime(100000L, 1);
                     }
@@ -151,6 +151,12 @@ public class Main {
                     }
                     if (wasDownDown && !window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS)) {
                         timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
+                    }
+
+                    if (window.isKeyPressed(GLFW_KEY_F3, GLFW_PRESS)) {
+                        if (wasCDown && !window.isKeyPressed(GLFW_KEY_C, GLFW_PRESS)) {
+                            player.creative = !player.creative;
+                        }
                     }
                 }
 

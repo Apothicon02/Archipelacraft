@@ -514,15 +514,14 @@ void main() {
     }
     vec4 lighting = vec4(-1);
     vec3 lightPos = ogPos + ogDir * size;
-    float tracedDepth = (nearClip/(1+max(0.f, dot(solidHitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1))));
+    //float tracedDepth = (nearClip/(1+max(0.f, dot(solidHitPos-ogPos, vec3(view[0][2], view[1][2], view[2][2])*-1))));
     //fragColor = pos.y > res.y/2 ? vec4(tracedDepth) : vec4(rasterDepth);
-    float depth = tracedDepth;
-    if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
-        vec3 rasterPos = worldPosFromDepth(rasterDepth);
+    vec3 rasterPos = worldPosFromDepth(rasterDepth);
+    if (distance(rasterPos, ogPos) < distance(solidHitPos-vec3(0.5), ogPos) || fragColor.a < 1.f) {
         if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
             fragColor.rgb = fromLinear(rasterColor).rgb;
             fragColor.a = rasterColor.a;
-            depth = rasterDepth;
+            normal = vec3(1);
             prevPos = worldPosFromDepth(rasterDepth-0.0001f);
             solidHitPos = rasterPos;
             if (fragColor.a > 0) {

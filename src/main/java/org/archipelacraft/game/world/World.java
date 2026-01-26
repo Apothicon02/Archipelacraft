@@ -291,14 +291,15 @@ public class World {
             }
         }
 
-        for (int x = (size/2)-20; x < size/2; x++) {
+        for (int x = (size/2)-19; x <= size/2; x++) {
             for (int z = (size/2)-20; z < size/2; z++) {
                 setBlock(x, 100, z, 15, 0);
-                if (x == (size/2)-20 || x == (size/2)-1 || z == (size/2)-20 || z == (size/2)-1) {
+                if (x == (size/2)-19 || x == (size/2) || z == (size/2)-20 || z == (size/2)-1) {
                     setBlock(x, 99, z, 15, 0);
                     setBlock(x, 98, z, 15, 0);
                     setBlock(x, 97, z, 15, 0);
                     setBlock(x, 96, z, 15, 0);
+                    setBlock(x, 95, z, 15, 0);
                 }
             }
         }

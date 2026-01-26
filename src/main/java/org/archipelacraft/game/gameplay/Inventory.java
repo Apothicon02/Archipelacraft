@@ -111,6 +111,9 @@ public class Inventory {
     public Item getItem(int x, int y) {
         return getItem((y*9)+x);
     }
+    public Item getItem(Vector2i xy) {
+        return getItem((xy.y*9)+xy.x);
+    }
     public void setItem(int slotId, Item item) {
         Item existing = items[slotId];
         if (item != null) {

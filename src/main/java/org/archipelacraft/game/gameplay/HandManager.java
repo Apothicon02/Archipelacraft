@@ -9,6 +9,7 @@ import org.archipelacraft.game.blocks.types.BlockProperties;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.FullBucketBlockType;
+import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
 
@@ -44,10 +45,10 @@ public class HandManager {
         }
         if ((!player.creative || (timeMillis - lastBlockBrokenOrPlaced >= 200)) && (!rmbDown || timeMillis - lastBlockPlaced >= 200)) { //two tenth second minimum delay between breaking blocks in creative or when placing blocks
             if (lmbDown || mmbDown || rmbDown) {
-                int blockTypeId = 0;//player.stack[0]+0;
-                int blockSubtypeId = 0;//player.stack[1]+0;
-                Vector2i handBlock = new Vector2i(blockTypeId, blockSubtypeId);
-                BlockType handType = BlockTypes.blockTypeMap.get(blockTypeId);
+                Item selectedItem = player.inv.getItem(player.inv.selectedSlot);
+                Vector2i blockToPlace = selectedItem.place();
+                Vector2i handBlock = new Vector2i(blockToPlace.x, blockToPlace.y);
+                BlockType handType = BlockTypes.blockTypeMap.get(blockToPlace.x);
                 Vector3f pos = lmbDown || mmbDown ? player.selectedBlock : player.prevSelectedBlock;
                 if (pos != null && World.inBounds((int) pos.x, (int) pos.y, (int) pos.z)) {
                     if (mmbDown) {
@@ -73,13 +74,13 @@ public class HandManager {
                             if (cornerData == -2147483521 || !player.crouching) {
                                 Vector3i intBreakingPos = new Vector3i((int) pos.x, (int) pos.y, (int) pos.z);
                                 boolean canBreak = breakingType.whilePlayerBreaking(intBreakingPos, blockBreaking, handBlock);
-                                if (canBreak && !Tags.cantBreakBlocks.tagged.contains(blockTypeId)) {
+                                if (canBreak && !Tags.cantBreakBlocks.tagged.contains(blockToPlace.x)) {
                                     if (!player.creative) {
                                         boolean sameBlock = blockStartedBreaking.x == (int)(pos.x) && blockStartedBreaking.y == (int)(pos.y) && blockStartedBreaking.z == (int)(pos.z);
                                         if (sameBlock) {
                                             if (blockStartedBreaking.w > 0) {
                                                 canBreak = false;
-                                                blockStartedBreaking.sub(0, 0, 0, (int) ((System.currentTimeMillis()-lastBlockBreakCheck)*breakingType.getTTBSpeed(blockTypeId)));
+                                                blockStartedBreaking.sub(0, 0, 0, (int) ((System.currentTimeMillis()-lastBlockBreakCheck)*breakingType.getTTBSpeed(blockToPlace.x)));
                                                 lastBlockBreakCheck = System.currentTimeMillis();
                                             }
                                         } else {
@@ -89,12 +90,14 @@ public class HandManager {
                                             BlockSFX sfx = breakingType.blockProperties.blockSFX;
                                             player.breakingSource.setPos(pos);
                                             player.breakingSource.setGain(sfx.placeGain);
-                                            player.breakingSource.setPitch(sfx.placePitch*(1+(Math.abs(1-breakingType.getTTBSpeed(blockTypeId))*0.8f)), 0);
+                                            player.breakingSource.setPitch(sfx.placePitch*(1+(Math.abs(1-breakingType.getTTBSpeed(blockToPlace.x))*0.8f)), 0);
                                             player.breakingSource.play(sfx.placeIds[(int) (Math.random() * sfx.placeIds.length)], true);
                                         }
                                     }
                                     if (canBreak) {
-                                        player.inv.addToInventory(BlockDrops.getDrops(blockBreaking));
+                                        if (!player.creative) {
+                                            player.inv.addToInventory(BlockDrops.getDrops(blockBreaking));
+                                        }
                                         blockStartedBreaking.set(0, 0, 0, 0);
                                         player.breakingSource.stop();
                                         //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, 0);
@@ -110,34 +113,34 @@ public class HandManager {
                             if (cornerData != 0) {
                                 cornerData &= (~(1 << (cornerIndex - 1)));
                                 //World.setCorner((int) pos.x, (int) pos.y, (int) pos.z, cornerData);
-                            } else if (false) {//player.stack[0] > 0) {
+                            } else if (blockToPlace.x > 0) {//player.stack[0] > 0) {
                                 Vector2i oldBlock = World.getBlock((int) pos.x, (int) pos.y, (int) pos.z);
                                 BlockProperties oldType = BlockTypes.blockTypeMap.get(oldBlock.x).blockProperties;
-                                BlockType blockType = BlockTypes.blockTypeMap.get(blockTypeId);
+                                BlockType blockType = BlockTypes.blockTypeMap.get(blockToPlace.x);
                                 if (blockType instanceof FullBucketBlockType && !player.crouching) {
-                                    blockTypeId = Fluids.fluidBucketMap.get(blockTypeId);
-                                    blockType = BlockTypes.blockTypeMap.get(blockTypeId);
+                                    blockToPlace.x = Fluids.fluidBucketMap.get(blockToPlace.x);
+                                    blockType = BlockTypes.blockTypeMap.get(blockToPlace.x);
                                 }
-                                if (oldType.isFluidReplaceable || (oldType.isFluid && !Tags.buckets.tagged.contains(blockTypeId) && !blockType.blockProperties.isFluidReplaceable && !blockType.blockProperties.isFluid)) {
-                                    World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, blockTypeId, blockSubtypeId, true, false, 1, false);
+                                if (oldType.isFluidReplaceable || (oldType.isFluid && !Tags.buckets.tagged.contains(blockToPlace.x) && !blockType.blockProperties.isFluidReplaceable && !blockType.blockProperties.isFluid)) {
+                                    World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, blockToPlace.x, blockToPlace.y, true, false, 1, false);
                                     if (!player.creative) {
                                         if (blockType.blockProperties.isFluid) {
-                                            blockTypeId = BlockTypes.getId(BlockTypes.BUCKET);
-                                            blockSubtypeId = 0;
+                                            blockToPlace.x = BlockTypes.getId(BlockTypes.BUCKET);
+                                            blockToPlace.y = 0;
                                             //StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
                                         } else {
                                             //StackManager.removeFirstEntryInStack();
                                         }
                                     }
-                                } else if (oldType.isFluid && blockTypeId == oldBlock.x) { //merge liquid
+                                } else if (oldType.isFluid && blockToPlace.x == oldBlock.x) { //merge liquid
                                     int room = 15-oldBlock.y;
-                                    int flow = Math.min(room, blockSubtypeId);
-                                    World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, blockTypeId, oldBlock.y+flow, true, false, 1, false);
+                                    int flow = Math.min(room, blockToPlace.y);
+                                    World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, blockToPlace.x, oldBlock.y+flow, true, false, 1, false);
                                     if (!player.creative) {
-                                        blockSubtypeId -= flow;
-                                        if (blockSubtypeId < 1) {
-                                            blockTypeId = BlockTypes.getId(BlockTypes.BUCKET);
-                                            blockSubtypeId = 0;
+                                        blockToPlace.y -= flow;
+                                        if (blockToPlace.y < 1) {
+                                            blockToPlace.x = BlockTypes.getId(BlockTypes.BUCKET);
+                                            blockToPlace.y = 0;
                                         }
                                         //StackManager.setFirstEntryInStack(new Vector2i(blockTypeId, blockSubtypeId));
                                     }

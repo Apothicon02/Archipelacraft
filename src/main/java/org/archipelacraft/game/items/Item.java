@@ -1,5 +1,6 @@
 package org.archipelacraft.game.items;
 
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class Item implements Cloneable {
@@ -26,5 +27,9 @@ public class Item implements Cloneable {
 
     public void playSound(Vector3f pos) {
         type.sound.placed(pos);
+    }
+
+    public Vector2i place() {
+        return type.blockToPlace;
     }
 }
