@@ -309,6 +309,7 @@ public class Renderer {
             glClearDepthf(0.f);
             glClear(GL_DEPTH_BUFFER_BIT);
             gui.bind();
+            glBindTextureUnit(0, Textures.sceneColor.id);
             glUniform2i(gui.uniforms.get("res"), window.getWidth(), window.getHeight());
             glUniform4f(gui.uniforms.get("color"), -1f, -1f, -1f, -1f);
             try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -319,6 +320,17 @@ public class Renderer {
             if (showUI) {
                 GUI.draw(window);
             }
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClearDepthf(0.f);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            raster.bind();
+            updateUniforms(raster, window);
+            glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrix().invert().translate(2.5f, -1.8f+(Main.player.bobbing*1.5f), -2).scale(0.55f, 0.55f, 0.9f).get(stack.mallocFloat(16)));
+            }
+            drawCube();
         }
     }
 }
