@@ -7,8 +7,6 @@ import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.audio.Source;
 import org.archipelacraft.game.blocks.Tags;
 import org.archipelacraft.game.blocks.types.BlockTypes;
-import org.archipelacraft.game.items.Item;
-import org.archipelacraft.game.items.ItemTypes;
 import org.archipelacraft.game.rendering.Renderer;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
@@ -270,19 +268,19 @@ public class Player {
         Vector3f newMovement = new Vector3f(0f);
         boolean canMove = (flying || onGround || blockIn.x == 1);
         if (forward || backward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (backward ? (realSuperSprint && realSprint ? 100 : (realSuperSprint ? 10 : 1.25f)) : (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraWithoutPitchOrProcessing()).translate(0, 0, (modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (backward ? (realSuperSprint && realSprint ? 100 : (realSuperSprint ? 10 : 1.25f)) : (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed)) : 1) * (forward ? 1.25f : -1)).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x,0, pos.z - translatedPos.z);
         }
         if (rightward || leftward) {
-            Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
+            Vector3f translatedPos = new Matrix4f(getCameraWithoutPitchOrProcessing()).translate((modifiedSpeed * (canMove ? 1 : 0.1f)) * (realSprint || realSuperSprint ? (flying ? (realSuperSprint ? 100 : 10) : sprintSpeed) : 1) * (rightward ? -0.85f : 0.85f), 0, 0).getTranslation(new Vector3f());
             newMovement.add(pos.x - translatedPos.x, 0, pos.z - translatedPos.z);
         }
         if (upward || downward) {
             if (flying) {
-                Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, speed * (downward ? (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1f) : -1.2f * (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1)), 0).getTranslation(new Vector3f());
+                Vector3f translatedPos = new Matrix4f(getCameraWithoutPitchOrProcessing()).translate(0, speed * (downward ? (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1f) : -1.2f * (realSprint || realSuperSprint ? (realSuperSprint ? 50 : 5) : 1)), 0).getTranslation(new Vector3f());
                 newMovement.add(0, pos.y - translatedPos.y, 0);
             } else if (blockIn.x == 1 && submerged) {
-                Vector3f translatedPos = new Matrix4f(getCameraMatrixWithoutPitch()).translate(0, speed * (upward ? -2 : downward ? 1 : 0), 0).getTranslation(new Vector3f());
+                Vector3f translatedPos = new Matrix4f(getCameraWithoutPitchOrProcessing()).translate(0, speed * (upward ? -2 : downward ? 1 : 0), 0).getTranslation(new Vector3f());
                 newMovement.add(0, pos.y - translatedPos.y, 0);
             }
         }
@@ -399,11 +397,20 @@ public class Player {
         camera.setViewMatrix(matrix);
         camera.move(0, camera.getViewMatrix().getTranslation(new Vector3f()).y(), 0, false);
     }
-    public Matrix4f getCameraMatrixWithoutPitch() {
+    public Matrix4f getCameraWithoutPitchOrProcessing() {
         Vector3f camOffset = new Vector3f();
         Matrix4f camMatrix = new Matrix4f(camera.getViewMatrixWithoutPitch());
         camMatrix.getTranslation(camOffset);
         return camMatrix.setTranslation(camOffset.x+pos.x, camOffset.y+pos.y, camOffset.z+pos.z);
+    }
+    public Matrix4f getCameraMatrixWithoutPitch() {
+        Vector3f camOffset = new Vector3f();
+        Matrix4f camMatrix = new Matrix4f(camera.getViewMatrixWithoutPitch());
+        camMatrix.getTranslation(camOffset);
+        camOffset = Utils.getInterpolatedVec(oldCamOffset, camOffset);
+        Vector3f interpolatedPos = Utils.getInterpolatedVec(oldPos, pos);
+        return camMatrix.setTranslation(camOffset.x+interpolatedPos.x, camOffset.y+eyeHeight+interpolatedPos.y+bobbing, camOffset.z+interpolatedPos.z)
+                .rotateX(Utils.getInterpolatedFloat(prevTilt, tilt)).rotateZ(Utils.getInterpolatedFloat(prevStrafe, strafe)).invert();
     }
     public Matrix4f getCameraMatrix() {
         Vector3f camOffset = new Vector3f();

@@ -46,7 +46,7 @@ public class HandManager {
         if ((!player.creative || (timeMillis - lastBlockBrokenOrPlaced >= 200)) && (!rmbDown || timeMillis - lastBlockPlaced >= 200)) { //two tenth second minimum delay between breaking blocks in creative or when placing blocks
             if (lmbDown || mmbDown || rmbDown) {
                 Item selectedItem = player.inv.getItem(player.inv.selectedSlot);
-                Vector2i blockToPlace = selectedItem.place();
+                Vector2i blockToPlace = selectedItem == null ? new Vector2i(0) : selectedItem.place();
                 Vector2i handBlock = new Vector2i(blockToPlace.x, blockToPlace.y);
                 BlockType handType = BlockTypes.blockTypeMap.get(blockToPlace.x);
                 Vector3f pos = lmbDown || mmbDown ? player.selectedBlock : player.prevSelectedBlock;

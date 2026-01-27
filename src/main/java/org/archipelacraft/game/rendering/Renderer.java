@@ -188,7 +188,7 @@ public class Renderer {
     }
     public static void drawDebugWheel() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512, 86, 512).scale(10).get(stack.mallocFloat(16)));//.translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512, 75, 512).scale(10).get(stack.mallocFloat(16)));//.translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
         }
         glUniform4f(raster.uniforms.get("color"), 0.5f, 0.5f, 0.5f, 1);
         glBindVertexArray(Models.TORUS.vaoId);
@@ -293,6 +293,11 @@ public class Renderer {
             drawStars();
             drawCenter();
             drawDebugWheel();
+            glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.45f+(Main.player.bobbing*0.325f), 0.f).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
+            }
+            drawCube();
 
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             glClearColor(0, 0, 0, 0);
@@ -325,12 +330,6 @@ public class Renderer {
             glClearDepthf(0.f);
             glClear(GL_DEPTH_BUFFER_BIT);
             raster.bind();
-            updateUniforms(raster, window);
-            glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
-            try(MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrix().invert().translate(2.5f, -1.8f+(Main.player.bobbing*1.5f), -2).scale(0.55f, 0.55f, 0.9f).get(stack.mallocFloat(16)));
-            }
-            drawCube();
         }
     }
 }

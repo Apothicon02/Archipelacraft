@@ -303,6 +303,7 @@ public class World {
                 }
             }
         }
+        setBlock(512, 95, 512, 15, 0);
 
 //        for (int x = 0; x < size; x++) {
 //            for (int y= 0; y < height; y++) {
