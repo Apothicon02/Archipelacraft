@@ -96,7 +96,9 @@ public class HandManager {
                                     }
                                     if (canBreak) {
                                         if (!player.creative) {
-                                            player.inv.addToInventory(BlockDrops.getDrops(blockBreaking));
+                                            for (Item item : BlockDrops.getDrops(blockBreaking)) {
+                                                World.items.add(item.moveTo(pos));
+                                            }
                                         }
                                         blockStartedBreaking.set(0, 0, 0, 0);
                                         player.breakingSource.stop();

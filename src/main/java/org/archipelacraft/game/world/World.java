@@ -6,6 +6,7 @@ import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.LightBlockType;
+import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Textures;
 import org.archipelacraft.game.world.shapes.Blob;
@@ -15,6 +16,7 @@ import org.joml.Vector3i;
 import org.joml.Vector4i;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -30,6 +32,7 @@ public class World {
     public static int halfSize = 1024/2;
     public static int height = 320;
     public static int seaLevel = 63;
+    public static ArrayList<Item> items = new ArrayList<>();
     public static short[] blocks = new short[(World.size*World.size*World.height)*2];
     public static short[] blocksLOD = new short[(World.size*World.size*World.height)/4];
     public static short[] blocksLOD2 = new short[(World.size*World.size*World.height)/16];
