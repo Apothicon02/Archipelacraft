@@ -294,19 +294,27 @@ public class Renderer {
             drawStars();
             drawCenter();
             drawDebugWheel();
-            for (Item item : World.items) {
-                glUniform4f(raster.uniforms.get("color"), 0.6f, 0.6f, 0.05f, 1);
-                try(MemoryStack stack = MemoryStack.stackPush()) {
-                    item.animate();
-                    glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover+0.05f, 0)).scale(0.2f).get(stack.mallocFloat(16)));
+            for (int i = 0; i < World.items.size(); i++) {
+                Item item = World.items.get(i);
+                if (item.timeExisted >= 600000) { //600000ms = 10m
+                    World.items.remove(i);
+                    i--;
+                } else {
+                    glUniform4f(raster.uniforms.get("color"), 0.6f, 0.6f, 0.05f, 1);
+                    try(MemoryStack stack = MemoryStack.stackPush()) {
+                        item.tick();
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover+0.05f, 0)).scale(0.2f).get(stack.mallocFloat(16)));
+                    }
+                    drawCube();
+                }
+            }
+            if (showUI) {
+                glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.45f + (Main.player.bobbing * 0.325f), 0.f).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
                 }
                 drawCube();
             }
-            glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
-            try(MemoryStack stack = MemoryStack.stackPush()) {
-                glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.45f+(Main.player.bobbing*0.325f), 0.f).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
-            }
-            drawCube();
 
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             glClearColor(0, 0, 0, 0);

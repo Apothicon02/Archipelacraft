@@ -7,6 +7,7 @@ import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.audio.Source;
 import org.archipelacraft.game.blocks.Tags;
 import org.archipelacraft.game.blocks.types.BlockTypes;
+import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.rendering.Renderer;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
@@ -162,6 +163,24 @@ public class Player {
     public float prevTilt = 0.f;
     public float tilt = 0.f;
     public void tick() {
+        pickupTick();
+        movementTick();
+    }
+
+    public void pickupTick() {
+        for (int i = 0; i < World.items.size(); i++) {
+            Item item = World.items.get(i);
+            if (item.timeExisted > 500 &&  item.pos.distance(pos) < 1.5f) { //500ms = 0.5s
+                item = inv.addToInventory(item);
+                if (item == null) {
+                    World.items.remove(i);
+                    i--;
+                }
+            }
+        }
+    }
+
+    public void movementTick() {
         if (!creative) {
             flying = false;
         }

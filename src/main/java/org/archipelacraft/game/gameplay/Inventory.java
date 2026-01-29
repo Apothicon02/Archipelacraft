@@ -137,7 +137,7 @@ public class Inventory {
         }
     }
 
-    public void addToInventory(Item item) {
+    public Item addToInventory(Item item) {
         loop:
         for (int y = 3; y >= 0; y--) { //first try merging with existing stacks
             for (int x = 0; x < 9; x++) {
@@ -164,6 +164,7 @@ public class Inventory {
                 }
             }
         }
+        return item;
     }
 
     public Item addToSlot(int existingId, Item item, int amount) {
