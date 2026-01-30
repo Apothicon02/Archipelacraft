@@ -277,7 +277,31 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                 prevPos = realPos + (hitNormal * 0.001f);
             }
         } else if (voxelPos.x < 8.0 && voxelPos.x >= 0.0 && voxelPos.y < 8.0 && voxelPos.y >= 0.0 && voxelPos.z < 8.0 && voxelPos.z >= 0.0) {
-            vec4 voxelColor = getVoxel(voxelPos.x, voxelPos.y, voxelPos.z, mapPos.x, mapPos.y, mapPos.z, block.x, block.y);
+            vec3 offsetVoxelPos = voxelPos;
+            if (block.x == 4 && offsetVoxelPos.y > 2.0) {
+                bool windDir = timeOfDay > 0.f;
+                float windStr = noise(((vec2(mapPos.x, mapPos.z)/48) + (float(time) * 100)) * (16+(float(time)/(float(time)/32))))+0.5f;
+                if (windStr > 0.8) {
+                    offsetVoxelPos.x = offsetVoxelPos.x+((offsetVoxelPos.y > 5 ? 3 : (offsetVoxelPos.y > 4 ? 2 : 1)) * (windDir ? -1 : 1));
+                    if (block.y < 2) {
+                        offsetVoxelPos.z = offsetVoxelPos.z+(offsetVoxelPos.y > 4 ? 2 : 1);
+                    }
+                } else if (windStr > 0.4) {
+                    offsetVoxelPos.x = offsetVoxelPos.x+((offsetVoxelPos.y > 5 ? 3 : (offsetVoxelPos.y > 4 ? 2 : 1)) * (windDir ? -1 : 1));
+                    if (block.y < 2) {
+                        offsetVoxelPos.z = offsetVoxelPos.z+(offsetVoxelPos.y > 4 ? 1 : 0);
+                    }
+                } else if (windStr > -0.2) {
+                    offsetVoxelPos.x = offsetVoxelPos.x+((offsetVoxelPos.y > 4 ? 2 : 1) * (windDir ? -1 : 1));
+                    if (block.y < 2) {
+                        offsetVoxelPos.z = offsetVoxelPos.z+(offsetVoxelPos.y > 4 ? 1 : 0);
+                    }
+                } else if (windStr > -0.8) {
+                    offsetVoxelPos.x = offsetVoxelPos.x+((offsetVoxelPos.y > 4 ? 1 : 0) * (windDir ? -1 : 1));
+                }
+                offsetVoxelPos.xz = clamp(offsetVoxelPos.xz, 0, 7);
+            }
+            vec4 voxelColor = getVoxel(offsetVoxelPos.x, offsetVoxelPos.y, offsetVoxelPos.z, mapPos.x, mapPos.y, mapPos.z, block.x, block.y);
             if (voxelColor.a > 0) {
                 vec3 voxelMini = ((voxelPos-voxelRayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
                 float voxelDist = max(voxelMini.x, max(voxelMini.y, voxelMini.z));
