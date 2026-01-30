@@ -42,19 +42,25 @@ public class Utils {
         short[] shortArr = new short[intArr.length*2];
         for (int i = 0; i < intArr.length; i++) {
             Vector2i data = unpackInt(intArr[i]);
-            shortArr[(i*2)+1] = (short) data.x;
-            shortArr[i*2] = (short) data.y;
+            shortArr[i*2] = (short) data.x;
+            shortArr[(i*2)+1] = (short) data.y;
         }
         return shortArr;
     }
-    public static int[] shortArrayToIntArray(short[] shortArr) {
-        int[] intArr = new int[shortArr.length/2];
-        int index = intArr.length;
-        for (int i = 0; i < intArr.length; i++) {
-            index--;
-            intArr[i] = packInts(shortArr[index*2], shortArr[(index*2)+1]);
+    public static byte[] shortArrayToByteArray(short[] shortArr) {
+        byte[] byteArr = new byte[shortArr.length*2];
+        for (int i = 0; i < shortArr.length; i++) {
+            byteArr[i*2] = (byte) (shortArr[i] >> 8);
+            byteArr[(i*2)+1] = (byte)shortArr[i];
         }
-        return intArr;
+        return byteArr;
+    }
+    public static short[] byteArrayToShortArray(byte[] byteArr) {
+        short[] shortArr = new short[byteArr.length/2];
+        for (int i = 0; i < shortArr.length; i++) {
+            shortArr[i] = (short)(((byteArr[i*2] & 0xFF) << 8) | (byteArr[(i*2)+1] & 0xFF));
+        }
+        return shortArr;
     }
     public static int[] byteArrayToIntArray(byte[] byteArr) {
         int[] intArr = new int[byteArr.length/4];

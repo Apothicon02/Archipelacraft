@@ -8,7 +8,6 @@ import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
-import org.archipelacraft.game.rendering.GUI;
 import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.LightHelper;
 import org.archipelacraft.game.world.World;
@@ -18,7 +17,11 @@ import org.joml.*;
 import org.archipelacraft.engine.*;
 import org.lwjgl.opengl.GL;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.lang.Math;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL45.*;
@@ -52,6 +55,7 @@ public class Main {
         World.generate();
         Models.loadModels();
 
+        //load player
         player = new Player(new Vector3f(522, 97, 500));
         player.setCameraMatrix(new Matrix4f().get(new float[16]));
         player.inv.init();
@@ -211,6 +215,7 @@ public class Main {
         tickTime=50/timeMul;
         timeMS = time;
         if (isClosing) {
+            World.saveWorld(World.worldPath+"/");
             glfwSetWindowShouldClose(window.getWindowHandle(), true);
         } else {
             if (!renderingEnabled) {
