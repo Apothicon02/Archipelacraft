@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.lang.Math;
 import java.nio.ByteBuffer;
 
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Renderer {

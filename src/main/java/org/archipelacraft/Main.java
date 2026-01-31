@@ -19,11 +19,6 @@ import org.archipelacraft.engine.*;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.lang.Math;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -38,25 +33,6 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();
-//        Frame frame = new Frame("Archipelacraft");
-//        frame.setBackground(Color.BLUE);
-//        frame.setSize(2560, 1440);
-//        frame.setUndecorated(true);
-//        Canvas canvas = new Canvas();
-//        canvas.setPreferredSize(new Dimension(2560, 1440));
-//        canvas.setMaximumSize(new Dimension(2560, 1440));
-//        canvas.setMinimumSize(new Dimension(2560, 1440));
-//        frame.add(canvas);
-//        frame.setVisible(true);
-//        frame.addWindowListener(new WindowAdapter() {
-//            @Override
-//            public void windowClosing(WindowEvent e) {
-//                System.exit(0);
-//            }
-//        });
-//        frame.pack();
-//        canvas.getGraphics().drawImage((Image) ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/generic/texture/screenshot.png")), 0, 0, null);
-        //while (true) {}
         Engine gameEng = new Engine("Archipelacraft", new Window.WindowOptions(), main);
         gameEng.start();
     }
