@@ -1,6 +1,7 @@
 package org.archipelacraft;
 
 import com.google.gson.Gson;
+import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.audio.Source;
@@ -15,13 +16,15 @@ import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Renderer;
 import org.joml.*;
 import org.archipelacraft.engine.*;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.lang.Math;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL45.*;
@@ -35,6 +38,25 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();
+//        Frame frame = new Frame("Archipelacraft");
+//        frame.setBackground(Color.BLUE);
+//        frame.setSize(2560, 1440);
+//        frame.setUndecorated(true);
+//        Canvas canvas = new Canvas();
+//        canvas.setPreferredSize(new Dimension(2560, 1440));
+//        canvas.setMaximumSize(new Dimension(2560, 1440));
+//        canvas.setMinimumSize(new Dimension(2560, 1440));
+//        frame.add(canvas);
+//        frame.setVisible(true);
+//        frame.addWindowListener(new WindowAdapter() {
+//            @Override
+//            public void windowClosing(WindowEvent e) {
+//                System.exit(0);
+//            }
+//        });
+//        frame.pack();
+//        canvas.getGraphics().drawImage((Image) ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/generic/texture/screenshot.png")), 0, 0, null);
+        //while (true) {}
         Engine gameEng = new Engine("Archipelacraft", new Window.WindowOptions(), main);
         gameEng.start();
     }
@@ -82,8 +104,9 @@ public class Main {
     boolean wasF1Down = false;
     boolean wasF4Down = false;
     boolean wasF5Down = false;
+    boolean wasF11Down = false;
     public static boolean isClosing = false;
-
+    public boolean isFullScreen = false;
     public static long lastBlockBroken = 0L;
     public static int reach = 50;
 
@@ -100,18 +123,31 @@ public class Main {
                 isRMBClick = wasRMBDown & !isRMBDown;
                 boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
                 boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
+                boolean isF11Down = window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS);
 
                 if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
                     player.inv.open = !player.inv.open;
                 }
 
-                if (window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS)) {
-                    glfwSetWindowPos(window.getWindowHandle(), 0, 0);
-                    glfwSetWindowSize(window.getWindowHandle(), 2560, 1440);
-                    //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                if (!isF11Down && wasF11Down) {
+                    if (!isFullScreen) {
+                        isFullScreen = true;
+                        //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_FALSE);
+                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
+                        GLFWVidMode mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+                        glfwSetWindowSize(window.getWindowHandle(), mode.width(), mode.height());
+                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                    } else {
+                        isFullScreen = false;
+                        //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_TRUE);
+                        glfwSetWindowPos(window.getWindowHandle(), 0, 32);
+                        glfwSetWindowSize(window.getWindowHandle(), Constants.width, Constants.height);
+                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                    }
                 }
 
                 if (player.inv.open) {
+                    glfwSetWindowAttrib(window.getWindowHandle(), GLFW_SCALE_FRAMEBUFFER, 10);
                     player.clearVars();
                     player.inv.tick(mouseInput);
                     if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
@@ -170,6 +206,7 @@ public class Main {
                 wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
                 wasF4Down = window.isKeyPressed(GLFW_KEY_F4, GLFW_PRESS);
                 wasF5Down = window.isKeyPressed(GLFW_KEY_F5, GLFW_PRESS);
+                wasF11Down = isF11Down;
                 wasQDown = window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS);
                 wasEDown = window.isKeyPressed(GLFW_KEY_E, GLFW_PRESS);
                 wasCDown = window.isKeyPressed(GLFW_KEY_C, GLFW_PRESS);

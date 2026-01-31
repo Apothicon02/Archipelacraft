@@ -5,6 +5,6 @@ public class Constants {
     public static final float Z_NEAR = 0.1f;
     public static final float Z_FAR = 100f;
 
-    public static int width = 2240;
-    public static int height = 1260;
+    public static int width = 192;
+    public static int height = 108;
 }

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.lang.Math;
 import java.nio.ByteBuffer;
 
+import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Renderer {
@@ -37,8 +38,6 @@ public class Renderer {
     public static float timeOfDay = 0.5f;
     public static double time = 0.5f;
 
-    public static boolean resized = false;
-
     public static void createGLDebugger() {
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -52,52 +51,55 @@ public class Renderer {
 
     public static boolean[] collisionData = new boolean[(1024*1024)+1024];
 
-    public static void initiallyFillTextures(Window window) throws IOException {
+    public static void initiallyFillTextures(Window window, boolean resized) throws IOException {
+        glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
+        float[] emptyData = new float[window.getWidth()*window.getHeight()*4];
         glBindTexture(GL_TEXTURE_2D, Textures.rasterColor.id);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, window.getWidth(), window.getHeight());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.rasterColor.id, 0);
 
         glBindTexture(GL_TEXTURE_2D, Textures.rasterDepth.id);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
 
-        BufferedImage atlasImage = ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/generic/texture/atlas.png"));
-        for (int x = 0; x < Textures.atlas.width; x++) {
-            for (int y = 0; y < 1024; y++) {
-                Color color = new Color(atlasImage.getRGB(x, y), true);
-                collisionData[(x*1024) + y] = color.getAlpha() != 0;
+        if (!resized) {
+            BufferedImage atlasImage = ImageIO.read(Renderer.class.getClassLoader().getResourceAsStream("assets/base/generic/texture/atlas.png"));
+            for (int x = 0; x < Textures.atlas.width; x++) {
+                for (int y = 0; y < 1024; y++) {
+                    Color color = new Color(atlasImage.getRGB(x, y), true);
+                    collisionData[(x * 1024) + y] = color.getAlpha() != 0;
+                }
             }
-        }
-        glBindTexture(GL_TEXTURE_3D, Textures.atlas.id);
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.atlas.width, Textures.atlas.height, ((Texture3D)Textures.atlas).depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, Utils.imageToBuffer(atlasImage));
+            glBindTexture(GL_TEXTURE_3D, Textures.atlas.id);
+            glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, Textures.atlas.width, Textures.atlas.height, ((Texture3D) Textures.atlas).depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, Utils.imageToBuffer(atlasImage));
 
-        glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
-        glTexStorage3D(GL_TEXTURE_3D, 5, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth);
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.blocks.width, Textures.blocks.height, ((Texture3D)Textures.blocks).depth, GL_RG_INTEGER, GL_SHORT, World.blocks);
-        glTexSubImage3D(GL_TEXTURE_3D, 2, 0, 0, 0, Textures.blocks.width/4, Textures.blocks.height/4, ((Texture3D)Textures.blocks).depth/4, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
-        glTexSubImage3D(GL_TEXTURE_3D, 4, 0, 0, 0, Textures.blocks.width/16, Textures.blocks.height/16, ((Texture3D)Textures.blocks).depth/16, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
+            glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
+            glTexStorage3D(GL_TEXTURE_3D, 5, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D) Textures.blocks).depth);
+            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.blocks.width, Textures.blocks.height, ((Texture3D) Textures.blocks).depth, GL_RG_INTEGER, GL_SHORT, World.blocks);
+            glTexSubImage3D(GL_TEXTURE_3D, 2, 0, 0, 0, Textures.blocks.width / 4, Textures.blocks.height / 4, ((Texture3D) Textures.blocks).depth / 4, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
+            glTexSubImage3D(GL_TEXTURE_3D, 4, 0, 0, 0, Textures.blocks.width / 16, Textures.blocks.height / 16, ((Texture3D) Textures.blocks).depth / 16, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
 
-        glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
-        glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth);
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.lights.width, Textures.lights.height, ((Texture3D)Textures.lights).depth, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(World.lights.length).put(World.lights).flip());
+            glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
+            glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D) Textures.lights).depth);
+            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.lights.width, Textures.lights.height, ((Texture3D) Textures.lights).depth, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(World.lights.length).put(World.lights).flip());
 
-        float[] mergedNoises = new float[(Textures.noises.width*Textures.noises.height)*4];
-        for (int x = 0; x < Textures.noises.width; x++) {
-            for (int y = 0; y < Textures.noises.height; y++) {
-                int pos = 4*((x*Textures.noises.height)+y);
-                mergedNoises[pos] = Noises.COHERERENT_NOISE.sample(x, y);
-                mergedNoises[pos+1] = Noises.WHITE_NOISE.sample(x, y);
+            float[] mergedNoises = new float[(Textures.noises.width * Textures.noises.height) * 4];
+            for (int x = 0; x < Textures.noises.width; x++) {
+                for (int y = 0; y < Textures.noises.height; y++) {
+                    int pos = 4 * ((x * Textures.noises.height) + y);
+                    mergedNoises[pos] = Noises.COHERERENT_NOISE.sample(x, y);
+                    mergedNoises[pos + 1] = Noises.WHITE_NOISE.sample(x, y);
+                }
             }
-        }
-        glBindTexture(GL_TEXTURE_2D, Textures.noises.id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Textures.noises.width, Textures.noises.height, 0, GL_RGBA, GL_FLOAT, mergedNoises);
+            glBindTexture(GL_TEXTURE_2D, Textures.noises.id);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, Textures.noises.width, Textures.noises.height, 0, GL_RGBA, GL_FLOAT, mergedNoises);
 
+            GUI.fillTexture();
+        }
         glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
         glBindTexture(GL_TEXTURE_2D, Textures.sceneColor.id);
-        glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, window.getWidth(), window.getHeight());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.sceneColor.id, 0);
-
-        GUI.fillTexture();
     }
 
     public static void bindTextures() {
@@ -141,7 +143,7 @@ public class Renderer {
 
         createBuffers();
         Textures.generate();
-        initiallyFillTextures(window);
+        initiallyFillTextures(window, false);
     }
 
     public static Vector3f sunPos = new Vector3f(0, World.height*2, 0);

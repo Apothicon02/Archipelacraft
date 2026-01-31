@@ -49,6 +49,8 @@ public class Window {
         } else {
             glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
             GLFWVidMode vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            Constants.width = (int)(vidMode.width()*0.8f);
+            Constants.height = (int)(vidMode.height()*0.8f);
             width = Constants.width;
             height = Constants.height;
         }
@@ -132,7 +134,7 @@ public class Window {
         try {
             glViewport(0, 0, width, height);
             resizeFunc.call();
-            Renderer.resized = true;
+            Renderer.initiallyFillTextures(this, true);
         } catch (Exception excp) {
             Logger.error("Error calling resize callback", excp);
         }
