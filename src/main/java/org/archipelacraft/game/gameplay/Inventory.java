@@ -1,7 +1,7 @@
 package org.archipelacraft.game.gameplay;
 
 import org.archipelacraft.Main;
-import org.archipelacraft.engine.MouseInput;
+import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.items.ItemTypes;
 import org.joml.Vector2i;
@@ -16,7 +16,7 @@ public class Inventory {
     public int prevRMBDeposit = -1;
     public int interactCD = 0;
 
-    public void tick(MouseInput mouseInput) {
+    public void tick(Window window) {
         if (interactCD > 0) {
             interactCD--;
         }
@@ -80,9 +80,9 @@ public class Inventory {
                 }
             }
         }
-        if (mouseInput.scroll.y > 0) {
+        if (window.scroll.y > 0) {
             scrollUp();
-        } else if (mouseInput.scroll.y < 0) {
+        } else if (window.scroll.y < 0) {
             scrollDown();
         }
     }

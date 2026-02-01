@@ -5,6 +5,8 @@ import io.github.libsdl4j.api.SdlSubSystemConst;
 import io.github.libsdl4j.api.event.SDL_Event;
 import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
 import io.github.libsdl4j.api.keyboard.SdlKeyboard;
+import io.github.libsdl4j.api.mouse.SDL_Button;
+import io.github.libsdl4j.api.mouse.SDL_ButtonMask;
 import io.github.libsdl4j.api.video.SDL_GLContext;
 import io.github.libsdl4j.api.video.SDL_Window;
 import org.archipelacraft.Main;
@@ -22,9 +24,14 @@ import static io.github.libsdl4j.api.Sdl.*;
 import static io.github.libsdl4j.api.error.SdlError.*;
 import static io.github.libsdl4j.api.event.SDL_EventType.*;
 import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
+import static io.github.libsdl4j.api.hints.SdlHints.SDL_SetHint;
+import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_MOUSE_AUTO_CAPTURE;
+import static io.github.libsdl4j.api.keyboard.SdlKeyboard.SDL_GetKeyboardState;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
 import static io.github.libsdl4j.api.log.SDL_LogCategory.*;
 import static io.github.libsdl4j.api.log.SdlLog.SDL_LogCritical;
+import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_GetMouseState;
+import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_SetRelativeMouseMode;
 import static io.github.libsdl4j.api.video.SDL_GLattr.*;
 import static io.github.libsdl4j.api.video.SDL_GLprofile.*;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.*;
@@ -36,11 +43,10 @@ public class Window {
     public static SDL_Window window;
     public static SDL_GLContext context;
     private int height;
-    private MouseInput mouseInput;
     private Callable<Void> resizeFunc;
     private int width;
     private final Matrix4f projectionMatrix;
-    public List<Integer> keys = new ArrayList<>();
+    public byte[] keys;
 
     public Window(String title, WindowOptions opts, Callable<Void> resizeFunc) {
         projectionMatrix = new Matrix4f();
@@ -84,7 +90,8 @@ public class Window {
         SDL_GL_SetSwapInterval(0); //disable vsync
         SDL_GL_MakeCurrent(Window.window, Window.context);
 
-        mouseInput = new MouseInput(this);
+        SDL_SetRelativeMouseMode(true);
+        input();
     }
 
     public void cleanup() {
@@ -94,60 +101,47 @@ public class Window {
     public int getHeight() {
         return height;
     }
-
-    public MouseInput getMouseInput() {
-        return mouseInput;
-    }
-
     public int getWidth() {
         return width;
     }
 
-    public long getWindowHandle() {
-        return 0;
-    }
-
     public boolean isKeyPressed(int keyCode) {
-        return keys.contains(keyCode);
+        return keys[keyCode] > 0;
     }
 
-    public void keyCallBack(int key, int action) {
-
-    }
-
+    public boolean leftButtonPressed = false;
+    public boolean middleButtonPressed = false;
+    public boolean rightButtonPressed = false;
+    public Vector2f scroll = new Vector2f(0);
     public Vector2f displVec = new Vector2f(0);
+    public Vector2f currentPos = new Vector2f(0);
+
+    public void input() {
+        leftButtonPressed = (SDL_GetMouseState(null, null)&SDL_ButtonMask.SDL_BUTTON_LMASK) > 0;
+        rightButtonPressed = (SDL_GetMouseState(null, null)&SDL_ButtonMask.SDL_BUTTON_RMASK) > 0;
+        middleButtonPressed = (SDL_GetMouseState(null, null)&SDL_ButtonMask.SDL_BUTTON_MMASK) > 0;
+        IntByReference length = new IntByReference();
+        keys = SDL_GetKeyboardState(length).getByteArray(0, length.getValue());
+    }
 
     public void pollEvents(SDL_Event event) {
         displVec.x = 0;
         displVec.y = 0;
+        scroll.set(0);
         while (SDL_PollEvent(event) != 0) {
             switch (event.type) {
                 case SDL_QUIT:
                     Main.isClosing = true;
                     break;
                 case SDL_MOUSEMOTION:
-                    boolean rotateX = event.motion.x != 0;
-                    boolean rotateY = event.motion.y != 0;
-                    if (rotateX) {
-                        displVec.y = event.motion.x;
-                    }
-                    if (rotateY) {
-                        displVec.x = event.motion.y;
-                    }
-                case SDL_KEYDOWN:
-                    if (!keys.contains(event.key.keysym.sym)) {
-                        keys.add(event.key.keysym.sym);
-                    }
+                    displVec.y = event.motion.xrel;
+                    displVec.x = event.motion.yrel;
+                    currentPos.x = event.motion.x;
+                    currentPos.y = event.motion.y;
                     break;
-                case SDL_KEYUP:
-                    if (keys.contains(event.key.keysym.sym)) {
-                        for (int i = 0; i < keys.size(); i++) {
-                            if (keys.get(i) == event.key.keysym.sym) {
-                                keys.remove(i);
-                                i--;
-                            }
-                        };
-                    }
+                case SDL_MOUSEWHEEL:
+                    scroll.x = event.wheel.x;
+                    scroll.y = event.wheel.y;
                     break;
                 default:
                     break;

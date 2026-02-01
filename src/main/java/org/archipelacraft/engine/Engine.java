@@ -13,7 +13,7 @@ public class Engine {
     public static final int TARGET_UPS = 75;
     public static final int TARGET_FPS = 360;
     private final Main main;
-    public final Window window;
+    public static Window window;
     private boolean running;
     private int targetFps;
     private int targetUps;
@@ -41,9 +41,6 @@ public class Engine {
     public List<Long> frameTimes = new ArrayList<>(List.of());
 
     private void run() throws Exception {
-        window.getMouseInput().input(window);
-        Main.mouseInput = window.getMouseInput();
-
         long initialNanoTime = System.nanoTime();
         long initialTime = System.currentTimeMillis();
         float timeU = 1000.0f / targetUps;

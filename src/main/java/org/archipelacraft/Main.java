@@ -2,6 +2,7 @@ package org.archipelacraft;
 
 import com.google.gson.Gson;
 import io.github.libsdl4j.api.keyboard.SdlKeyboard;
+import io.github.libsdl4j.api.scancode.SDL_Scancode;
 import io.github.libsdl4j.api.video.SDL_Window;
 import io.github.libsdl4j.api.video.SDL_WindowFlags;
 import org.archipelacraft.engine.Window;
@@ -24,7 +25,11 @@ import org.lwjgl.opengl.GL;
 import java.lang.Math;
 
 import static io.github.libsdl4j.api.Sdl.SDL_Quit;
+import static io.github.libsdl4j.api.hints.SdlHints.*;
+import static io.github.libsdl4j.api.hints.SdlHintsConst.*;
 import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_SetRelativeMouseMode;
+import static io.github.libsdl4j.api.scancode.SDL_Scancode.*;
 import static io.github.libsdl4j.api.video.SdlVideo.*;
 import static org.lwjgl.opengl.GL45.*;
 
@@ -63,7 +68,6 @@ public class Main {
         player.inv.init();
     }
 
-    public static MouseInput mouseInput = null;
     public static boolean isLMBClick = false;
     public static boolean isRMBClick = false;
     public static boolean wasLMBDown = false;
@@ -92,20 +96,19 @@ public class Main {
 
     public void input(Window window, long timeMillis, long diffTimeMillis) {
         if (!isClosing) {
-            if (window.isKeyPressed(SDLK_ESCAPE)) {
+            window.input();
+            if (window.isKeyPressed(SDL_SCANCODE_ESCAPE)) {
                 isClosing = true;
             } else {
-                window.getMouseInput().input(window);
-                mouseInput = window.getMouseInput();
-                boolean isLMBDown = mouseInput.isLeftButtonPressed();
-                boolean isRMBDown = mouseInput.isRightButtonPressed();
+                boolean isLMBDown = window.leftButtonPressed;
+                boolean isRMBDown = window.rightButtonPressed;
                 isLMBClick = wasLMBDown && !isLMBDown;
                 isRMBClick = wasRMBDown & !isRMBDown;
-                boolean isShiftDown = window.isKeyPressed(SDLK_LSHIFT);
-                boolean isCtrlDown = window.isKeyPressed(SDLK_LCTRL);
-                boolean isF11Down = window.isKeyPressed(SDLK_F11);
+                boolean isShiftDown = window.isKeyPressed(SDL_SCANCODE_LSHIFT);
+                boolean isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
+                boolean isF11Down = window.isKeyPressed(SDL_SCANCODE_F11);
 
-                if (wasTabDown && !window.isKeyPressed(SDLK_TAB)) {
+                if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
                     player.inv.open = !player.inv.open;
                 }
 
@@ -133,78 +136,79 @@ public class Main {
                 }
 
                 if (player.inv.open) {
+                    SDL_SetRelativeMouseMode(false);
                     player.clearVars();
-                    player.inv.tick(mouseInput);
-                    if (wasQDown && !window.isKeyPressed(SDLK_Q)) {
+                    player.inv.tick(window);
+                    if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
                         //drop item mouse cursor is holding or hovering over.
                     }
                 } else {
-                    Vector2f displVec = new Vector2f(window.displVec).mul(0.001f);
+                    SDL_SetRelativeMouseMode(true);
+                    Vector2f displVec = new Vector2f(window.displVec);
                     player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
                             (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
-                    HandManager.useHands(timeMillis, mouseInput);
+                    HandManager.useHands(timeMillis, window);
 
                     player.sprint = isShiftDown;
-                    player.superSprint = window.isKeyPressed(SDLK_CAPSLOCK);
-                    player.forward = window.isKeyPressed(SDLK_W);
-                    player.backward = window.isKeyPressed(SDLK_S);
-                    player.rightward = window.isKeyPressed(SDLK_D);
-                    player.leftward = window.isKeyPressed(SDLK_A);
-                    player.upward = window.isKeyPressed(SDLK_SPACE);
+                    player.superSprint = window.isKeyPressed(SDL_SCANCODE_CAPSLOCK);
+                    player.forward = window.isKeyPressed(SDL_SCANCODE_W);
+                    player.backward = window.isKeyPressed(SDL_SCANCODE_S);
+                    player.rightward = window.isKeyPressed(SDL_SCANCODE_D);
+                    player.leftward = window.isKeyPressed(SDL_SCANCODE_A);
+                    player.upward = window.isKeyPressed(SDL_SCANCODE_SPACE);
                     player.downward = isCtrlDown;
                     player.crouching = isCtrlDown;
-                    if (window.isKeyPressed(SDLK_SPACE) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
+                    if (window.isKeyPressed(SDL_SCANCODE_SPACE) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
                         player.jump = timeMillis;
                     }
-                    if (wasXDown && !window.isKeyPressed(SDLK_X)) {
+                    if (wasXDown && !window.isKeyPressed(SDL_SCANCODE_X)) {
                         player.flying = !player.flying;
                     }
 
-                    if (wasQDown && !window.isKeyPressed(SDLK_Q)) {
+                    if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
                         //drop item in hand.
                     }
 
-                    if (wasF1Down && !window.isKeyPressed(SDLK_F1)) {
+                    if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
                         Renderer.showUI = !Renderer.showUI;
                     }
 
-                    if (wasTDown && !window.isKeyPressed(SDLK_T)) {
+                    if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
                         updateTime(100000L, 1);
                     }
-                    if (wasUpDown && !window.isKeyPressed(SDLK_UP)) {
+                    if (wasUpDown && !window.isKeyPressed(SDL_SCANCODE_UP)) {
                         timeMul = Math.min(100, timeMul + (isShiftDown ? 10.f : 0.25f));
                     }
-                    if (wasDownDown && !window.isKeyPressed(SDLK_DOWN)) {
+                    if (wasDownDown && !window.isKeyPressed(SDL_SCANCODE_DOWN)) {
                         timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
                     }
 
-                    if (window.isKeyPressed(SDLK_F3)) {
-                        if (wasCDown && !window.isKeyPressed(SDLK_C)) {
+                    if (window.isKeyPressed(SDL_SCANCODE_F3)) {
+                        if (wasCDown && !window.isKeyPressed(SDL_SCANCODE_C)) {
                             player.creative = !player.creative;
                         }
                     }
                 }
 
-                mouseInput.scroll.set(0.d);
                 wasLMBDown = isLMBDown;
                 wasRMBDown = isRMBDown;
-                wasF1Down = window.isKeyPressed(SDLK_F1);
-                wasF4Down = window.isKeyPressed(SDLK_F4);
-                wasF5Down = window.isKeyPressed(SDLK_F5);
+                wasF1Down = window.isKeyPressed(SDL_SCANCODE_F1);
+                wasF4Down = window.isKeyPressed(SDL_SCANCODE_F4);
+                wasF5Down = window.isKeyPressed(SDL_SCANCODE_F5);
                 wasF11Down = isF11Down;
-                wasQDown = window.isKeyPressed(SDLK_Q);
-                wasEDown = window.isKeyPressed(SDLK_E);
-                wasCDown = window.isKeyPressed(SDLK_C);
-                wasSDown = window.isKeyPressed(SDLK_S);
-                wasRDown = window.isKeyPressed(SDLK_R);
-                wasWDown = window.isKeyPressed(SDLK_W);
-                wasTDown = window.isKeyPressed(SDLK_T);
-                wasXDown = window.isKeyPressed(SDLK_X);
-                wasTabDown = window.isKeyPressed(SDLK_TAB);
-                wasGDown = window.isKeyPressed(SDLK_G);
-                wasLDown = window.isKeyPressed(SDLK_L);
-                wasUpDown = window.isKeyPressed(SDLK_UP);
-                wasDownDown = window.isKeyPressed(SDLK_DOWN);
+                wasQDown = window.isKeyPressed(SDL_SCANCODE_Q);
+                wasEDown = window.isKeyPressed(SDL_SCANCODE_E);
+                wasCDown = window.isKeyPressed(SDL_SCANCODE_C);
+                wasSDown = window.isKeyPressed(SDL_SCANCODE_S);
+                wasRDown = window.isKeyPressed(SDL_SCANCODE_R);
+                wasWDown = window.isKeyPressed(SDL_SCANCODE_W);
+                wasTDown = window.isKeyPressed(SDL_SCANCODE_T);
+                wasXDown = window.isKeyPressed(SDL_SCANCODE_X);
+                wasTabDown = window.isKeyPressed(SDL_SCANCODE_TAB);
+                wasGDown = window.isKeyPressed(SDL_SCANCODE_G);
+                wasLDown = window.isKeyPressed(SDL_SCANCODE_L);
+                wasUpDown = window.isKeyPressed(SDL_SCANCODE_UP);
+                wasDownDown = window.isKeyPressed(SDL_SCANCODE_DOWN);
             }
         }
     }

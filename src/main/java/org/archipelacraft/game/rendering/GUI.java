@@ -1,6 +1,7 @@
 package org.archipelacraft.game.rendering;
 
 import org.archipelacraft.Main;
+import org.archipelacraft.engine.Engine;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.gameplay.HandManager;
@@ -95,8 +96,8 @@ public class GUI {
         if (Main.player.inv.cursorItem != null) { //cursor item
             ItemType itemType = Main.player.inv.cursorItem.type;
             glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), itemType.atlasOffset.x(), itemType.atlasOffset.y());
-            float offX = Main.mouseInput.getCurrentPos().x()/width;
-            float offY = Math.abs(height-(Main.mouseInput.getCurrentPos().y()))/height;
+            float offX = Engine.window.currentPos.x()/width;
+            float offY = Math.abs(height-(Engine.window.currentPos.y()))/height;
             drawQuad(true, true, offX, offY, ItemTypes.itemTexSize, ItemTypes.itemTexSize);
             if (Main.player.inv.cursorItem.amount > 1) {
                 glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
@@ -128,10 +129,10 @@ public class GUI {
         return (Math.clamp(cursor, pos, pos+size-(1f/width))-pos)*(1/size);
     }
     public static float cursorX() {
-        return Main.mouseInput.getCurrentPos().x()/width;
+        return Engine.window.currentPos.x()/width;
     }
     public static float cursorY() {
-        return Math.abs(height-Main.mouseInput.getCurrentPos().y())/height;
+        return Math.abs(height-Engine.window.currentPos.y())/height;
     }
 
     public static void drawQuad(boolean centeredX, boolean centeredY, float x, float y, int scaleX, int scaleY) {

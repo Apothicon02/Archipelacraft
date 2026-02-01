@@ -1,6 +1,6 @@
 package org.archipelacraft.game.gameplay;
 
-import org.archipelacraft.engine.MouseInput;
+import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.blocks.Fluids;
 import org.archipelacraft.game.blocks.Tags;
@@ -24,21 +24,21 @@ public class HandManager {
     public static int hotbarSlot = 0;
     public static Vector4i blockStartedBreaking = new Vector4i();
 
-    public static void useHands(long timeMillis, MouseInput mouseInput) {
-        if (mouseInput.scroll.y > 0) {
+    public static void useHands(long timeMillis, Window window) {
+        if (window.scroll.y > 0) {
             hotbarSlot++;
             if (hotbarSlot > 8) {
                 hotbarSlot = 0;
             }
-        } else if (mouseInput.scroll.y < 0) {
+        } else if (window.scroll.y < 0) {
             hotbarSlot--;
             if (hotbarSlot < 0) {
                 hotbarSlot = 8;
             }
         }
-        boolean lmbDown = mouseInput.isLeftButtonPressed();
-        boolean mmbDown = mouseInput.isMiddleButtonPressed();
-        boolean rmbDown = mouseInput.isRightButtonPressed();
+        boolean lmbDown = window.leftButtonPressed;
+        boolean mmbDown = window.middleButtonPressed;
+        boolean rmbDown = window.rightButtonPressed;
         if (!lmbDown) {
             player.breakingSource.stop();
             blockStartedBreaking.set(0, 0, 0, 0);
