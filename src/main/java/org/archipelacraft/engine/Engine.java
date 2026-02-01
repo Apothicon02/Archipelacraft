@@ -1,11 +1,12 @@
 package org.archipelacraft.engine;
 
-import org.lwjgl.glfw.GLFW;
+import io.github.libsdl4j.api.event.SDL_Event;
 import org.archipelacraft.Main;
-import org.archipelacraft.game.rendering.Renderer;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static io.github.libsdl4j.api.video.SdlVideo.SDL_SetWindowTitle;
 
 public class Engine {
 
@@ -54,9 +55,10 @@ public class Engine {
             frameTimes.add(15000000L);
         }
 
+        SDL_Event event = new SDL_Event();
         long updateTime = initialTime;
         while (running && !window.windowShouldClose()) {
-            window.pollEvents();
+            window.pollEvents(event);
 
             long now = System.currentTimeMillis();
             deltaUpdate += (now - initialTime) / timeU;
@@ -79,7 +81,7 @@ public class Engine {
                 framesUntilUpdate--;
                 if (framesUntilUpdate <= 0) {
                     double avgMS = 1000000000d/ArchipelacraftMath.averageLongs(frameTimes);
-                    GLFW.glfwSetWindowTitle(window.getWindowHandle(), "Archipelacraft | " +
+                    SDL_SetWindowTitle(Window.window, "Archipelacraft | " +
                             (int)Main.player.pos.x+"x,"+(int)Main.player.pos.y+"y,"+(int)Main.player.pos.z+"z | " +
                             (long)(avgMS) + "fps " +
                             String.format("%.1f", 1000d/(avgMS)) + "ms");

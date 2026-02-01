@@ -18,6 +18,7 @@ out vec4 fragColor;
 void main() {
     if (color.a == -1f) {
         fragColor = texture(scene_color, pos.xy, 0);
+        //fragColor = vec4(vec3(0.f, (((gl_FragCoord.x)/res.x)/4), (((gl_FragCoord.y)/res.y)/4)), 1);
     } else {
         vec4 guiColor = texelFetch(tex == 0 ? gui : item, ivec3(atlasOffset.x+(pos.x*size.x), atlasOffset.y+(abs(1-pos.y)*size.y), layer), 0)*color;
         if (guiColor.a > 0) {

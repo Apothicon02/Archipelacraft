@@ -1,11 +1,9 @@
 package org.archipelacraft.engine;
 
 import org.archipelacraft.Main;
-import org.archipelacraft.game.rendering.GUI;
 import org.joml.Vector2d;
 import org.joml.Vector2f;
 
-import static org.lwjgl.glfw.GLFW.*;
 
 public class MouseInput {
 
@@ -28,18 +26,18 @@ public class MouseInput {
         rightButtonPressed = false;
         inWindow = false;
 
-        glfwSetScrollCallback(windowHandle, (handle, xOffset,  yOffset) -> {
-            scroll.x += xOffset;
-            scroll.y += yOffset;
-        });
-        glfwSetCursorEnterCallback(windowHandle, (handle, entered) -> inWindow = entered);
-        glfwSetMouseButtonCallback(windowHandle, (handle, button, action, mode) -> {
-            leftButtonPressed = button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS;
-            middleButtonPressed = button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS;
-            rightButtonPressed = button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS;
-        });
-        glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+//        glfwSetScrollCallback(windowHandle, (handle, xOffset,  yOffset) -> {
+//            scroll.x += xOffset;
+//            scroll.y += yOffset;
+//        });
+//        glfwSetCursorEnterCallback(windowHandle, (handle, entered) -> inWindow = entered);
+//        glfwSetMouseButtonCallback(windowHandle, (handle, button, action, mode) -> {
+//            leftButtonPressed = button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS;
+//            middleButtonPressed = button == GLFW_MOUSE_BUTTON_MIDDLE && action == GLFW_PRESS;
+//            rightButtonPressed = button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS;
+//        });
+//        glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//        glfwSetInputMode(windowHandle, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
 
     public Vector2f getCurrentPos() {
@@ -53,7 +51,7 @@ public class MouseInput {
     public void input(Window window) {
         double[] x = new double[1];
         double[] y = new double[1];
-        glfwGetCursorPos(window.getWindowHandle(), x, y);
+        //glfwGetCursorPos(window.getWindowHandle(), x, y);
         currentPos.x = (float) x[0];
         currentPos.y = (float) y[0];
         displVec.x = 0;
@@ -72,11 +70,11 @@ public class MouseInput {
         }
         if (!Main.player.inv.open) {
             previousPos = new Vector2f(window.getWidth() / 2f, window.getHeight() / 2f);
-            glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            glfwSetCursorPos(window.getWindowHandle(), previousPos.x, previousPos.y);
+            //glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            //glfwSetCursorPos(window.getWindowHandle(), previousPos.x, previousPos.y);
         } else {
             previousPos = currentPos;
-            glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            //glfwSetInputMode(window.getWindowHandle(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         }
     }
 

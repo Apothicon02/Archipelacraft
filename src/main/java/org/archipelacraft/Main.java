@@ -1,6 +1,9 @@
 package org.archipelacraft;
 
 import com.google.gson.Gson;
+import io.github.libsdl4j.api.keyboard.SdlKeyboard;
+import io.github.libsdl4j.api.video.SDL_Window;
+import io.github.libsdl4j.api.video.SDL_WindowFlags;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.audio.BlockSFX;
@@ -16,12 +19,13 @@ import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Renderer;
 import org.joml.*;
 import org.archipelacraft.engine.*;
-import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import java.lang.Math;
 
-import static org.lwjgl.glfw.GLFW.*;
+import static io.github.libsdl4j.api.Sdl.SDL_Quit;
+import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
+import static io.github.libsdl4j.api.video.SdlVideo.*;
 import static org.lwjgl.opengl.GL45.*;
 
 public class Main {
@@ -82,13 +86,13 @@ public class Main {
     boolean wasF5Down = false;
     boolean wasF11Down = false;
     public static boolean isClosing = false;
-    public boolean isFullScreen = false;
+    public static boolean isFullScreen = false;
     public static long lastBlockBroken = 0L;
     public static int reach = 50;
 
     public void input(Window window, long timeMillis, long diffTimeMillis) {
         if (!isClosing) {
-            if (window.isKeyPressed(GLFW_KEY_ESCAPE, GLFW_PRESS)) {
+            if (window.isKeyPressed(SDLK_ESCAPE)) {
                 isClosing = true;
             } else {
                 window.getMouseInput().input(window);
@@ -97,80 +101,85 @@ public class Main {
                 boolean isRMBDown = mouseInput.isRightButtonPressed();
                 isLMBClick = wasLMBDown && !isLMBDown;
                 isRMBClick = wasRMBDown & !isRMBDown;
-                boolean isShiftDown = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT, GLFW_PRESS);
-                boolean isCtrlDown = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL, GLFW_PRESS);
-                boolean isF11Down = window.isKeyPressed(GLFW_KEY_F11, GLFW_PRESS);
+                boolean isShiftDown = window.isKeyPressed(SDLK_LSHIFT);
+                boolean isCtrlDown = window.isKeyPressed(SDLK_LCTRL);
+                boolean isF11Down = window.isKeyPressed(SDLK_F11);
 
-                if (wasTabDown && !window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS)) {
+                if (wasTabDown && !window.isKeyPressed(SDLK_TAB)) {
                     player.inv.open = !player.inv.open;
                 }
 
                 if (!isF11Down && wasF11Down) {
                     if (!isFullScreen) {
                         isFullScreen = true;
+                        SDL_SetWindowPosition(Window.window, 0, 0);
+                        SDL_SetWindowSize(Window.window, 2560, 1440);
+                        window.resized(2560, 1440);
                         //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_FALSE);
-                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
-                        GLFWVidMode mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-                        glfwSetWindowSize(window.getWindowHandle(), mode.width(), mode.height());
+//                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
+//                        GLFWVidMode mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+//                        glfwSetWindowSize(window.getWindowHandle(), mode.width(), mode.height());
                         //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
                     } else {
                         isFullScreen = false;
+                        SDL_SetWindowPosition(Window.window, 0, 32);
+                        SDL_SetWindowSize(Window.window, (int) (2560*0.8f), (int) (1440*0.8f));
+                        window.resized((int) (2560*0.8f), (int) (1440*0.8f));
                         //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_TRUE);
-                        glfwSetWindowPos(window.getWindowHandle(), 0, 32);
-                        glfwSetWindowSize(window.getWindowHandle(), Constants.width, Constants.height);
+//                        glfwSetWindowPos(window.getWindowHandle(), 0, 32);
+//                        glfwSetWindowSize(window.getWindowHandle(), Constants.width, Constants.height);
                         //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
                     }
                 }
 
                 if (player.inv.open) {
-                    glfwSetWindowAttrib(window.getWindowHandle(), GLFW_SCALE_FRAMEBUFFER, 10);
                     player.clearVars();
                     player.inv.tick(mouseInput);
-                    if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
+                    if (wasQDown && !window.isKeyPressed(SDLK_Q)) {
                         //drop item mouse cursor is holding or hovering over.
                     }
                 } else {
-                    Vector2f displVec = mouseInput.getDisplVec();
+                    Vector2f displVec = new Vector2f(window.displVec).mul(0.001f);
                     player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
                             (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
                     HandManager.useHands(timeMillis, mouseInput);
 
                     player.sprint = isShiftDown;
-                    player.superSprint = window.isKeyPressed(GLFW_KEY_CAPS_LOCK, GLFW_PRESS);
-                    player.forward = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
-                    player.backward = window.isKeyPressed(GLFW_KEY_S, GLFW_PRESS);
-                    player.rightward = window.isKeyPressed(GLFW_KEY_D, GLFW_PRESS);
-                    player.leftward = window.isKeyPressed(GLFW_KEY_A, GLFW_PRESS);
-                    player.upward = window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS);
+                    player.superSprint = window.isKeyPressed(SDLK_CAPSLOCK);
+                    player.forward = window.isKeyPressed(SDLK_W);
+                    player.backward = window.isKeyPressed(SDLK_S);
+                    player.rightward = window.isKeyPressed(SDLK_D);
+                    player.leftward = window.isKeyPressed(SDLK_A);
+                    player.upward = window.isKeyPressed(SDLK_SPACE);
                     player.downward = isCtrlDown;
                     player.crouching = isCtrlDown;
-                    if (window.isKeyPressed(GLFW_KEY_SPACE, GLFW_PRESS) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
+                    if (window.isKeyPressed(SDLK_SPACE) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
                         player.jump = timeMillis;
                     }
-                    if (wasXDown && !window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS)) {
+                    if (wasXDown && !window.isKeyPressed(SDLK_X)) {
                         player.flying = !player.flying;
                     }
 
-                    if (wasQDown && !window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS)) {
+                    if (wasQDown && !window.isKeyPressed(SDLK_Q)) {
                         //drop item in hand.
                     }
 
-                    if (wasF1Down && !window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS)) {
+                    if (wasF1Down && !window.isKeyPressed(SDLK_F1)) {
                         Renderer.showUI = !Renderer.showUI;
                     }
 
-                    if (wasTDown && !window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS)) {
+                    if (wasTDown && !window.isKeyPressed(SDLK_T)) {
                         updateTime(100000L, 1);
                     }
-                    if (wasUpDown && !window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS)) {
+                    if (wasUpDown && !window.isKeyPressed(SDLK_UP)) {
                         timeMul = Math.min(100, timeMul + (isShiftDown ? 10.f : 0.25f));
                     }
-                    if (wasDownDown && !window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS)) {
+                    if (wasDownDown && !window.isKeyPressed(SDLK_DOWN)) {
                         timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
                     }
 
-                    if (window.isKeyPressed(GLFW_KEY_F3, GLFW_PRESS)) {
-                        if (wasCDown && !window.isKeyPressed(GLFW_KEY_C, GLFW_PRESS)) {
+                    if (window.isKeyPressed(SDLK_F3)) {
+                        if (wasCDown && !window.isKeyPressed(SDLK_C)) {
                             player.creative = !player.creative;
                         }
                     }
@@ -179,23 +188,23 @@ public class Main {
                 mouseInput.scroll.set(0.d);
                 wasLMBDown = isLMBDown;
                 wasRMBDown = isRMBDown;
-                wasF1Down = window.isKeyPressed(GLFW_KEY_F1, GLFW_PRESS);
-                wasF4Down = window.isKeyPressed(GLFW_KEY_F4, GLFW_PRESS);
-                wasF5Down = window.isKeyPressed(GLFW_KEY_F5, GLFW_PRESS);
+                wasF1Down = window.isKeyPressed(SDLK_F1);
+                wasF4Down = window.isKeyPressed(SDLK_F4);
+                wasF5Down = window.isKeyPressed(SDLK_F5);
                 wasF11Down = isF11Down;
-                wasQDown = window.isKeyPressed(GLFW_KEY_Q, GLFW_PRESS);
-                wasEDown = window.isKeyPressed(GLFW_KEY_E, GLFW_PRESS);
-                wasCDown = window.isKeyPressed(GLFW_KEY_C, GLFW_PRESS);
-                wasSDown = window.isKeyPressed(GLFW_KEY_S, GLFW_PRESS);
-                wasRDown = window.isKeyPressed(GLFW_KEY_R, GLFW_PRESS);
-                wasWDown = window.isKeyPressed(GLFW_KEY_W, GLFW_PRESS);
-                wasTDown = window.isKeyPressed(GLFW_KEY_T, GLFW_PRESS);
-                wasXDown = window.isKeyPressed(GLFW_KEY_X, GLFW_PRESS);
-                wasTabDown = window.isKeyPressed(GLFW_KEY_TAB, GLFW_PRESS);
-                wasGDown = window.isKeyPressed(GLFW_KEY_G, GLFW_PRESS);
-                wasLDown = window.isKeyPressed(GLFW_KEY_L, GLFW_PRESS);
-                wasUpDown = window.isKeyPressed(GLFW_KEY_UP, GLFW_PRESS);
-                wasDownDown = window.isKeyPressed(GLFW_KEY_DOWN, GLFW_PRESS);
+                wasQDown = window.isKeyPressed(SDLK_Q);
+                wasEDown = window.isKeyPressed(SDLK_E);
+                wasCDown = window.isKeyPressed(SDLK_C);
+                wasSDown = window.isKeyPressed(SDLK_S);
+                wasRDown = window.isKeyPressed(SDLK_R);
+                wasWDown = window.isKeyPressed(SDLK_W);
+                wasTDown = window.isKeyPressed(SDLK_T);
+                wasXDown = window.isKeyPressed(SDLK_X);
+                wasTabDown = window.isKeyPressed(SDLK_TAB);
+                wasGDown = window.isKeyPressed(SDLK_G);
+                wasLDown = window.isKeyPressed(SDLK_L);
+                wasUpDown = window.isKeyPressed(SDLK_UP);
+                wasDownDown = window.isKeyPressed(SDLK_DOWN);
             }
         }
     }
@@ -229,7 +238,8 @@ public class Main {
         timeMS = time;
         if (isClosing) {
             World.saveWorld(World.worldPath+"/");
-            glfwSetWindowShouldClose(window.getWindowHandle(), true);
+            SDL_DestroyWindow(Window.window);
+            SDL_Quit();
         } else {
             if (!renderingEnabled) {
                 renderingEnabled = true;

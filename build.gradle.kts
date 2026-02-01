@@ -31,6 +31,7 @@ repositories {
 dependencies {
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
+    implementation("io.github.libsdl4j:libsdl4j:2.28.4-1.6")
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("org.tinylog:tinylog-api-kotlin:2.7.0")
     implementation("org.tinylog:tinylog-impl:2.7.0")
@@ -42,7 +43,6 @@ dependencies {
     implementation("org.lwjgl", "lwjgl-egl")
     implementation("org.lwjgl", "lwjgl-fmod")
     implementation("org.lwjgl", "lwjgl-freetype")
-    implementation("org.lwjgl", "lwjgl-glfw")
     implementation("org.lwjgl", "lwjgl-harfbuzz")
     implementation("org.lwjgl", "lwjgl-hwloc")
     implementation("org.lwjgl", "lwjgl-jawt")
@@ -86,7 +86,6 @@ dependencies {
     runtimeOnly("org.lwjgl", "lwjgl-assimp", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-bgfx", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-freetype", classifier = lwjglNatives)
-    runtimeOnly("org.lwjgl", "lwjgl-glfw", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-harfbuzz", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-hwloc", classifier = lwjglNatives)
     runtimeOnly("org.lwjgl", "lwjgl-jemalloc", classifier = lwjglNatives)
