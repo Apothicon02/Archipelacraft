@@ -340,9 +340,11 @@ public class Renderer {
             }
             glBindTextureUnit(0, Textures.sceneColor.id);
             draw();
+            GUI.updateGUI(window);
             if (showUI) {
                 GUI.draw(window);
             }
+            GUI.drawAlwaysVisible(window);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearDepthf(0.f);

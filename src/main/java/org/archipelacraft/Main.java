@@ -22,12 +22,10 @@ import org.joml.*;
 import org.archipelacraft.engine.*;
 import org.lwjgl.opengl.GL;
 
+import java.io.IOException;
 import java.lang.Math;
 
 import static io.github.libsdl4j.api.Sdl.SDL_Quit;
-import static io.github.libsdl4j.api.hints.SdlHints.*;
-import static io.github.libsdl4j.api.hints.SdlHintsConst.*;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.*;
 import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_SetRelativeMouseMode;
 import static io.github.libsdl4j.api.scancode.SDL_Scancode.*;
 import static io.github.libsdl4j.api.video.SdlVideo.*;
@@ -91,10 +89,10 @@ public class Main {
     boolean wasF11Down = false;
     public static boolean isClosing = false;
     public static boolean isFullScreen = false;
-    public static long lastBlockBroken = 0L;
-    public static int reach = 50;
+    public static boolean showDebug = true;
+    public static int uiState = 1;
 
-    public void input(Window window, long timeMillis, long diffTimeMillis) {
+    public void input(Window window, long timeMillis, long diffTimeMillis) throws IOException {
         if (!isClosing) {
             window.input();
             if (window.isKeyPressed(SDL_SCANCODE_ESCAPE)) {
@@ -107,6 +105,25 @@ public class Main {
                 boolean isShiftDown = window.isKeyPressed(SDL_SCANCODE_LSHIFT);
                 boolean isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
                 boolean isF11Down = window.isKeyPressed(SDL_SCANCODE_F11);
+
+                if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
+                    if (uiState == 0) {
+                        uiState = 1;
+                        Renderer.showUI = true;
+                        showDebug = true;
+                    } else if (uiState == 1) {
+                        uiState = 2;
+                        Renderer.showUI = true;
+                        showDebug = false;
+                    } else if (uiState == 2) {
+                        uiState = 0;
+                        Renderer.showUI = false;
+                        showDebug = false;
+                    }
+                }
+                if (window.isKeyPressed(SDL_SCANCODE_F3) && wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
+                    World.saveWorld(World.worldPath+"/");
+                }
 
                 if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
                     player.inv.open = !player.inv.open;
@@ -167,10 +184,6 @@ public class Main {
 
                     if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
                         //drop item in hand.
-                    }
-
-                    if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
-                        Renderer.showUI = !Renderer.showUI;
                     }
 
                     if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
@@ -241,7 +254,7 @@ public class Main {
         tickTime=50/timeMul;
         timeMS = time;
         if (isClosing) {
-            World.saveWorld(World.worldPath+"/");
+            //World.saveWorld(World.worldPath+"/");
             SDL_DestroyWindow(Window.window);
             SDL_Quit();
         } else {

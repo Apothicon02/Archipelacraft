@@ -39,12 +39,38 @@ public class GUI {
     public static int slotSizeY = 22;
     public static int enlargedSlotSize = 24;
 
-    public static void draw(Window window) {
+    public static void updateGUI(Window window) {
         glBindTextureUnit(1, Textures.gui.id);
         width = window.getWidth();
         height = window.getHeight();
         guiScale = width/4f;
         aspectRatio = (float) width / height;
+    }
+
+    public static void drawAlwaysVisible(Window window) {
+
+    }
+
+    public static void drawDebug(Window window) {
+        glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
+        drawText(0, 1, 2, -2-charHeight, ((long)(Engine.avgMS) + "fps ").toCharArray());
+        drawText(0, 1, 2, -2-(charHeight*2), (String.format("%.1f", 1000d/(Engine.avgMS)) + "ms").toCharArray());
+        drawText(0, 1, 2, -2-(charHeight*3), ((int)Main.player.pos.x+"x,"+(int)Main.player.pos.y+"y,"+(int)Main.player.pos.z+"z").toCharArray());
+    }
+
+    public static void drawText(float offsetX, float offsetY, float offsetPX, float offsetPY, char[] chars) {
+        float offset = 0;
+        for (char character : chars) {
+            int charAtlasOffset = getCharAtlasOffset(character);
+            if (charAtlasOffset >= 0) {
+                glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
+                drawSlot(offsetX, offsetY, offsetPX+offset, offsetPY, 0, 0, charWidth, charHeight);
+            }
+            offset += charWidth;
+        }
+    }
+
+    public static void draw(Window window) {
         hotbarPosX = (0.5f-((182/2f)/guiScale));
         hotbarPosY = 5.f/height;
         glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), 0, 0);
@@ -81,12 +107,7 @@ public class GUI {
                             glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                             char[] chars = String.valueOf(item.amount).toCharArray();
                             float startOffset = 16-(chars.length*charWidth);
-                            for (char character : chars) {
-                                int charAtlasOffset = getCharAtlasOffset(character);
-                                glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
-                                drawSlot(hotbarPosX, hotbarPosY, offX+startOffset, offY+1, 0, 0, charWidth, charHeight);
-                                startOffset += charWidth;
-                            }
+                            drawText(hotbarPosX, hotbarPosY, offX+startOffset, offY+1, chars);
                         }
                     }
                 }
@@ -103,13 +124,11 @@ public class GUI {
                 glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
                 char[] chars = String.valueOf(Main.player.inv.cursorItem.amount).toCharArray();
                 float startOffset = 16-(chars.length*charWidth);
-                for (char character : chars) {
-                    int charAtlasOffset = getCharAtlasOffset(character);
-                    glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), charAtlasOffset, 0);
-                    drawSlot(offX, offY, 1+startOffset-(charWidth*1.5f), 1-charHeight, 0, 0, charWidth, charHeight);
-                    startOffset += charWidth;
-                }
+                drawText(offX, offY, 1+startOffset-(charWidth*1.5f), 1-charHeight, chars);
             }
+        }
+        if (Main.showDebug) {
+            drawDebug(window);
         }
     }
 
@@ -160,8 +179,9 @@ public class GUI {
                 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.!?$:,;`'"()[]{}*=+-/\\^%&#~<>|
                 """.toCharArray();
     public static Map<Character, Integer> charAtlasOffsetIndex = new HashMap<>();
+    public static char space = " ".toCharArray()[0];
     public static int getCharAtlasOffset(char character) {
-        return charAtlasOffsetIndex.get(character);
+        return character == space ? -1 : charAtlasOffsetIndex.get(character);
     }
 
     public static void fillTexture() throws IOException {

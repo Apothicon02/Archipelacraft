@@ -39,6 +39,7 @@ public class Engine {
     }
 
     public List<Long> frameTimes = new ArrayList<>(List.of());
+    public static double avgMS = 0;
 
     private void run() throws Exception {
         long initialNanoTime = System.nanoTime();
@@ -77,11 +78,7 @@ public class Engine {
                 window.update();
                 framesUntilUpdate--;
                 if (framesUntilUpdate <= 0) {
-                    double avgMS = 1000000000d/ArchipelacraftMath.averageLongs(frameTimes);
-                    SDL_SetWindowTitle(Window.window, "Archipelacraft | " +
-                            (int)Main.player.pos.x+"x,"+(int)Main.player.pos.y+"y,"+(int)Main.player.pos.z+"z | " +
-                            (long)(avgMS) + "fps " +
-                            String.format("%.1f", 1000d/(avgMS)) + "ms");
+                    avgMS = 1000000000d/ArchipelacraftMath.averageLongs(frameTimes);
                     framesUntilUpdate = 40;
                 }
                 if (Main.renderingEnabled) {
