@@ -34,6 +34,7 @@ import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_GetMouseState;
 import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_SetRelativeMouseMode;
 import static io.github.libsdl4j.api.video.SDL_GLattr.*;
 import static io.github.libsdl4j.api.video.SDL_GLprofile.*;
+import static io.github.libsdl4j.api.video.SDL_WindowEventID.SDL_WINDOWEVENT_RESIZED;
 import static io.github.libsdl4j.api.video.SDL_WindowFlags.*;
 import static io.github.libsdl4j.api.video.SdlVideo.*;
 import static io.github.libsdl4j.api.video.SdlVideoConst.*;
@@ -90,6 +91,7 @@ public class Window {
         SDL_GL_SetSwapInterval(0); //disable vsync
         SDL_GL_MakeCurrent(Window.window, Window.context);
 
+        SDL_SetWindowResizable(window, true);
         SDL_SetRelativeMouseMode(true);
         input();
     }
@@ -132,6 +134,11 @@ public class Window {
             switch (event.type) {
                 case SDL_QUIT:
                     Main.isClosing = true;
+                    break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                        resized(event.window.data1, event.window.data2);
+                    }
                     break;
                 case SDL_MOUSEMOTION:
                     displVec.y = event.motion.xrel;
