@@ -453,8 +453,11 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     for (int i = 0; distance(rayPos, lod2Pos) < size/16 && i < size/8; i++) {
         mapPos = lod2Pos*16;
         bool inBound = inBounds(lod2Pos, lod2Size);
+        if (!inBound && rayDir.y >= 0.f) {
+            break;
+        }
         isInfiniteSea = !inBound && (lod2Pos.y == 3) && ogPos.y > 63;
-        int lod = isInfiniteSea ? 1 : (inBound ? texelFetch(blocks, ivec3(lod2Pos.x, lod2Pos.y, lod2Pos.z), 4).x : 0);
+        int lod = isInfiniteSea ? ((mapPos.y < 64) ? 1 : 0) : (inBound ? texelFetch(blocks, ivec3(lod2Pos.x, lod2Pos.y, lod2Pos.z), 4).x : 0);
         if (lod > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
