@@ -84,6 +84,7 @@ public class Main {
     boolean wasWDown = false;
     boolean wasQDown = false;
     boolean wasF1Down = false;
+    boolean wasF2Down = false;
     boolean wasF4Down = false;
     boolean wasF5Down = false;
     boolean wasF11Down = false;
@@ -120,6 +121,9 @@ public class Main {
                         Renderer.showUI = false;
                         showDebug = false;
                     }
+                }
+                if (wasF2Down && !window.isKeyPressed(SDL_SCANCODE_F2)) {
+                    Renderer.screenshot = true;
                 }
                 if (window.isKeyPressed(SDL_SCANCODE_F3) && wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
                     World.saveWorld(World.worldPath+"/");
@@ -206,6 +210,7 @@ public class Main {
                 wasLMBDown = isLMBDown;
                 wasRMBDown = isRMBDown;
                 wasF1Down = window.isKeyPressed(SDL_SCANCODE_F1);
+                wasF2Down = window.isKeyPressed(SDL_SCANCODE_F2);
                 wasF4Down = window.isKeyPressed(SDL_SCANCODE_F4);
                 wasF5Down = window.isKeyPressed(SDL_SCANCODE_F5);
                 wasF11Down = isF11Down;

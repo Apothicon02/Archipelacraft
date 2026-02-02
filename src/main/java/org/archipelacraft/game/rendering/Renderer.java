@@ -7,14 +7,19 @@ import org.archipelacraft.game.world.World;
 import org.joml.*;
 import org.archipelacraft.engine.*;
 import org.archipelacraft.engine.Window;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryStack;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.color.ColorSpace;
+import java.awt.image.*;
+import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -36,6 +41,7 @@ public class Renderer {
     public static int aoQuality = 2;
     public static float timeOfDay = 0.5f;
     public static double time = 0.5f;
+    public static boolean screenshot = false;
 
     public static void createGLDebugger() {
         glEnable(GL_DEBUG_OUTPUT);
@@ -328,6 +334,7 @@ public class Renderer {
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
 
             draw();
+            screenshot(window);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glClearDepthf(0.f);
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -350,6 +357,47 @@ public class Renderer {
             glClearDepthf(0.f);
             glClear(GL_DEPTH_BUFFER_BIT);
             raster.bind();
+        }
+    }
+
+    public static void screenshot(Window window) throws IOException {
+        if (screenshot) {
+            screenshot = false;
+            float[] data = new float[4 * window.getWidth() * window.getHeight()];
+            glReadPixels(0, 0, window.getWidth(), window.getHeight(), GL_RGBA, GL_FLOAT, data);
+
+            ColorModel colorModel = new ComponentColorModel(
+                    ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                    new int[]{10, 10, 10},               // bits per component
+                    false,              // no alpha
+                    false,              // not premultiplied
+                    Transparency.OPAQUE,
+                    DataBuffer.TYPE_USHORT // store in 16-bit unsigned short
+            );
+            SampleModel sampleModel = new PixelInterleavedSampleModel(
+                    DataBuffer.TYPE_USHORT,
+                    window.getWidth(),
+                    window.getHeight(),
+                    3,                  // number of bands
+                    window.getWidth() * 3,          // scanline stride
+                    new int[]{0, 1, 2}  // band offsets
+            );
+            DataBuffer dataBuffer = new DataBufferUShort(window.getWidth() * window.getHeight() * 3);
+            WritableRaster imgRaster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+            BufferedImage image = new BufferedImage(colorModel, imgRaster, false, null);
+            int i = 0;
+            for (int h = window.getHeight()-1; h >= 0; h--) {
+                for (int w = 0; w < window.getWidth(); w++) {
+                    imgRaster.setPixel(w, h, new int[]{(int)(data[i++]*65534), (int)(data[i++]*65534), (int)(data[i++]*65534)});
+                    i++;
+                }
+            }
+            String dir = Main.mainFolder+"screenshots/";
+            Path path = Path.of(dir);
+            Files.createDirectories(path);
+            int filesInDir = path.toFile().list().length;
+            File file = new File(dir+filesInDir+".png");
+            ImageIO.write(image, "png", file);
         }
     }
 }
