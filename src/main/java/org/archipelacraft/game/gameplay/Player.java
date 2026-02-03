@@ -12,7 +12,12 @@ import org.archipelacraft.game.rendering.Renderer;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
 
+import java.io.*;
 import java.lang.Math;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static org.archipelacraft.game.gameplay.Inventory.invPath;
 
 public class Player {
     private final Camera camera = new Camera();
@@ -70,6 +75,61 @@ public class Player {
         magmaSource = new Source(newPos, 0, 1, 0, 1);
         setPos(newPos);
         oldPos = newPos;
+    }
+
+    public static Path plrPath = Path.of(Main.mainFolder+"world0/player.data");
+    public static void create() throws IOException {
+        if (Files.exists(plrPath)) {
+            int[] plrData = Utils.flipIntArray(Utils.byteArrayToIntArray(new FileInputStream(plrPath.toFile()).readAllBytes()));
+            int i = 0;
+            Main.player = new Player(new Vector3f(plrData[i++]/1000f, plrData[i++]/1000f, plrData[i++]/1000f));
+            float[] camMatrix = new float[16];
+            for (int cI = 0; cI < 16; cI++) {
+                camMatrix[cI] = plrData[i++]/1000f;
+            }
+            Main.player.setCameraMatrix(camMatrix);
+            Main.player.camera.pitch.set(plrData[i++]/1000f, plrData[i++]/1000f, plrData[i++]/1000f, plrData[i++]/1000f);
+            Main.player.movement.set(plrData[i++]/1000f, plrData[i++]/1000f, plrData[i++]/1000f);
+            Main.player.vel.set(plrData[i++]/1000f, plrData[i++]/1000f, plrData[i++]/1000f);
+            Main.player.creative = plrData[i++] != 0;
+            Main.player.flying = plrData[i++] != 0;
+        } else {
+            Main.player = new Player(new Vector3f(522, 97, 500));
+            Main.player.setCameraMatrix(new Matrix4f().get(new float[16]));
+        }
+        if (Files.exists(invPath)) {
+            Main.player.inv.load();
+        } else {
+            Main.player.inv.init();
+        }
+    }
+    public void save() throws IOException {
+        FileOutputStream out = new FileOutputStream(plrPath.toFile());
+        float[] cam = new float[16];
+        camera.getViewMatrixWithoutPitch().get(cam);
+        int[] data = new int[31];
+        int i = 0;
+        data[i++] = (int)(pos.x()*1000);
+        data[i++] = (int)(pos.y()*1000);
+        data[i++] = (int)(pos.z()*1000);
+        for (int cI = 0; cI < 16; cI++) {
+            data[i++] = (int)(cam[cI]*1000);
+        }
+        data[i++] = (int)(camera.pitch.x()*1000);
+        data[i++] = (int)(camera.pitch.y()*1000);
+        data[i++] = (int)(camera.pitch.z()*1000);
+        data[i++] = (int)(camera.pitch.w()*1000);
+        data[i++] = (int)(movement.x()*1000);
+        data[i++] = (int)(movement.y()*1000);
+        data[i++] = (int)(movement.z()*1000);
+        data[i++] = (int)(vel.x()*1000);
+        data[i++] = (int)(vel.y()*1000);
+        data[i++] = (int)(vel.z()*1000);
+        data[i++] = Main.player.creative ? 1 : 0;
+        data[i++] = Main.player.flying ? 1 : 0;
+        out.write(Utils.intArrayToByteArray(data));
+        out.close();
+        inv.save();
     }
 
     public void clearVars() {

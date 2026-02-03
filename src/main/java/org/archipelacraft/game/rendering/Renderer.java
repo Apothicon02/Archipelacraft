@@ -352,11 +352,6 @@ public class Renderer {
                 GUI.draw(window);
             }
             GUI.drawAlwaysVisible(window);
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glClearDepthf(0.f);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            raster.bind();
         }
     }
 

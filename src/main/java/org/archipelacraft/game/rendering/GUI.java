@@ -48,7 +48,10 @@ public class GUI {
     }
 
     public static void drawAlwaysVisible(Window window) {
-
+        if (Main.isSaving) {
+            glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
+            drawText(0, 0, 2, 2, "Saving data...".toCharArray());
+        }
     }
 
     public static void drawDebug(Window window) {

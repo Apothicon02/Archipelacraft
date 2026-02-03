@@ -4,14 +4,22 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class Item implements Cloneable {
-    public int amount = 1;
+    public int dataLength = 6; //excludes this int
     public ItemType type = ItemTypes.AIR;
     public Vector3f pos = new Vector3f();
+    public int amount = 1;
     public float rot = 0.f;
     public float hover = 0.f;
     public boolean hoverMeridiem = false;
-    public long timeExisted = 0;
+    public int timeExisted = 0;
     public long prevTickTime = 0;
+
+    public static Item load(int[] data, int offset) {
+        return new Item().type(ItemTypes.itemTypeMap.get(data[offset++])).moveTo(new Vector3f(data[offset++]/100f, data[offset++]/100f, data[offset++]/100f)).amount(data[offset++]).timeExisted(data[offset++]);
+    }
+    public int[] getData() {
+        return new int[]{dataLength, ItemTypes.getId(type), (int)pos.x()*100, (int)pos.y()*100, (int)pos.z()*100, amount, timeExisted};
+    }
 
     public void tick() {
         long time = System.currentTimeMillis();
@@ -49,6 +57,10 @@ public class Item implements Cloneable {
     }
     public Item amount(int amount) {
         this.amount = amount;
+        return this;
+    }
+    public Item timeExisted(int newTime) {
+        this.timeExisted = newTime;
         return this;
     }
 

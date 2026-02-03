@@ -1,10 +1,6 @@
 package org.archipelacraft;
 
 import com.google.gson.Gson;
-import io.github.libsdl4j.api.keyboard.SdlKeyboard;
-import io.github.libsdl4j.api.scancode.SDL_Scancode;
-import io.github.libsdl4j.api.video.SDL_Window;
-import io.github.libsdl4j.api.video.SDL_WindowFlags;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.audio.BlockSFX;
@@ -60,10 +56,7 @@ public class Main {
         World.generate();
         Models.loadModels();
 
-        //load player
-        player = new Player(new Vector3f(522, 97, 500));
-        player.setCameraMatrix(new Matrix4f().get(new float[16]));
-        player.inv.init();
+        Player.create();
     }
 
     public static boolean isLMBClick = false;
@@ -89,6 +82,8 @@ public class Main {
     boolean wasF5Down = false;
     boolean wasF11Down = false;
     public static boolean isClosing = false;
+    public static boolean isSaving = false;
+    public static boolean shouldActuallySave = false;
     public static boolean isFullScreen = false;
     public static boolean showDebug = true;
     public static int uiState = 1;
@@ -126,7 +121,7 @@ public class Main {
                     Renderer.screenshot = true;
                 }
                 if (window.isKeyPressed(SDL_SCANCODE_F3) && wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
-                    World.saveWorld(World.worldPath+"/");
+                    isSaving = true;
                 }
 
                 if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
@@ -311,6 +306,16 @@ public class Main {
                 }
                 Renderer.render(window);
                 LightHelper.iterateLightQueue();
+                if (isSaving) {
+                    if (shouldActuallySave) {
+                        World.saveWorld(World.worldPath + "/");
+                        player.save();
+                        isSaving = false;
+                        shouldActuallySave = false;
+                    } else {
+                        shouldActuallySave = true;
+                    }
+                }
                 timePassed += diffTimeMillis;
             }
         }

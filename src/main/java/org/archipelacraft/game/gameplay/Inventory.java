@@ -1,11 +1,18 @@
 package org.archipelacraft.game.gameplay;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.archipelacraft.Main;
+import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.items.ItemTypes;
 import org.joml.Vector2i;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Inventory {
@@ -103,6 +110,40 @@ public class Inventory {
         setItem(1, 3, new Item().type(ItemTypes.OAK_LOG).amount(54));
         setItem(0, 3, new Item().type(ItemTypes.STONE).amount(64));
         setItem(0, 2, new Item().type(ItemTypes.MARBLE).amount(64));
+    }
+
+    public static Path invPath = Path.of(Main.mainFolder+"world0/inv.data");
+
+    public void load() throws IOException {
+        int[] data = Utils.flipIntArray(Utils.byteArrayToIntArray(new FileInputStream(invPath.toFile()).readAllBytes()));
+        int slot = 0;
+        for (int i = 0; i < data.length;) {
+            int itemDataLength = data[i++];
+            if (itemDataLength > 0) {
+                items[slot++] = Item.load(data, i);
+                i += itemDataLength;
+            } else {
+                slot++;
+            }
+        }
+    }
+    public void save() throws IOException {
+        IntArrayList data = new IntArrayList();
+        int i = 0;
+        for (Item item : items) {
+            if (item == null) {
+                data.add(i, 0);
+            } else {
+                int[] itemData = item.getData();
+                data.addElements(i, itemData);
+                i += itemData[0];
+            }
+            i++;
+        }
+
+        FileOutputStream out = new FileOutputStream(invPath.toFile());
+        out.write(Utils.intArrayToByteArray(data.toIntArray()));
+        out.close();
     }
 
     public Item getItem(int index) {
