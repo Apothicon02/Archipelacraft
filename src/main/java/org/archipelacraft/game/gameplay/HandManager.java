@@ -97,7 +97,9 @@ public class HandManager {
                                     if (canBreak) {
                                         if (!player.creative) {
                                             for (Item item : BlockDrops.getDrops(blockBreaking)) {
-                                                World.items.add(item.moveTo(new Vector3f(pos).add(0, 0.3f, 0)));
+                                                World.items.add(item.moveTo(new Vector3f((float)(Math.floor(pos.x())+(Math.clamp(pos.x-Math.floor(pos.x), 0.2, 0.8)/2)),
+                                                        (float)(Math.floor(pos.y())+(Math.clamp(pos.y-Math.floor(pos.y), 0.2, 0.8)/2)),
+                                                        (float)(Math.floor(pos.z())+(Math.clamp(pos.z-Math.floor(pos.z), 0.2, 0.8)/2)))));
                                             }
                                         }
                                         blockStartedBreaking.set(0, 0, 0, 0);

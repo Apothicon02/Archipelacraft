@@ -161,10 +161,14 @@ public class Inventory {
             if (existing == null || item.type != existing.type || item.amount != existing.amount) {
                 item.playSound(Main.player.pos);
             }
+            item.prevTickTime(System.currentTimeMillis());
         } else if (existing != null) {
             existing.playSound(Main.player.pos);
         }
         items[slotId] = item;
+    }
+    public void setItem(Vector2i xy, Item item) {
+        setItem((xy.y*9)+xy.x, item);
     }
     public void setItem(int x, int y, Item item) {
         setItem((y*9)+x, item);
@@ -185,8 +189,8 @@ public class Inventory {
                 int i = (y*9)+x;
                 Item slotItem = getItem(i);
                 if (slotItem != null && slotItem.type == item.type) {
-                    if (addToSlot(i, item, item.amount) == null) {
-                        item = null;
+                    item = addToSlot(i, item, item.amount);
+                    if (item == null) {
                         break loop;
                     }
                 }
@@ -200,6 +204,7 @@ public class Inventory {
                     Item slotItem = getItem(i);
                     if (slotItem == null || slotItem.type == ItemTypes.AIR) {
                         setItem(i, item.clone());
+                        item = null;
                         break loop;
                     }
                 }

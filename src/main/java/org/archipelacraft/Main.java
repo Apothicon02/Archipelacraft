@@ -9,6 +9,7 @@ import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
+import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.LightHelper;
 import org.archipelacraft.game.world.World;
@@ -151,13 +152,17 @@ public class Main {
                     }
                 }
 
+                if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
+                    Item item = player.inv.getItem(player.inv.selectedSlot);
+                    if (item != null) {
+                        World.items.add(item.clone().timeExisted(-2000).moveTo(player.getCameraMatrixWithoutPitch().invert().translate(0, -player.eyeHeight + 0.2f, -1f).getTranslation(new Vector3f())));
+                        player.inv.setItem(player.inv.selectedSlot, null);
+                    }
+                }
                 if (player.inv.open) {
                     SDL_SetRelativeMouseMode(false);
                     player.clearVars();
                     player.inv.tick(window);
-                    if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
-                        //drop item mouse cursor is holding or hovering over.
-                    }
                 } else {
                     SDL_SetRelativeMouseMode(true);
                     Vector2f displVec = new Vector2f(window.displVec);

@@ -72,6 +72,10 @@ public class Item implements Cloneable {
         this.hoverMeridiem = hoverMeridiem;
         return this;
     }
+    public Item prevTickTime(long time) {
+        this.prevTickTime = time;
+        return this;
+    }
 
     @Override
     public Item clone() {

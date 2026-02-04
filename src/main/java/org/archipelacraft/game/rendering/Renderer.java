@@ -2,6 +2,7 @@ package org.archipelacraft.game.rendering;
 
 import org.archipelacraft.Main;
 import org.archipelacraft.game.items.Item;
+import org.archipelacraft.game.items.ItemType;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.world.World;
 import org.joml.*;
@@ -139,7 +140,7 @@ public class Renderer {
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
                 new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "color", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
                 new String[]{"res", "model", "color", "tex", "layer", "atlasOffset", "offset", "size", "scale"});
         rasterFBOId = glGenFramebuffers();
@@ -191,6 +192,14 @@ public class Renderer {
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glDrawArrays(GL_TRIANGLES, 0, Models.CUBE.positions.length);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }
+    public static void drawDoubleSidedPlane() {
+        glBindVertexArray(Models.PLANE_DB.vaoId);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glDrawArrays(GL_TRIANGLES, 0, Models.PLANE_DB.positions.length);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
@@ -297,24 +306,29 @@ public class Renderer {
             raster.bind();
             updateBuffers();
             updateUniforms(raster, window);
+            glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
             drawSunAndMoon();
             drawStars();
             drawCenter();
             drawDebugWheel();
+            glUniform1i(raster.uniforms.get("tex"), 1); // rendering item
+            glBindTextureUnit(0, Textures.items.id);
             for (int i = 0; i < World.items.size(); i++) {
                 Item item = World.items.get(i);
                 if (item.timeExisted >= 600000) { //600000ms = 10m
                     World.items.remove(i);
                     i--;
                 } else {
-                    glUniform4f(raster.uniforms.get("color"), 0.6f, 0.6f, 0.05f, 1);
+                    glUniform4f(raster.uniforms.get("color"), 1, 1, 1, 1);
                     try(MemoryStack stack = MemoryStack.stackPush()) {
                         item.tick();
-                        glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover+0.05f, 0)).scale(0.2f).get(stack.mallocFloat(16)));
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover, 0)).scale(0.5f).get(stack.mallocFloat(16)));
                     }
-                    drawCube();
+                    glUniform2i(raster.uniforms.get("atlasOffset"), item.type.atlasOffset.x(), item.type.atlasOffset.y());
+                    drawDoubleSidedPlane();
                 }
             }
+            glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
             if (showUI) {
                 glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
                 try (MemoryStack stack = MemoryStack.stackPush()) {
