@@ -548,7 +548,7 @@ void main() {
             fragColor.rgb = fromLinear(rasterColor).rgb;
             fragColor.a = rasterColor.a;
             normal = vec3(1);
-            prevPos = ivec3(worldPosFromDepth(rasterDepth-0.0001f)*8.f)/8.f;
+            prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
             solidHitPos = rasterPos;
             if (fragColor.a > 0) {
                 tint = vec4(0);

@@ -15,6 +15,8 @@ import org.archipelacraft.game.world.LightHelper;
 import org.archipelacraft.game.world.World;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.rendering.Renderer;
+import org.archipelacraft.game.world.types.BorealWorldType;
+import org.archipelacraft.game.world.types.TemperateWorldType;
 import org.joml.*;
 import org.archipelacraft.engine.*;
 import org.lwjgl.opengl.GL;
@@ -54,7 +56,7 @@ public class Main {
         AudioController.setListenerData(new Vector3f(0, 0, 0), new Vector3f(0, 0, 0), new float[6]);
 
         Noises.init();
-        World.generate();
+        World.worldType.generate();
         Models.loadModels();
 
         Player.create();
@@ -121,8 +123,20 @@ public class Main {
                 if (wasF2Down && !window.isKeyPressed(SDL_SCANCODE_F2)) {
                     Renderer.screenshot = true;
                 }
-                if (window.isKeyPressed(SDL_SCANCODE_F3) && wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
-                    isSaving = true;
+                if (window.isKeyPressed(SDL_SCANCODE_F3)) {
+                    if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
+                        isSaving = true;
+                    } else if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
+                        World.saveWorld(World.worldType.getWorldPath() + "/");
+                        World.clearData();
+                        if (World.worldType instanceof TemperateWorldType) {
+                            World.worldType = new BorealWorldType();
+                        } else if (World.worldType instanceof BorealWorldType) {
+                            World.worldType = new TemperateWorldType();
+                        }
+                        World.worldType.generate();
+                        Renderer.initiallyFillTextures(window, false);
+                    }
                 }
 
                 if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
@@ -313,7 +327,7 @@ public class Main {
                 LightHelper.iterateLightQueue();
                 if (isSaving) {
                     if (shouldActuallySave) {
-                        World.saveWorld(World.worldPath + "/");
+                        World.saveWorld(World.worldType.getWorldPath() + "/");
                         player.save();
                         isSaving = false;
                         shouldActuallySave = false;
