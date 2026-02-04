@@ -498,7 +498,7 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     return vec4(0);
 }
 
-float nearClip = 0.1f;
+float nearClip = 0.01f;
 
 vec3 worldPosFromDepth(float depth) {
     vec2 coords = gl_FragCoord.xy / res;

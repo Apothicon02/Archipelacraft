@@ -1,6 +1,7 @@
 package org.archipelacraft.game.rendering;
 
 import org.archipelacraft.Main;
+import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.items.ItemType;
 import org.archipelacraft.game.noise.Noises;
@@ -22,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.archipelacraft.Main.player;
 import static org.lwjgl.opengl.GL46.*;
 
 public class Renderer {
@@ -130,8 +132,8 @@ public class Renderer {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, playerSSBOId);
         float[] data = new float[6];
         glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, data);
-        Main.player.selectedBlock.set(data[0], data[1], data[2]);
-        Main.player.prevSelectedBlock.set(data[3], data[4], data[5]);
+        player.selectedBlock.set(data[0], data[1], data[2]);
+        player.prevSelectedBlock.set(data[3], data[4], data[5]);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     }
 
@@ -160,9 +162,9 @@ public class Renderer {
             glUniformMatrix4fv(program.uniforms.get("projection"), false, window.updateProjectionMatrix().get(stack.mallocFloat(16)));
         }
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(Main.player.getCameraMatrix()).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(player.getCameraMatrix()).get(stack.mallocFloat(16)));
         }
-        Vector3f selected = Main.player.selectedBlock;
+        Vector3f selected = player.selectedBlock;
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
         glUniform1i(program.uniforms.get("ui"), showUI ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
@@ -313,13 +315,13 @@ public class Renderer {
             drawDebugWheel();
             glUniform1i(raster.uniforms.get("tex"), 1); // rendering item
             glBindTextureUnit(0, Textures.items.id);
+            glUniform4f(raster.uniforms.get("color"), 1, 1, 1, 1);
             for (int i = 0; i < World.items.size(); i++) {
                 Item item = World.items.get(i);
                 if (item.timeExisted >= 600000) { //600000ms = 10m
                     World.items.remove(i);
                     i--;
                 } else {
-                    glUniform4f(raster.uniforms.get("color"), 1, 1, 1, 1);
                     try(MemoryStack stack = MemoryStack.stackPush()) {
                         item.tick();
                         glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover, 0)).scale(0.5f).get(stack.mallocFloat(16)));
@@ -328,13 +330,22 @@ public class Renderer {
                     drawDoubleSidedPlane();
                 }
             }
-            glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
-            if (showUI) {
-                glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
+            Item item = player.inv.getItem(player.inv.selectedSlot);
+            if (item != null) {
                 try (MemoryStack stack = MemoryStack.stackPush()) {
-                    glUniformMatrix4fv(raster.uniforms.get("model"), false, Main.player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.45f + (Main.player.bobbing * 0.325f), 0.f).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
+                    glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.045f+Math.max(0, handTilt()*0.03f), -0.115f + (player.bobbing * 0.05f) - Math.min(0, handTilt()*0.1f),  -0.03f+(handTilt()*0.1f)).rotateY((float)Math.toRadians(-90.f)).rotateZ((float)Math.toRadians(55.f+(handTilt() < 0 ? (handTilt()*80) : (handTilt()*40))+HandManager.getTilt())).scale(0.125f).get(stack.mallocFloat(16)));
                 }
-                drawCube();
+                glUniform2i(raster.uniforms.get("atlasOffset"), item.type.atlasOffset.x(), item.type.atlasOffset.y());
+                drawDoubleSidedPlane();
+            } else {
+                glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
+                if (showUI) {
+                    glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.35f + (player.bobbing * 0.325f), 0.f).rotateX((float)Math.toRadians((handTilt()*-88)+(HandManager.getTilt()/2))).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
+                    }
+                    drawCube();
+                }
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
@@ -367,6 +378,10 @@ public class Renderer {
             }
             GUI.drawAlwaysVisible(window);
         }
+    }
+
+    public static float handTilt() {
+        return (player.getCameraMatrix().invert().translate(0, 0, 1).getTranslation(new Vector3f()).y()-(player.getCameraMatrixWithoutPitch().invert().getTranslation(new Vector3f()).y()));
     }
 
     public static void screenshot(Window window) throws IOException {

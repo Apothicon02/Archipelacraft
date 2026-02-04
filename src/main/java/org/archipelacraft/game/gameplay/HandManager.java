@@ -1,5 +1,6 @@
 package org.archipelacraft.game.gameplay;
 
+import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.blocks.Fluids;
@@ -22,6 +23,10 @@ public class HandManager {
     public static long lastBlockPlaced = 0L;
     public static long lastBlockBreakCheck = 0;
     public static int hotbarSlot = 0;
+    public static float prevTilt = 0;
+    public static float tilt = 0;
+    public static float tiltTarget = 0;
+    public static int tiltDelay = 0;
     public static Vector4i blockStartedBreaking = new Vector4i();
 
     public static void useHands(long timeMillis, Window window) {
@@ -42,6 +47,7 @@ public class HandManager {
         if (!lmbDown) {
             player.breakingSource.stop();
             blockStartedBreaking.set(0, 0, 0, 0);
+            tiltTarget = 0;
         }
         if ((!player.creative || (timeMillis - lastBlockBrokenOrPlaced >= 200)) && (!rmbDown || timeMillis - lastBlockPlaced >= 200)) { //two tenth second minimum delay between breaking blocks in creative or when placing blocks
             if (lmbDown || mmbDown || rmbDown) {
@@ -63,7 +69,7 @@ public class HandManager {
                                 //StackManager.cycleToEntryInStack(block);
                             }
                         }
-                    } else  {
+                    } else {
                         lastBlockBrokenOrPlaced = timeMillis;
                         int cornerData = World.getCorner((int) pos.x, (int) pos.y, (int) pos.z);
                         int cornerIndex = (pos.y < (int)(pos.y)+0.5 ? 0 : 4) + (pos.z < (int)(pos.z)+0.5 ? 0 : 2) + (pos.x < (int)(pos.x)+0.5 ? 0 : 1);
@@ -155,5 +161,39 @@ public class HandManager {
                 }
             }
         }
+        if (lmbDown) {
+            if (tiltTarget == 0) {
+                tiltTarget = 30;
+            }
+        } else {
+            tiltTarget = 0;
+        }
+    }
+
+    public static void tick() {
+        if (tiltDelay >= 0) {
+            tiltDelay--;
+        }
+        prevTilt = tilt;
+        if (tiltDelay <= 0) {
+            if (tiltTarget == 0 && Math.abs(tilt - tiltTarget) < 10f) {
+                tilt = 0;
+            } else {
+                if (tilt < tiltTarget) {
+                    tilt += 10f;
+                } else if (tilt > tiltTarget) {
+                    tilt -= 10f;
+                }
+                if (tilt >= 30) {
+                    tiltTarget = -30;
+                } else if (tilt <= -30) {
+                    tiltTarget = 30;
+                }
+            }
+        }
+    }
+
+    public static float getTilt() {
+        return Utils.getInterpolatedFloat(prevTilt, tilt);
     }
 }

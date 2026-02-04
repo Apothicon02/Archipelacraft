@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import static org.archipelacraft.game.gameplay.Inventory.invPath;
 
 public class Player {
-    private final Camera camera = new Camera();
+    public final Camera camera = new Camera();
     public Vector3f pos = new Vector3f();
     public Vector3f selectedBlock = new Vector3f();
     public Vector3f prevSelectedBlock = new Vector3f();
@@ -225,6 +225,7 @@ public class Player {
     public void tick() {
         pickupTick();
         movementTick();
+        HandManager.tick();
     }
 
     public void pickupTick() {
