@@ -1,5 +1,6 @@
 package org.archipelacraft.game.world;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.archipelacraft.Main;
 import org.archipelacraft.engine.ArchipelacraftMath;
 import org.archipelacraft.engine.Utils;
@@ -399,6 +400,17 @@ public class World {
         out = new FileOutputStream(lightsPath);
         out.write(lights);
 
+        String itemsPath = path + "items.data";
+        out = new FileOutputStream(itemsPath);
+        IntArrayList data = new IntArrayList();
+        int i = 0;
+        for (Item item : items) {
+            int[] itemData = item.getData();
+            data.addElements(i, itemData);
+            i += itemData[0]+1;
+        }
+        out.write(Utils.intArrayToByteArray(data.toIntArray()));
+
         out.close();
     }
 
@@ -412,5 +424,15 @@ public class World {
         blocksLOD = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD.data").readAllBytes());
         blocksLOD2 = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD2.data").readAllBytes());
         lights = new FileInputStream(path+"lights.data").readAllBytes();
+        if (Files.exists(Path.of(path + "items.data"))) {
+            int[] itemsData = Utils.flipIntArray(Utils.byteArrayToIntArray(new FileInputStream(path + "items.data").readAllBytes()));
+            for (int i = 0; i < itemsData.length; ) {
+                int itemDataLength = itemsData[i++];
+                if (itemDataLength > 0) {
+                    items.add(Item.load(itemsData, i));
+                    i += itemDataLength;
+                }
+            }
+        }
     }
 }

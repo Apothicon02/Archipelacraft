@@ -4,7 +4,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class Item implements Cloneable {
-    public int dataLength = 6; //excludes this int
+    public int dataLength = 9; //excludes this int
     public ItemType type = ItemTypes.AIR;
     public Vector3f pos = new Vector3f();
     public int amount = 1;
@@ -15,10 +15,10 @@ public class Item implements Cloneable {
     public long prevTickTime = 0;
 
     public static Item load(int[] data, int offset) {
-        return new Item().type(ItemTypes.itemTypeMap.get(data[offset++])).moveTo(new Vector3f(data[offset++]/100f, data[offset++]/100f, data[offset++]/100f)).amount(data[offset++]).timeExisted(data[offset++]);
+        return new Item().type(ItemTypes.itemTypeMap.get(data[offset++])).moveTo(new Vector3f(data[offset++]/1000f, data[offset++]/1000f, data[offset++]/1000f)).rot(data[offset++]/1000f).hover(data[offset++]/1000f, data[offset++]>0).amount(data[offset++]).timeExisted(data[offset++]);
     }
     public int[] getData() {
-        return new int[]{dataLength, ItemTypes.getId(type), (int)pos.x()*100, (int)pos.y()*100, (int)pos.z()*100, amount, timeExisted};
+        return new int[]{dataLength, ItemTypes.getId(type), (int)(pos.x()*1000), (int)(pos.y()*1000), (int)(pos.z()*1000), (int)(rot*1000), (int)(hover*1000), hoverMeridiem ? 1 : 0, amount, timeExisted};
     }
 
     public void tick() {
@@ -26,11 +26,11 @@ public class Item implements Cloneable {
         if (prevTickTime != 0) {
             long dif = time - prevTickTime;
             timeExisted += dif;
-            rot += dif / 100f;
+            rot += (dif / 50f) * Math.random();
             if (rot >= 360) {
                 rot = 0;
             }
-            float hoverInc = (dif / 2500f) * Math.min(Math.max(0.01f, 0.1f - hover) * 10, Math.max(0.01f, 0.1f - Math.abs(hover - 0.1f)) * 10);
+            double hoverInc = (dif / 1750f) * Math.min(Math.max(0.01f, 0.1f - hover) * 10, Math.max(0.01f, 0.1f - Math.abs(hover - 0.1f)) * 10) * Math.random();
             if (hoverMeridiem) {
                 hover += hoverInc;
                 if (hover >= 0.1) {
@@ -61,6 +61,15 @@ public class Item implements Cloneable {
     }
     public Item timeExisted(int newTime) {
         this.timeExisted = newTime;
+        return this;
+    }
+    public Item rot(float rot) {
+        this.rot = rot;
+        return this;
+    }
+    public Item hover(float hover, boolean hoverMeridiem) {
+        this.hover = hover;
+        this.hoverMeridiem = hoverMeridiem;
         return this;
     }
 
