@@ -33,11 +33,12 @@ import static org.lwjgl.opengl.GL12.glTexSubImage3D;
 import static org.lwjgl.opengl.GL30.*;
 
 public class World {
-    public static WorldType worldType = WorldTypes.BOREAL;
     public static int size = 1024;
     public static int halfSize = 1024/2;
     public static int height = 320;
     public static int seaLevel = 63;
+    public static boolean generated = false;
+    public static WorldType worldType = WorldTypes.TEMPERATE;
     public static ArrayList<Item> items = new ArrayList<>();
     public static short[][] blocks = new short[height][(size*size)*2];
     public static boolean[] unsavedBlocks = new boolean[height];
@@ -46,7 +47,6 @@ public class World {
     public static byte[][] lights = new byte[height][(size*size)*4];
     public static boolean[] unsavedLights = new boolean[height];
     public static short[] heightmap = new short[size*size];
-    public static Random seededRand = new Random(35311350L);
 
     public static void clearData() {
         items.clear();
@@ -54,7 +54,7 @@ public class World {
         unsavedBlocks = new boolean[height];
         blocksLOD = new short[height/4][(size*size)/4];
         blocksLOD2 = new short[height/16][(size*size)/16];
-        lights = new byte[height][(size*size)*2];
+        lights = new byte[height][(size*size)*4];
         heightmap = new short[size*size];
     }
 
@@ -69,8 +69,8 @@ public class World {
             lights[y][pos+1] = (byte)b;
             lights[y][pos+2] = (byte)g;
             lights[y][pos+3] = (byte)s;
-            unsavedLights[y] = true;
-            if (Main.player != null) {
+            if (generated) {
+                unsavedLights[y] = true;
                 glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
                 glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(4).put((byte)r).put((byte)b).put((byte)g).put((byte)s).flip());
             }
@@ -146,8 +146,8 @@ public class World {
             int pos = condensePos(x, z)*2;
             blocks[y][pos] = (short)(block);
             blocks[y][pos+1] = (short)(blockSubType);
-            unsavedBlocks[y] = true;
-            if (Main.player != null) {
+            if (generated) {
+                unsavedBlocks[y] = true;
                 glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
                 glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
                 boolean clear = true;
@@ -231,6 +231,7 @@ public class World {
     }
 
     public static void saveWorld(String path) throws IOException {
+        boolean didExist = Files.exists(Path.of(path));
         new File(path).mkdirs();
 
         String globalDataPath = path+"global.data";
@@ -249,7 +250,7 @@ public class World {
         if (Files.notExists(blocksPath)) {Files.createDirectory(blocksPath);};
         int y = 0;
         for (boolean unsaved : unsavedBlocks) {
-            if (unsaved) {
+            if (unsaved || !didExist) {
                 new FileOutputStream(path + "blocks/" + y + ".data").write(Utils.shortArrayToByteArray(blocks[y]));
                 unsavedBlocks[y] = false;
             }
@@ -269,7 +270,7 @@ public class World {
         if (Files.notExists(lightsPath)) {Files.createDirectory(lightsPath);};
         y = 0;
         for (boolean unsaved : unsavedLights) {
-            if (unsaved) {
+            if (unsaved || !didExist) {
                 new FileOutputStream(path + "lights/" + y + ".data").write(lights[y]);
                 unsavedLights[y] = false;
             }

@@ -12,6 +12,7 @@ import org.joml.Vector2i;
 import org.joml.Vector3i;
 
 import java.nio.file.Path;
+import java.util.Random;
 
 import static org.archipelacraft.engine.Utils.condensePos;
 import static org.archipelacraft.engine.Utils.distance;
@@ -20,6 +21,7 @@ import static org.archipelacraft.game.world.World.getLight;
 
 public class TemperateWorldType extends WorldType {
     private Path worldPath = Path.of(Main.mainFolder+"world0/temperate");
+    public static Random seededRand = new Random(35311350L);
 
     @Override
     public Path getWorldPath() {

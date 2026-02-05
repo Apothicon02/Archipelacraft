@@ -1,7 +1,5 @@
 package org.archipelacraft.game.world.types;
 
-import org.archipelacraft.Main;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,11 +12,13 @@ public class WorldType {
     }
 
     public void generate() throws IOException {
+        generated = false;
         if (Files.exists(getWorldPath())) {
             loadWorld(getWorldPath()+"/");
         } else {
             createNew();
         }
+        generated = true;
     }
 
     public void createNew() {}
