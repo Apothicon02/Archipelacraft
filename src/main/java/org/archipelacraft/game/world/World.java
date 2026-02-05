@@ -26,33 +26,36 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static org.archipelacraft.engine.Utils.condensePos;
+import static org.archipelacraft.engine.Utils.*;
 import static org.lwjgl.opengl.GL11.glBindTexture;
 import static org.lwjgl.opengl.GL12.GL_TEXTURE_3D;
 import static org.lwjgl.opengl.GL12.glTexSubImage3D;
 import static org.lwjgl.opengl.GL30.*;
 
 public class World {
-    public static WorldType worldType = WorldTypes.TEMPERATE;
+    public static WorldType worldType = WorldTypes.BOREAL;
     public static int size = 1024;
     public static int halfSize = 1024/2;
     public static int height = 320;
     public static int seaLevel = 63;
     public static ArrayList<Item> items = new ArrayList<>();
-    public static short[] blocks = new short[(World.size*World.size*World.height)*2];
-    public static short[] blocksLOD = new short[(World.size*World.size*World.height)/4];
-    public static short[] blocksLOD2 = new short[(World.size*World.size*World.height)/16];
-    public static byte[] lights = new byte[(World.size*World.size*World.height)*4];
-    public static short[] heightmap = new short[World.size*World.size];
+    public static short[][] blocks = new short[height][(size*size)*2];
+    public static boolean[] unsavedBlocks = new boolean[height];
+    public static short[][] blocksLOD = new short[height/4][(size*size)/4];
+    public static short[][] blocksLOD2 = new short[height/16][(size*size)/16];
+    public static byte[][] lights = new byte[height][(size*size)*4];
+    public static boolean[] unsavedLights = new boolean[height];
+    public static short[] heightmap = new short[size*size];
     public static Random seededRand = new Random(35311350L);
 
     public static void clearData() {
         items.clear();
-        blocks = new short[(World.size*World.size*World.height)*2];
-        blocksLOD = new short[(World.size*World.size*World.height)/4];
-        blocksLOD2 = new short[(World.size*World.size*World.height)/16];
-        lights = new byte[(World.size*World.size*World.height)*4];
-        heightmap = new short[World.size*World.size];
+        blocks = new short[height][(size*size)*2];
+        unsavedBlocks = new boolean[height];
+        blocksLOD = new short[height/4][(size*size)/4];
+        blocksLOD2 = new short[height/16][(size*size)/16];
+        lights = new byte[height][(size*size)*2];
+        heightmap = new short[size*size];
     }
 
     public static boolean inBounds(int x, int y, int z) {
@@ -61,14 +64,15 @@ public class World {
 
     public static void setLight(int x, int y, int z, int r, int b, int g, int s) {
         if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z)*4;
-            lights[pos] = (byte)r;
-            lights[pos+1] = (byte)b;
-            lights[pos+2] = (byte)g;
-            lights[pos+3] = (byte)s;
+            int pos = condensePos(x, z)*4;
+            lights[y][pos] = (byte)r;
+            lights[y][pos+1] = (byte)b;
+            lights[y][pos+2] = (byte)g;
+            lights[y][pos+3] = (byte)s;
+            unsavedLights[y] = true;
             if (Main.player != null) {
                 glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
-                glTexSubImage3D(GL_TEXTURE_3D, 0, x, y, z, 1, 1, 1, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(4).put((byte)r).put((byte)b).put((byte)g).put((byte)s).flip());
+                glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(4).put((byte)r).put((byte)b).put((byte)g).put((byte)s).flip());
             }
         }
     }
@@ -77,8 +81,8 @@ public class World {
     }
     public static Vector4i getLight(int x, int y, int z, boolean returnNull) {
         if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z)*4;
-            return new Vector4i(lights[pos], lights[pos+1], lights[pos+2], lights[pos+3]);
+            int pos = condensePos(x, z)*4;
+            return new Vector4i(lights[y][pos], lights[y][pos+1], lights[y][pos+2], lights[y][pos+3]);
         }
         return returnNull ? null : new Vector4i(0);
     }
@@ -139,42 +143,43 @@ public class World {
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType) {
         if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z)*2;
-            blocks[pos] = (short)(block);
-            blocks[pos+1] = (short)(blockSubType);
+            int pos = condensePos(x, z)*2;
+            blocks[y][pos] = (short)(block);
+            blocks[y][pos+1] = (short)(blockSubType);
+            unsavedBlocks[y] = true;
             if (Main.player != null) {
                 glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
-                glTexSubImage3D(GL_TEXTURE_3D, 0, x, y, z, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
+                glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
                 boolean clear = true;
                 loop:
                 for (int cX = (int) Math.floor(x/4f)*4; cX < (Math.floor(x/4f)*4)+4; cX++) {
                     for (int cY = (int) Math.floor(y/4f)*4; cY < (Math.floor(y/4f)*4)+4; cY++) {
                         for (int cZ = (int) Math.floor(z/4f)*4; cZ < (Math.floor(z/4f)*4)+4; cZ++) {
-                            if (blocks[condensePos(cX, cY, cZ)*2] > 0) {
+                            if (blocks[y][condensePos(cX, cZ)*2] > 0) {
                                 clear = false;
                                 break loop;
                             }
                         }
                     }
                 }
-                glTexSubImage3D(GL_TEXTURE_3D, 2, x/4, y/4, z/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD[(((((z/4)*(World.height/4))+(y/4))*(World.size/4))+(x/4))] = (short)(clear ? 0 : 1);
+                glTexSubImage3D(GL_TEXTURE_3D, 2, z/4, y/4, x/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(clear ? 0 : 1);
                 loop:
                 for (int cX = (int) Math.floor(x/16f)*16; cX < (Math.floor(x/16f)*16)+16; cX++) {
                     for (int cY = (int) Math.floor(y/16f)*16; cY < (Math.floor(y/16f)*16)+16; cY++) {
                         for (int cZ = (int) Math.floor(z/16f)*16; cZ < (Math.floor(z/16f)*16)+16; cZ++) {
-                            if (blocks[condensePos(cX, cY, cZ)*2] > 0) {
+                            if (blocks[y][condensePos(cX, cZ)*2] > 0) {
                                 clear = false;
                                 break loop;
                             }
                         }
                     }
                 }
-                glTexSubImage3D(GL_TEXTURE_3D, 4, x/16, y/16, z/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD2[(((((z/16)*(World.height/16))+(y/16))*(World.size/16))+(x/16))] = (short)(clear ? 0 : 1);
+                glTexSubImage3D(GL_TEXTURE_3D, 4, z/16, y/16, x/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+                blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(clear ? 0 : 1);
             } else if (block > 0) {
-                blocksLOD[(((((z/4)*(World.height/4))+(y/4))*(World.size/4))+(x/4))] = (short)(block);
-                blocksLOD2[(((((z/16)*(World.height/16))+(y/16))*(World.size/16))+(x/16))] = (short)(block);
+                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(block);
+                blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(block);
             }
         }
     }
@@ -184,8 +189,8 @@ public class World {
 
     public static Vector2i getBlock(int x, int y, int z) {
         if (inBounds(x, y, z)) {
-            int pos = condensePos(x, y, z)*2;
-            return new Vector2i(blocks[pos], blocks[pos+1]);
+            int pos = condensePos(x, z)*2;
+            return new Vector2i(blocks[y][pos], blocks[y][pos+1]);
         } else {
             return null;
         }
@@ -240,21 +245,36 @@ public class World {
         out.write(heightmapData);
         out.close();
 
-        String blocksPath = path + "blocks.data";
-        out = new FileOutputStream(blocksPath);
-        byte[] blocksData = Utils.shortArrayToByteArray(blocks);
-        out.write(blocksData);
-        String blockLODsPath = path + "blocksLOD.data";
-        out = new FileOutputStream(blockLODsPath);
-        byte[] blocksLODData = Utils.shortArrayToByteArray(blocksLOD);
-        out.write(blocksLODData);
-        String blocksLOD2Path = path + "blocksLOD2.data";
-        out = new FileOutputStream(blocksLOD2Path);
-        byte[] blocksLOD2Data = Utils.shortArrayToByteArray(blocksLOD2);
-        out.write(blocksLOD2Data);
-        String lightsPath = path + "lights.data";
-        out = new FileOutputStream(lightsPath);
-        out.write(lights);
+        Path blocksPath = Path.of(path + "blocks/");
+        if (Files.notExists(blocksPath)) {Files.createDirectory(blocksPath);};
+        int y = 0;
+        for (boolean unsaved : unsavedBlocks) {
+            if (unsaved) {
+                new FileOutputStream(path + "blocks/" + y + ".data").write(Utils.shortArrayToByteArray(blocks[y]));
+                unsavedBlocks[y] = false;
+            }
+            y++;
+        }
+        Path blocksLODPath = Path.of(path + "blocksLOD/");
+        if (Files.notExists(blocksLODPath)) {Files.createDirectory(blocksLODPath);};
+        for (int i = 0; i < height/4; i++) {
+            new FileOutputStream(path + "blocksLOD/"+i+".data").write(Utils.shortArrayToByteArray(blocksLOD[i]));
+        }
+        Path blocksLOD2Path = Path.of(path + "blocksLOD2/");
+        if (Files.notExists(blocksLOD2Path)) {Files.createDirectory(blocksLOD2Path);};
+        for (int i = 0; i < height/16; i++) {
+            new FileOutputStream(path + "blocksLOD2/"+i+".data").write(Utils.shortArrayToByteArray(blocksLOD2[i]));
+        }
+        Path lightsPath = Path.of(path + "lights/");
+        if (Files.notExists(lightsPath)) {Files.createDirectory(lightsPath);};
+        y = 0;
+        for (boolean unsaved : unsavedLights) {
+            if (unsaved) {
+                new FileOutputStream(path + "lights/" + y + ".data").write(lights[y]);
+                unsavedLights[y] = false;
+            }
+            y++;
+        }
 
         String itemsPath = path + "items.data";
         out = new FileOutputStream(itemsPath);
@@ -276,10 +296,18 @@ public class World {
         Main.timePassed = globalData[1]/1000f;
         Main.meridiem = globalData[2];
         heightmap = Utils.byteArrayToShortArray(new FileInputStream(path+"heightmap.data").readAllBytes());
-        blocks = Utils.byteArrayToShortArray(new FileInputStream(path+"blocks.data").readAllBytes());
-        blocksLOD = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD.data").readAllBytes());
-        blocksLOD2 = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD2.data").readAllBytes());
-        lights = new FileInputStream(path+"lights.data").readAllBytes();
+        for (int i = 0; i < height; i++) {
+            blocks[i] = Utils.byteArrayToShortArray(new FileInputStream(path+"blocks/"+i+".data").readAllBytes());
+        }
+        for (int i = 0; i < height/4; i++) {
+            blocksLOD[i] = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD/"+i+".data").readAllBytes());
+        }
+        for (int i = 0; i < height/16; i++) {
+            blocksLOD2[i] = Utils.byteArrayToShortArray(new FileInputStream(path+"blocksLOD2/"+i+".data").readAllBytes());
+        }
+        for (int i = 0; i < height; i++) {
+            lights[i] = new FileInputStream(path+"lights/"+i+".data").readAllBytes();
+        }
         if (Files.exists(Path.of(path + "items.data"))) {
             int[] itemsData = Utils.flipIntArray(Utils.byteArrayToIntArray(new FileInputStream(path + "items.data").readAllBytes()));
             for (int i = 0; i < itemsData.length; ) {

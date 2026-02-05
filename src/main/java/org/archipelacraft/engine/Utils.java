@@ -170,4 +170,10 @@ public class Utils {
     public static int condensePos(int x, int z) {
         return (x * World.size) + z;
     }
+    public static int condensePosLOD(int x, int z) {
+        return ((x/4) * (World.size/4)) + (z/4);
+    }
+    public static int condensePosLOD2(int x, int z) {
+        return ((x/16) * (World.size/16)) + (z/16);
+    }
 }

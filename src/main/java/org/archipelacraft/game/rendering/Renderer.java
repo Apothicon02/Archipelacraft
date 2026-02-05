@@ -88,16 +88,24 @@ public class Renderer {
             if (!alreadyCreatedTextures) {
                 glTexStorage3D(GL_TEXTURE_3D, 5, GL_RGBA16I, Textures.blocks.width, Textures.blocks.height, ((Texture3D) Textures.blocks).depth);
             }
-            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.blocks.width, Textures.blocks.height, ((Texture3D) Textures.blocks).depth, GL_RG_INTEGER, GL_SHORT, World.blocks);
-            glTexSubImage3D(GL_TEXTURE_3D, 2, 0, 0, 0, Textures.blocks.width / 4, Textures.blocks.height / 4, ((Texture3D) Textures.blocks).depth / 4, GL_RED_INTEGER, GL_SHORT, World.blocksLOD);
-            glTexSubImage3D(GL_TEXTURE_3D, 4, 0, 0, 0, Textures.blocks.width / 16, Textures.blocks.height / 16, ((Texture3D) Textures.blocks).depth / 16, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2);
+            for (int i = 0; i < World.height; i++) {
+                glTexSubImage3D(GL_TEXTURE_3D, 0, 0, i, 0, Textures.blocks.width, 1, ((Texture3D) Textures.blocks).depth, GL_RG_INTEGER, GL_SHORT, World.blocks[i]);
+            }
+            for (int i = 0; i < World.height/4; i++) {
+                glTexSubImage3D(GL_TEXTURE_3D, 2, 0, i, 0, Textures.blocks.width/4, 1, ((Texture3D) Textures.blocks).depth/4, GL_RED_INTEGER, GL_SHORT, World.blocksLOD[i]);
+            }
+            for (int i = 0; i < World.height/16; i++) {
+                glTexSubImage3D(GL_TEXTURE_3D, 4, 0, i, 0, Textures.blocks.width/16, 1, ((Texture3D) Textures.blocks).depth/16, GL_RED_INTEGER, GL_SHORT, World.blocksLOD2[i]);
+            }
 
             glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
             if (!alreadyCreatedTextures) {
                 glTexStorage3D(GL_TEXTURE_3D, 1, GL_RGBA4, Textures.lights.width, Textures.lights.height, ((Texture3D) Textures.lights).depth);
             }
-            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, Textures.lights.width, Textures.lights.height, ((Texture3D) Textures.lights).depth, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(World.lights.length).put(World.lights).flip());
-
+            for (int i = 0; i < World.height; i++) {
+                byte[] data = World.lights[i];
+                glTexSubImage3D(GL_TEXTURE_3D, 0, 0, i, 0, Textures.lights.width, 1, ((Texture3D) Textures.lights).depth, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(data.length).put(data).flip());
+            }
             if (!alreadyCreatedTextures) {
                 float[] mergedNoises = new float[(Textures.noises.width * Textures.noises.height) * 4];
                 for (int x = 0; x < Textures.noises.width; x++) {

@@ -158,10 +158,10 @@ bool checker(ivec2 pixel) {
 }
 
 ivec4 getBlock(float x, float y, float z) {
-    return texelFetch(blocks, ivec3(x, y, z), 0);
+    return texelFetch(blocks, ivec3(z, y, x), 0);
 }
 vec4 getLight(float x, float y, float z) {
-    return texture(lights, vec3(x, y, z)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
+    return texture(lights, vec3(z, y, x)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
 }
 vec3 sunColor = vec3(0);
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess) {
@@ -405,7 +405,7 @@ vec4 traceLOD(vec3 rayPos, vec3 rayDir, vec3 iMask, float chunkDist) {
 
     for (int i = 0; lodPos.x < 4.0 && lodPos.x >= 0.0 && lodPos.y < 4.0 && lodPos.y >= 0.0 && lodPos.z < 4.0 && lodPos.z >= 0.0 && i < 4*3; i++) {
         mapPos = (lod2Pos*16)+(lodPos*4);
-        int lod = isInfiniteSea ? 1 : texelFetch(blocks, ivec3(lodPos.x, lodPos.y, lodPos.z), 2).x;
+        int lod = isInfiniteSea ? 1 : texelFetch(blocks, ivec3(lodPos.z, lodPos.y, lodPos.x), 2).x;
         if (lod > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
@@ -457,7 +457,7 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
             break;
         }
         isInfiniteSea = !inBound && (lod2Pos.y == 3) && ogPos.y > 63;
-        int lod = isInfiniteSea ? ((mapPos.y < 64) ? 1 : 0) : (inBound ? texelFetch(blocks, ivec3(lod2Pos.x, lod2Pos.y, lod2Pos.z), 4).x : 0);
+        int lod = isInfiniteSea ? ((mapPos.y < 64) ? 1 : 0) : (inBound ? texelFetch(blocks, ivec3(lod2Pos.z, lod2Pos.y, lod2Pos.x), 4).x : 0);
         if (lod > 0) {
             vec3 uv3d = vec3(0);
             vec3 intersect = vec3(0);
@@ -568,7 +568,7 @@ void main() {
             vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
             vec3 source = mun.y > sun.y ? mun : sun;
             source.y = max(source.y, 72);
-            vec3 sunDir = vec3(normalize(source.xy - shadowPos.xy), 0.1f);
+            vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
             vec4 prevTint = tint;
             vec3 prevHitPos = hitPos;
             clearVars();
