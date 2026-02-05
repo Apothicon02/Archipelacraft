@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Random;
 
 import static org.archipelacraft.engine.Utils.*;
 import static org.lwjgl.opengl.GL11.glBindTexture;
