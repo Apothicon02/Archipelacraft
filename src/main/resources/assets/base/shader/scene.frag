@@ -217,7 +217,9 @@ void clearVars() {
     lodPos = vec3(0);
     block = ivec4(0);
 }
-
+bool isBlockLeaves(ivec2 block) {
+    return block.y == 0 && (block.x == 17 || block.x == 21 || block.x == 27 || block.x == 36 || block.x == 39 || block.x == 42 || block.x == 45 || block.x == 48 || block.x == 51);
+}
 float one = fromLinear(vec4(1)).a;
 vec4 getVoxelAndBlock(vec3 pos) {
     vec3 rayMapPos = floor(pos);
@@ -225,6 +227,8 @@ vec4 getVoxelAndBlock(vec3 pos) {
     ivec2 block = getBlock(rayMapPos.x, rayMapPos.y, rayMapPos.z).xy;
     if (block.x <= 1) {
         return vec4(0.f);
+    } else if (isBlockLeaves(block)) {
+        return vec4(one);
     }
     return getVoxel(mapPos.x, mapPos.y, mapPos.z, rayMapPos.x, rayMapPos.y, rayMapPos.z, block.x, block.y);
 }
@@ -362,15 +366,15 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                         float xFactor = offsetVoxelPos.x >= 4 ? 0.125f : -0.125f;
                         float yFactor = offsetVoxelPos.y >= 4 ? 0.125f : -0.125f;
                         float zFactor = offsetVoxelPos.z >= 4 ? 0.125f : -0.125f;
-                        float highlight = 0.75f;
+                        float highlight = 0.67f;
                         if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(xFactor, 0, 0)).a < one) {
-                            highlight+=0.25f;
+                            highlight+=0.33f;
                         }
                         if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, 0, zFactor)).a < one) {
-                            highlight+=0.25f;
+                            highlight+=0.33f;
                         }
                         if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, yFactor, 0)).a < one) {
-                            highlight+=0.25f;
+                            highlight+=0.33f;
                         }
                         voxelColor.rgb *= min(highlight, 1.33f);
                     }
