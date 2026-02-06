@@ -556,7 +556,7 @@ void main() {
             source.y = max(source.y, 500);
             vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
             float brightness = dot(normal.xy, source.xy)*-0.0002f;
-            fragColor.rgb *= max(0.66f, 0.75f+brightness);
+            fragColor.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
             vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
             vec4 prevTint = tint;
             vec3 prevHitPos = hitPos;
