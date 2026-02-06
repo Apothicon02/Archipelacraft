@@ -170,7 +170,7 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess)
     float sunDist = (distance(lightPos.xz, sun.xz)/(size*1.5f));
     float adjustedTime = clamp((sunDist*abs(1-clamp(sunHeight, 0.05f, 0.5f)))+scattering, 0.f, 1.f);
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
-    float sunBrightness = clamp(sunHeight+0.5, 0.2f, 1.f);
+    float sunBrightness = clamp(sunHeight+0.5, 0.33f, 1.f);
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
     float skyWhiteness = mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1));
     float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
@@ -472,19 +472,6 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
             vec4 voxelColor = traceLOD(uv3d, rayDir, mask, lod2Dist);
             if (voxelColor.a >= 1 || voxelColor.a <= -1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
-                if (normal.y >0) { //down
-                    voxelColor.rgb *= 0.7f;
-                } else if (normal.y <0) { //up
-                    voxelColor.rgb *= 1.f;
-                } else if (normal.z >0) { //south
-                    voxelColor.rgb *= 0.85f;
-                } else if (normal.z <0) { //north
-                    voxelColor.rgb *= 0.85f;
-                } else if (normal.x >0) { //west
-                    voxelColor.rgb *= 0.75f;
-                } else if (normal.x <0) { //east
-                    voxelColor.rgb *= 0.95f;
-                }
 
                 return voxelColor;
             }
@@ -565,9 +552,11 @@ void main() {
     if (!isSky) {
         lightPos = solidHitPos;
         if (fragColor.a < 2) {
-            vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
             vec3 source = mun.y > sun.y ? mun : sun;
-            source.y = max(source.y, 72);
+            source.y = max(source.y, 500);
+            vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
+            float brightness = dot(normal.xy, source.xy)*-0.0002f;
+            fragColor.rgb *= max(0.66f, 0.75f+brightness);
             vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
             vec4 prevTint = tint;
             vec3 prevHitPos = hitPos;

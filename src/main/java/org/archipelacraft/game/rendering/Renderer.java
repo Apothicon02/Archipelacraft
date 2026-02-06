@@ -193,11 +193,11 @@ public class Renderer {
         glUniform1i(program.uniforms.get("reflectionShadows"), reflectionShadows ? 1 : 0);
         sunPos.set(0, World.size*2, 0);
         sunPos.rotateZ((float) time);
-        sunPos.set(sunPos.x+(World.size/2f), sunPos.y-World.size, sunPos.z+(World.size/2f));
+        sunPos.set(sunPos.x+(World.size/2f), sunPos.y, sunPos.z+(World.size/2f));
         glUniform3f(program.uniforms.get("sun"), sunPos.x, sunPos.y, sunPos.z);
         munPos.set(0, World.size*-2, 0);
         munPos.rotateZ((float) time);
-        munPos.set(munPos.x+(World.size/2f), munPos.y-World.size, munPos.z+(World.size/2f));
+        munPos.set(munPos.x+(World.size/2f), munPos.y, munPos.z+(World.size/2f));
         glUniform3f(program.uniforms.get("mun"), munPos.x, munPos.y, munPos.z);
     }
 
@@ -256,14 +256,14 @@ public class Renderer {
                     .rotateX(starRand.nextFloat() * 10)
                     .rotateY(starRand.nextFloat() * 10)
                     .rotateZ((float) time + starRand.nextFloat() * 10);
-            starPos.set(starPos.x + (starDist / 2f), starPos.y - starDist, starPos.z + (starDist / 2f));
+            starPos.set(starPos.x + (starDist / 2f), starPos.y, starPos.z + (starDist / 2f));
             float starSize = ((starRand.nextFloat()*6)+3)-Math.max(0, 15*(sunPos.y/World.size));
             if (starSize > 0.01f) {
                 Matrix4f starMatrix = new Matrix4f()
                         .rotateXYZ(starRand.nextFloat(), starRand.nextFloat(), starRand.nextFloat())
                         .setTranslation(starPos)
                         .scale(starSize);
-                if (starMatrix.getTranslation(new Vector3f()).y > 0) {
+                if (starMatrix.getTranslation(new Vector3f()).y > World.seaLevel-player.pos.y()) {
                     try (MemoryStack stack = MemoryStack.stackPush()) {
                         glUniformMatrix4fv(raster.uniforms.get("model"), false, starMatrix.get(stack.mallocFloat(16)));
                     }

@@ -15,7 +15,7 @@ void main() {
         fragColor = color;
         if (fragColor.a < 2 && fragColor.a > 0) {
             vec3 source = mun.y > sun.y ? mun : sun;
-            source.y = max(source.y, 72);
+            source.y = max(source.y, 500);
             float brightness = dot(norm.xy, source.xy)*0.0005f;
             fragColor.rgb *= max(0.3f, 1.f+brightness);
             if (brightness < 0.f) {
