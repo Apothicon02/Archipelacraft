@@ -184,7 +184,7 @@ public class Renderer {
         }
         Vector3f selected = player.selectedBlock;
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
-        glUniform1i(program.uniforms.get("ui"), showUI ? 1 : 0);
+        glUniform1i(program.uniforms.get("ui"), showUI && !screenshot ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
         glUniform1i(program.uniforms.get("aoQuality"), aoQuality);
         glUniform1f(program.uniforms.get("timeOfDay"), timeOfDay);
@@ -430,7 +430,7 @@ public class Renderer {
             int i = 0;
             for (int h = window.getHeight()-1; h >= 0; h--) {
                 for (int w = 0; w < window.getWidth(); w++) {
-                    imgRaster.setPixel(w, h, new int[]{(int)(data[i++]*65534), (int)(data[i++]*65534), (int)(data[i++]*65534)});
+                    imgRaster.setPixel(w, h, new int[]{(int)Math.min(65534, data[i++]*65534), (int)Math.min(65534, data[i++]*65534), (int)Math.min(65534, data[i++]*65534)});
                     i++;
                 }
             }
