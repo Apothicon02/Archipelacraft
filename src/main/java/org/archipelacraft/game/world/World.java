@@ -38,6 +38,7 @@ public class World {
     public static int seaLevel = 63;
     public static boolean generated = false;
     public static WorldType worldType = WorldTypes.TEMPERATE;
+    public static WorldType nextWorldType = WorldTypes.BOREAL;
     public static ArrayList<Item> items = new ArrayList<>();
     public static short[][] blocks = new short[height][(size*size)*2];
     public static boolean[] unsavedBlocks = new boolean[height];

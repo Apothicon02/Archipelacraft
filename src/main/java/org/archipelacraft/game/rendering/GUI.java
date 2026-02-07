@@ -8,6 +8,7 @@ import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.items.ItemType;
 import org.archipelacraft.game.items.ItemTypes;
+import org.archipelacraft.game.world.World;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
@@ -27,6 +28,7 @@ import static org.lwjgl.opengl.GL45.glBindTextureUnit;
 
 public class GUI {
     public static float guiScale = 1;
+    public static float guiScaleMul = 4f; //even-though it's a float, should always be set to a round number to prevent distortion of pixel-art
     public static float aspectRatio = 0f;
     public static int width = 0;
     public static int height = 0;
@@ -40,25 +42,44 @@ public class GUI {
     public static int enlargedSlotSize = 24;
 
     public static void updateGUI(Window window) {
-        glBindTextureUnit(1, Textures.gui.id);
+        glBindTextureUnit(0, Textures.sceneColor.id);
+        glBindTextureUnit(1, Textures.blurred.id);
+        glBindTextureUnit(2, Textures.gui.id);
+        glBindTextureUnit(3, Textures.items.id);
         width = window.getWidth();
         height = window.getHeight();
-        guiScale = width/4f;
+        guiScale = width/guiScaleMul;
         aspectRatio = (float) width / height;
     }
 
     public static void drawAlwaysVisible(Window window) {
         if (Main.isSaving) {
+            glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 1.f);
             glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
-            drawText(0, 0, 2, 2, "Saving data...".toCharArray());
+            Vector2i border = new Vector2i((int) ((32*(width/3840f))/guiScaleMul), (int) ((32*(height/2180f))/guiScaleMul));
+            drawText(0, 0, 2+border.x(), 2+border.y(), "Saving data...".toCharArray());
+            if (Main.isSwappingWorldType) {
+                drawText(0, 1, 2+border.x(), -2 - border.y() - charHeight, ("Travelling to "+World.nextWorldType.getWorldTypeName()+" from "+World.worldType.getWorldTypeName()).toCharArray());
+                glUniform1i(Renderer.gui.uniforms.get("layer"), 3); //frame
+                glUniform2i(Renderer.gui.uniforms.get("size"), 3840, 2160);
+                glUniform2i(Renderer.gui.uniforms.get("scale"), width, (int)(height*aspectRatio));
+                glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), 0, 0);
+                try(MemoryStack stack = MemoryStack.stackPush()) {
+                    glUniformMatrix4fv(Renderer.gui.uniforms.get("model"), false, new Matrix4f().get(stack.mallocFloat(16)));
+                }
+                Renderer.draw();
+            }
         }
     }
 
     public static void drawDebug(Window window) {
-        glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
-        drawText(0, 1, 2, -2-charHeight, ((long)(Engine.avgMS) + "fps ").toCharArray());
-        drawText(0, 1, 2, -2-(charHeight*2), (String.format("%.1f", 1000d/(Engine.avgMS)) + "ms").toCharArray());
-        drawText(0, 1, 2, -2-(charHeight*3), ((int)Main.player.pos.x+"x,"+(int)Main.player.pos.y+"y,"+(int)Main.player.pos.z+"z").toCharArray());
+        glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 0.5f);
+        if (!Main.isSwappingWorldType) {
+            glUniform1i(Renderer.gui.uniforms.get("tex"), 0); //use gui atlas
+            drawText(0, 1, 2, -2 - charHeight, ((long) (Engine.avgMS) + "fps ").toCharArray());
+            drawText(0, 1, 2, -2 - (charHeight * 2), (String.format("%.1f", 1000d / (Engine.avgMS)) + "ms").toCharArray());
+            drawText(0, 1, 2, -2 - (charHeight * 3), ((int) Main.player.pos.x + "x," + (int) Main.player.pos.y + "y," + (int) Main.player.pos.z + "z").toCharArray());
+        }
     }
 
     public static void drawText(float offsetX, float offsetY, float offsetPX, float offsetPY, char[] chars) {
@@ -85,8 +106,8 @@ public class GUI {
             drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*2) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
             drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*3) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
         }
-        glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 1.f); //hotbar
-        drawQuad(false, false, hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY);
+        glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 1.f);
+        drawQuad(false, false, hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY); //hotbar
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 2); //selector
         Vector2f clampedPos = confineToMenu(hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY*4);
@@ -94,7 +115,6 @@ public class GUI {
         drawSlot(hotbarPosX, hotbarPosY, 0, -1, Main.player.inv.selectedSlot.x(), Main.player.inv.selectedSlot.y(), enlargedSlotSize, enlargedSlotSize);
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //items
-        glBindTextureUnit(2, Textures.items.id);
         for (int y = 0; y < (Main.player.inv.open ? 4 : 1); y++) {
             for (int x = 0; x < 9; x++) {
                 Item item = Main.player.inv.getItem(x, y);
@@ -168,10 +188,10 @@ public class GUI {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(Renderer.gui.uniforms.get("model"), false, new Matrix4f().translate(xOffset, yOffset, 0.f).scale(xScale, yScale, 1).get(stack.mallocFloat(16)));
         }
-        glBindVertexArray(Models.CUBE.vaoId);
+        glBindVertexArray(Models.QUAD_UNNORMALIZED.vaoId);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
-        glDrawArrays(GL_TRIANGLES, 0, Models.CUBE.positions.length);
+        glDrawArrays(GL_TRIANGLES, 0, Models.QUAD_UNNORMALIZED.positions.length);
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
@@ -199,6 +219,7 @@ public class GUI {
         loadImage("texture/font");
         loadImage("texture/hotbar");
         loadImage("texture/selected_slot");
+        loadImage("texture/frame");
 
         ItemTypes.fillTexture();
     }

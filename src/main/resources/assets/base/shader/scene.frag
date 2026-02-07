@@ -526,107 +526,102 @@ vec3 worldPosFromDepth(float depth) {
     return (inverse(view)*viewSpacePos).xyz;
 }
 
-bool inArea(int i) {
-    return gl_FragCoord.x >= (res.x/2)-i && gl_FragCoord.x < (res.x/2)+i && gl_FragCoord.y >= (res.y/2)-i && gl_FragCoord.y < (res.y/2)+i;
-}
-
 void main() {
-    if (ui && inArea(2)) {
-        fragColor = vec4(1);
+    mat4 invView = inverse(view);
+    vec2 pos = gl_FragCoord.xy;
+    vec4 camClipSpace = vec4((inverse(projection) * vec4(0, 0, 1.f, 1.f)).xyz, 0);
+    vec3 camDir = normalize((invView*camClipSpace).xyz);
+    vec2 uv = ((pos / res)*2.f)-1.f;
+    vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
+    vec3 ogDir = normalize((invView*clipSpace).xyz);
+    vec3 ogPos = invView[3].xyz;
+    vec4 rasterColor = texture(raster_color, pos/res);
+    float rasterDepth = texture(raster_depth, pos/res).r;
+    bool isSky = rasterColor.a <= 0.f;
+    fragColor = raytrace(ogPos, ogDir);
+    isFirstRay = false;
+    if (solidHitPos != vec3(0)) {
+        isSky = false;
+    }
+    if (fragColor.a < 1) {
+        isSky = true;
+    }
+    if (isSky) {
+        solidHitPos = mapPos;
+    }
+    if (hitSelection && ui) {
+        fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
+    }
+    vec4 lighting = vec4(-1);
+    vec3 lightPos = ogPos + ogDir * size;
+    float tracedDepth = nearClip/max(0, dot((solidHitPos+(normal/2))-ogPos, camDir));
+    float depth = tracedDepth;
+    //fragColor = (checker(ivec2(pos/32) ? vec4(tracedDepth) : vec4(rasterDepth)))*4;
+    if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
+        vec3 rasterPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
+        if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
+            depth = rasterDepth;
+            fragColor.rgb = fromLinear(rasterColor).rgb;
+            fragColor.a = rasterColor.a;
+            normal = vec3(1);
+            prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
+            solidHitPos = rasterPos;
+            if (fragColor.a > 0) {
+                tint = vec4(0);
+                isSky = false;
+            }
+        }
+    }
+    if (inBounds(solidHitPos, worldSize)) {
+        lighting = fromLinear(getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
     } else {
-        mat4 invView = inverse(view);
-        vec2 pos = gl_FragCoord.xy;
-        vec4 camClipSpace = vec4((inverse(projection) * vec4(0, 0, 1.f, 1.f)).xyz, 0);
-        vec3 camDir = normalize((invView*camClipSpace).xyz);
-        vec2 uv = ((pos / res)*2.f)-1.f;
-        vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
-        vec3 ogDir = normalize((invView*clipSpace).xyz);
-        vec3 ogPos = invView[3].xyz;
-        vec4 rasterColor = texture(raster_color, pos/res);
-        float rasterDepth = texture(raster_depth, pos/res).r;
-        bool isSky = rasterColor.a <= 0.f;
-        fragColor = raytrace(ogPos, ogDir);
-        isFirstRay = false;
-        if (solidHitPos != vec3(0)) {
-            isSky = false;
-        }
-        if (fragColor.a < 1) {
-            isSky = true;
-        }
-        if (isSky) {
-            solidHitPos = mapPos;
-        }
-        if (hitSelection && ui) {
-            fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
-        }
-        vec4 lighting = vec4(-1);
-        vec3 lightPos = ogPos + ogDir * size;
-        float tracedDepth = nearClip/max(0, dot((solidHitPos+(normal/2))-ogPos, camDir));
-        //fragColor = (checker(ivec2(pos/32) ? vec4(tracedDepth) : vec4(rasterDepth)))*4;
-        if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
-            vec3 rasterPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
-            if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
-                fragColor.rgb = fromLinear(rasterColor).rgb;
-                fragColor.a = rasterColor.a;
-                normal = vec3(1);
-                prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
-                solidHitPos = rasterPos;
-                if (fragColor.a > 0) {
-                    tint = vec4(0);
-                    isSky = false;
-                }
+        lighting = fromLinear(vec4(0, 0, 0, 1));
+    }
+    float shadowFactor = 1.f;
+    if (!isSky) {
+        lightPos = solidHitPos;
+        if (fragColor.a < 2) {
+            vec3 source = mun.y > sun.y ? mun : sun;
+            source.y = max(source.y, 500);
+            vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
+            float brightness = dot(normal.xy, source.xy)*-0.0002f;
+            fragColor.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
+            vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
+            vec4 prevTint = tint;
+            vec3 prevHitPos = hitPos;
+            clearVars();
+            isShadow = true;
+            bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
+            if (shade > 0.f) {
+                shadowFactor *= solidCaster ? min(0.9f, mix(0.66f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
             }
+            isShadow = false;
+            tint = prevTint;
+            hitPos = prevHitPos;
+        } else if (fragColor.a >= 10) {
+            fragColor.a -= 10;
+            shadowFactor = 0.66f;
         }
-        if (inBounds(solidHitPos, worldSize)) {
-            lighting = fromLinear(getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
-        } else {
-            lighting = fromLinear(vec4(0, 0, 0, 1));
-        }
-        float shadowFactor = 1.f;
-        if (!isSky) {
-            lightPos = solidHitPos;
-            if (fragColor.a < 2) {
-                vec3 source = mun.y > sun.y ? mun : sun;
-                source.y = max(source.y, 500);
-                vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
-                float brightness = dot(normal.xy, source.xy)*-0.0002f;
-                fragColor.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
-                vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
-                vec4 prevTint = tint;
-                vec3 prevHitPos = hitPos;
-                clearVars();
-                isShadow = true;
-                bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
-                if (shade > 0.f) {
-                    shadowFactor *= solidCaster ? min(0.9f, mix(0.66f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
-                }
-                isShadow = false;
-                tint = prevTint;
-                hitPos = prevHitPos;
-            } else if (fragColor.a >= 10) {
-                fragColor.a -= 10;
-                shadowFactor = 0.66f;
-            }
-        }
-        float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+    }
+    float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+    lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
+    lighting = powLighting(lighting);
+    if (fragColor.a < 2) {
+        vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
+        fragColor.rgb *= lightingColor.rgb;
+        fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
+    }
+    if (tint.a > 0) {
+        fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, hitPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+        lighting = fromLinear(getLight(hitPos.x, hitPos.y, hitPos.z));
         lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
         lighting = powLighting(lighting);
-        if (fragColor.a < 2) {
-            vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
-            fragColor.rgb *= lightingColor.rgb;
-            fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
-        }
-        if (tint.a > 0) {
-            fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, hitPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
-            lighting = fromLinear(getLight(hitPos.x, hitPos.y, hitPos.z));
-            lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
-            lighting = powLighting(lighting);
-            vec4 lightingColor = getLightingColor(hitPos, lighting, isSky, fogginess);
-            vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
-            normalizedTint.rgb *= lightingColor.rgb*lighting.a;
-            normalizedTint.rgb = mix(normalizedTint.rgb, lightingColor.rgb*lighting.a, pow(fogginess, 2));
-            fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a*0.75f);
-        }
-        fragColor = toLinear(fragColor);
+        vec4 lightingColor = getLightingColor(hitPos, lighting, isSky, fogginess);
+        vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
+        normalizedTint.rgb *= lightingColor.rgb*lighting.a;
+        normalizedTint.rgb = mix(normalizedTint.rgb, lightingColor.rgb*lighting.a, pow(fogginess, 2));
+        fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a*0.75f);
     }
+    fragColor = toLinear(fragColor);
+    fragColor.a = depth;
 }

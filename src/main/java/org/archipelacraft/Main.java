@@ -89,6 +89,7 @@ public class Main {
     public static boolean shouldActuallySave = false;
     public static boolean isFullScreen = false;
     public static boolean showDebug = true;
+    public static boolean isSwappingWorldType = false;
     public static int uiState = 1;
 
     public void input(Window window, long timeMillis, long diffTimeMillis) throws IOException {
@@ -127,15 +128,13 @@ public class Main {
                     if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
                         isSaving = true;
                     } else if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
-                        World.saveWorld(World.worldType.getWorldPath() + "/");
-                        World.clearData();
+                        isSwappingWorldType = true;
+                        isSaving = true;
                         if (World.worldType instanceof TemperateWorldType) {
-                            World.worldType = new BorealWorldType();
+                            World.nextWorldType = new BorealWorldType();
                         } else if (World.worldType instanceof BorealWorldType) {
-                            World.worldType = new TemperateWorldType();
+                            World.nextWorldType = new TemperateWorldType();
                         }
-                        World.worldType.generate();
-                        Renderer.initiallyFillTextures(window, false);
                     }
                 }
 
@@ -331,6 +330,17 @@ public class Main {
                         player.save();
                         isSaving = false;
                         shouldActuallySave = false;
+                        if (isSwappingWorldType) {
+                            World.clearData();
+                            if (World.worldType instanceof TemperateWorldType) {
+                                World.worldType = new BorealWorldType();
+                            } else if (World.worldType instanceof BorealWorldType) {
+                                World.worldType = new TemperateWorldType();
+                            }
+                            World.worldType.generate();
+                            Renderer.initiallyFillTextures(window, false);
+                            isSwappingWorldType = false;
+                        }
                     } else {
                         shouldActuallySave = true;
                     }

@@ -10,6 +10,9 @@ public class WorldType {
     public Path getWorldPath() {
         return Path.of("none");
     }
+    public String getWorldTypeName() {
+        return "none";
+    }
 
     public void generate() throws IOException {
         generated = false;

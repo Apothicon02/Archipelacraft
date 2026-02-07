@@ -1,8 +1,9 @@
 uniform vec4 color;
 
 uniform layout(binding = 0) sampler2D scene_color;
-uniform layout(binding = 1) sampler3D gui;
-uniform layout(binding = 2) sampler3D item;
+uniform layout(binding = 1) sampler2D blurred;
+uniform layout(binding = 2) sampler3D gui;
+uniform layout(binding = 3) sampler3D item;
 uniform int tex;
 uniform int layer;
 uniform ivec2 atlasOffset;
@@ -10,6 +11,8 @@ uniform ivec2 offset;
 uniform ivec2 size;
 uniform ivec2 scale;
 uniform ivec2 res;
+uniform bool tiltShift;
+uniform bool dof;
 
 in vec3 pos;
 
@@ -17,7 +20,11 @@ out vec4 fragColor;
 
 void main() {
     if (color.a == -1f) {
-        fragColor = texture(scene_color, pos.xy, 0);
+        vec4 baseColor = texture(scene_color, pos.xy, 0);
+        vec4 blurredColor = texture(blurred, pos.xy, 0);
+        float blurriness = tiltShift ? (1, sqrt(distance(pos.y, 0.5))*1.5f) : 0; //tilt-shift
+        blurriness = max(blurriness, dof ? mix(1, 0, clamp(baseColor.a*500, 0, 1)) : 0); //dof
+        fragColor = mix(baseColor, blurredColor, blurriness);
         //fragColor = vec4(vec3(0.f, (((gl_FragCoord.x)/res.x)/4), (((gl_FragCoord.y)/res.y)/4)), 1);
     } else {
         vec4 guiColor = texelFetch(tex == 0 ? gui : item, ivec3(atlasOffset.x+(pos.x*size.x), atlasOffset.y+(abs(1-pos.y)*size.y), layer), 0)*color;

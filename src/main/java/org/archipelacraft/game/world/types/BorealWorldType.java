@@ -28,6 +28,11 @@ public class BorealWorldType extends WorldType {
     }
 
     @Override
+    public String getWorldTypeName() {
+        return "Boreal Meadow";
+    }
+
+    @Override
     public void createNew() {
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {

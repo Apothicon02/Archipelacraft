@@ -277,7 +277,7 @@ public class Player {
             }
         }
         new Matrix4f(camera.getViewMatrix()).getTranslation(oldCamOffset);
-        blockBreathing = World.getBlockNotNull(blockPos.x, blockPos.y+eyeHeight, blockPos.z);
+        blockBreathing = World.getBlockNotNull(blockPos.x, (blockPos.y+eyeHeight-bobbing)+1, blockPos.z);
         speed = baseSpeed;
         boolean hittingCeiling = solid(pos.x, pos.y+height, pos.z, width, 0.125f, false, false);
         boolean mightBeCrawling = false;
