@@ -21,10 +21,20 @@ out vec4 fragColor;
 void main() {
     if (color.a == -1f) {
         vec4 baseColor = texture(scene_color, pos.xy, 0);
-        vec4 blurredColor = texture(blurred, pos.xy, 0);
-        float blurriness = tiltShift ? (1, sqrt(distance(pos.y, 0.5))*1.5f) : 0; //tilt-shift
-        blurriness = max(blurriness, dof ? mix(1, 0, clamp(baseColor.a*500, 0, 1)) : 0); //dof
-        fragColor = mix(baseColor, blurredColor, blurriness);
+        vec4 result = vec4(0.0);
+        float radius = 32;
+        for (int i = 0; i < radius; ++i) {
+            float angle = (float(i) / float(radius)) * 6.28318531;//pie
+            vec2 offset = vec2(cos(angle), sin(angle)) * radius;
+            vec2 samplePos = clamp(gl_FragCoord.xy + offset, vec2(0), res-1);
+            vec4 newResult = texture(blurred, samplePos/res.xy, 0);
+            result += newResult/radius;
+        }
+        vec4 blurColor = max(texture(blurred, pos.xy, 0), result);
+        vec4 blurriness = vec4(tiltShift ? (1, sqrt(max(0.1f, distance(pos.y, 0.5)))*1.5f) : 0); //tilt-shift
+        blurriness = max(blurriness, vec4(dof ? mix(1, 0, clamp(baseColor.a*500, 0, 1)) : 0)); //dof
+        blurriness = max(blurriness, 2*(max(vec4(0.5f), blurColor)-0.5f)); //bloom
+        fragColor = mix(baseColor, blurColor, min(vec4(1), blurriness));
         //fragColor = vec4(vec3(0.f, (((gl_FragCoord.x)/res.x)/4), (((gl_FragCoord.y)/res.y)/4)), 1);
     } else {
         vec4 guiColor = texelFetch(tex == 0 ? gui : item, ivec3(atlasOffset.x+(pos.x*size.x), atlasOffset.y+(abs(1-pos.y)*size.y), layer), 0)*color;

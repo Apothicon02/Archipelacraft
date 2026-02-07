@@ -292,7 +292,7 @@ public class Renderer {
                         glUniformMatrix4fv(raster.uniforms.get("model"), false, starMatrix.get(stack.mallocFloat(16)));
                     }
                     Vector3f color = starRand.nextFloat() < 0.64f ? new Vector3f(0.97f, 0.98f, 1.f) : starColors[starRand.nextInt(starColors.length - 1)];
-                    glUniform4f(raster.uniforms.get("color"), color.x, color.y, color.z, 2);
+                    glUniform4f(raster.uniforms.get("color"), color.x*12, color.y*12, color.z*12, 2);
                     drawCube();
                 }
             }
@@ -419,25 +419,24 @@ public class Renderer {
             bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
             draw();
-            if (tiltShift || dof) {
-                glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
-                blur.bind();
-                glUniform2i(blur.uniforms.get("res"), window.getWidth(), window.getHeight());
-                glUniform2f(blur.uniforms.get("dir"), 1f, 0f);
-                glBindTextureUnit(0, Textures.sceneColor.id);
-                glBindImageTexture(1, Textures.blurry.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-                glClearTexImage(Textures.blurry.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 0.f, 1.f, 1.f});
-                draw();
-                glUniform2f(blur.uniforms.get("dir"), 0f, 1f);
-                glBindTextureUnit(0, Textures.blurry.id);
-                glBindImageTexture(1, Textures.blurred.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-                glClearTexImage(Textures.blurred.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 1.f, 0.f, 1.f});
-                draw();
-            }
 
-            screenshot(window);
+            glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
+            blur.bind();
+            glUniform2i(blur.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform2f(blur.uniforms.get("dir"), 1f, 0f);
+            glBindTextureUnit(0, Textures.sceneColor.id);
+            glBindImageTexture(1, Textures.blurry.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+            glClearTexImage(Textures.blurry.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 0.f, 1.f, 1.f});
+            draw();
+            glUniform2f(blur.uniforms.get("dir"), 0f, 1f);
+            glBindTextureUnit(0, Textures.blurry.id);
+            glBindImageTexture(1, Textures.blurred.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+            glClearTexImage(Textures.blurred.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 1.f, 0.f, 1.f});
+            draw();
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             gui.bind();
+            screenshot(window);
             glClearDepthf(0.f);
             glClear(GL_DEPTH_BUFFER_BIT);
             GUI.updateGUI(window);

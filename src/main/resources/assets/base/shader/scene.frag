@@ -569,10 +569,8 @@ void main() {
             normal = vec3(1);
             prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
             solidHitPos = rasterPos;
-            if (fragColor.a > 0 || fragColor.a < 0) {
-                tint = vec4(0);
-                isSky = false;
-            }
+            tint = vec4(0);
+            isSky = false;
         }
     }
     if (inBounds(solidHitPos, worldSize)) {
