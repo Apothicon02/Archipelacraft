@@ -494,8 +494,12 @@ public class Renderer {
             String dir = Main.mainFolder+"screenshots/";
             Path path = Path.of(dir);
             Files.createDirectories(path);
-            int filesInDir = path.toFile().list().length;
-            File file = new File(dir+filesInDir+".png");
+            int num = 0;
+            File file = new File(dir+num+".png");
+            while (file.exists()) {
+                num++;
+                file = new File(dir+num+".png");
+            }
             ImageIO.write(image, "png", file);
         }
     }
