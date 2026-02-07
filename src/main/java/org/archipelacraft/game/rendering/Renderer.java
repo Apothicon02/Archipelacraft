@@ -246,6 +246,19 @@ public class Renderer {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
+    public static void drawClouds() {
+        Random cloudRand = new Random(911);
+        float brightness = Math.clamp((640+sunPos.y())/640, 0.3f, 1.2f);
+        for (int i = 0; i < 512; i++) {
+            float b = brightness-(cloudRand.nextFloat()/5);
+            Vector3f pos = new Vector3f(0, 0, 2000*(cloudRand.nextFloat()+0.05f)).rotateY((float) ((cloudRand.nextFloat()*10)+(time*(7+cloudRand.nextInt(5)))));
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY(cloudRand.nextFloat()/10).setTranslation(pos.set(pos.x + 512, cloudRand.nextInt(200)+320-((Math.abs(pos.x)+Math.abs(pos.z))/10), pos.z + 512)).scale(10+cloudRand.nextInt(10), 3+cloudRand.nextInt(6), 10+cloudRand.nextInt(10)).get(stack.mallocFloat(16)));
+            }
+            glUniform4f(raster.uniforms.get("color"), b, b, b, -1);
+            drawCube();
+        }
+    }
     public static void drawSunAndMoon() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(80).get(stack.mallocFloat(16)));
@@ -356,6 +369,7 @@ public class Renderer {
             updateUniforms(raster, window);
             glUniform1i(raster.uniforms.get("alwaysUpfront"), 0);
             glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
+            drawClouds();
             drawSunAndMoon();
             drawStars();
             drawCenter();

@@ -163,16 +163,17 @@ ivec4 getBlock(float x, float y, float z) {
 vec4 getLight(float x, float y, float z) {
     return texture(lights, vec3(z, y, x)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
 }
+vec3 ogPos = vec3(0);
 vec3 sunColor = vec3(0);
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess) {
     float sunHeight = sun.y/size;
-    float scattering = gradient(lightPos.y, 0, 500, 1.5f, -0.5f);
+    float scattering = gradient(lightPos.y, ogPos.y-63, ogPos.y+437, 1.5f, -0.5f);
     float sunDist = (distance(lightPos.xz, sun.xz)/(size*1.5f));
     float adjustedTime = clamp((sunDist*abs(1-clamp(sunHeight, 0.05f, 0.5f)))+scattering, 0.f, 1.f);
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
     float sunBrightness = clamp(sunHeight+0.5, 0.33f, 1.f);
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
-    float skyWhiteness = mix(gradient(lightPos.y, 63, 450, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1));
+    float skyWhiteness = mix(gradient(lightPos.y, (ogPos.y/4)+47, (ogPos.y/2)+436, 0, 0.9), 0.9f, clamp(abs(1-sunSetness), 0, 1));
     float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
     sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, sunSetness), vec3(sunBrightness), whiteness);
     return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
@@ -534,7 +535,7 @@ void main() {
     vec2 uv = ((pos / res)*2.f)-1.f;
     vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
     vec3 ogDir = normalize((invView*clipSpace).xyz);
-    vec3 ogPos = invView[3].xyz;
+    ogPos = invView[3].xyz;
     vec4 rasterColor = texture(raster_color, pos/res);
     float rasterDepth = texture(raster_depth, pos/res).r;
     bool isSky = rasterColor.a <= 0.f;
@@ -568,7 +569,7 @@ void main() {
             normal = vec3(1);
             prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
             solidHitPos = rasterPos;
-            if (fragColor.a > 0) {
+            if (fragColor.a > 0 || fragColor.a < 0) {
                 tint = vec4(0);
                 isSky = false;
             }
@@ -606,6 +607,7 @@ void main() {
         }
     }
     float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+    if (fragColor.a < 0 && !isSky) {fogginess *= 0.5f;}
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
     if (fragColor.a < 2) {
