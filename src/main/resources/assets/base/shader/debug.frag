@@ -5,13 +5,16 @@ uniform int tex;
 uniform ivec2 atlasOffset;
 uniform vec3 sun;
 uniform vec3 mun;
+uniform bool alwaysUpfront;
 
 in vec3 pos;
 in vec3 norm;
 out vec4 fragColor;
+out float gl_FragDepth;
 
 void main() {
-    if (tex == 0) {
+    gl_FragDepth = alwaysUpfront ? 1.f : gl_FragCoord.z;
+    if (tex <= 0) {
         fragColor = color;
         if (fragColor.a < 2 && fragColor.a > 0) {
             vec3 source = mun.y > sun.y ? mun : sun;

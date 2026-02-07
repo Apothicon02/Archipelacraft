@@ -47,6 +47,7 @@ public class Renderer {
     public static float timeOfDay = 0.5f;
     public static double time = 0.5f;
     public static boolean screenshot = false;
+    public static boolean forceTiltShift = false;
 
     public static void createGLDebugger() {
         glEnable(GL_DEBUG_OUTPUT);
@@ -167,7 +168,7 @@ public class Renderer {
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
                 new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -339,6 +340,12 @@ public class Renderer {
                 tiltShift = true;
                 dof = false;
             }
+            if (forceTiltShift) {
+                tiltShift = true;
+                Constants.FOV = (float) Math.toRadians(57);
+            } else {
+                Constants.FOV = (float) Math.toRadians(73);
+            }
 
             glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
             raster.bind();
@@ -347,6 +354,7 @@ public class Renderer {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             updateBuffers();
             updateUniforms(raster, window);
+            glUniform1i(raster.uniforms.get("alwaysUpfront"), 0);
             glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
             drawSunAndMoon();
             drawStars();
@@ -370,6 +378,7 @@ public class Renderer {
                 }
             }
             Item item = player.inv.getItem(player.inv.selectedSlot);
+            glUniform1i(raster.uniforms.get("alwaysUpfront"), 1);
             if (item != null) {
                 try (MemoryStack stack = MemoryStack.stackPush()) {
                     glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.045f+Math.max(0, handTilt()*0.03f), -0.115f + (player.bobbing * 0.05f) - Math.min(0, handTilt()*0.1f),  -0.03f+(handTilt()*0.1f)).rotateY((float)Math.toRadians(-90.f)).rotateZ((float)Math.toRadians(55.f+(handTilt() < 0 ? (handTilt()*80) : (handTilt()*40))+HandManager.getTilt())).scale(0.125f).get(stack.mallocFloat(16)));
@@ -377,7 +386,7 @@ public class Renderer {
                 glUniform2i(raster.uniforms.get("atlasOffset"), item.type.atlasOffset.x(), item.type.atlasOffset.y());
                 drawDoubleSidedPlane();
             } else {
-                glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
+                glUniform1i(raster.uniforms.get("tex"), -1); //rendering hand
                 if (showUI && !Main.isSwappingWorldType) {
                     glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
                     try (MemoryStack stack = MemoryStack.stackPush()) {

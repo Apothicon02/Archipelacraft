@@ -538,7 +538,9 @@ void main() {
     vec4 rasterColor = texture(raster_color, pos/res);
     float rasterDepth = texture(raster_depth, pos/res).r;
     bool isSky = rasterColor.a <= 0.f;
-    fragColor = raytrace(ogPos, ogDir);
+    if (rasterDepth < 0.05) {
+        fragColor = raytrace(ogPos, ogDir);
+    }
     isFirstRay = false;
     if (solidHitPos != vec3(0)) {
         isSky = false;

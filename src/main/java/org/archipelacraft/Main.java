@@ -109,14 +109,22 @@ public class Main {
                 if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
                     if (uiState == 0) {
                         uiState = 1;
+                        Renderer.forceTiltShift = false;
                         Renderer.showUI = true;
                         showDebug = true;
                     } else if (uiState == 1) {
                         uiState = 2;
+                        Renderer.forceTiltShift = false;
                         Renderer.showUI = true;
                         showDebug = false;
                     } else if (uiState == 2) {
+                        uiState = 3;
+                        Renderer.forceTiltShift = false;
+                        Renderer.showUI = false;
+                        showDebug = false;
+                    } else if (uiState == 3) {
                         uiState = 0;
+                        Renderer.forceTiltShift = true;
                         Renderer.showUI = false;
                         showDebug = false;
                     }
