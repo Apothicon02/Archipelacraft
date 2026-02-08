@@ -5,7 +5,9 @@ import org.archipelacraft.Main;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.items.Item;
+import org.archipelacraft.game.items.ItemType;
 import org.archipelacraft.game.items.ItemTypes;
+import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 
 import java.io.FileInputStream;
@@ -20,6 +22,7 @@ public class Inventory {
     public Item[] items = new Item[9*4];
     public Item cursorItem = null;
     public Vector2i selectedSlot = new Vector2i(0);
+    public Vector2i selectedContainerSlot = new Vector2i(0);
     public int prevRMBDeposit = -1;
     public int interactCD = 0;
 
@@ -31,8 +34,9 @@ public class Inventory {
             prevRMBDeposit = -1;
         }
         if (interactCD <= 0) {
-            int selSlotId = selectedSlot.x+(selectedSlot.y*9);
-            Item selItem = getItem(selSlotId);
+            Integer selSlotId = selectedSlot == null || selectedSlot.x() < 0 || selectedSlot.y() < 0 ? null : selectedSlot.x+(selectedSlot.y*9);
+            Integer containerSlotId = selectedContainerSlot == null || selectedContainerSlot.x() < 0 || selectedContainerSlot.y() < 0 ? null : selectedContainerSlot.x+(selectedContainerSlot.y*9);
+            Item selItem = getSelectedItem(true);
             if (cursorItem == null) {
                 if (selItem != null) {
                     Item newSelItem = selItem.clone();
@@ -52,18 +56,46 @@ public class Inventory {
                         cursorItem.amount = (int) Math.ceil(splitAmt);
                         interactCD = 5;
                     }
-                    setItem(selSlotId, newSelItem);
+                    if (selSlotId != null) {
+                        setItem(selSlotId, newSelItem);
+                        if (Main.isShiftDown && cursorItem != null) {
+                            if (!Main.player.creative || !Main.isCtrlDown) {
+                                addToInventory(cursorItem, selectedSlot.y() > 0);
+                            }
+                            cursorItem = null;
+                        }
+                    }
+                    if (containerSlotId != null) {
+                        if (Main.isShiftDown && cursorItem != null) {
+                            addToInventory(cursorItem, true);
+                            cursorItem = null;
+                        }
+                    }
                 }
             } else if (Main.isLMBClick) {
                 if (selItem != null) {
                     if (cursorItem.type != selItem.type) { //swap item with slot
                         Item oldCursorItem = cursorItem.clone();
                         cursorItem = selItem.clone();
-                        setItem(selSlotId, oldCursorItem);
-                    } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
+                        if (selSlotId != null) {
+                            setItem(selSlotId, oldCursorItem);
+                        }
+                    } else if (selSlotId != null) { //dump contents into slot
+                        if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) {
+                            cursorItem = null;
+                        }
+                    } else {
+                        World.dropItem(cursorItem);
                         cursorItem = null;
                     }
-                } else if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) { //dump contents into slot
+                } else if (selSlotId != null) { //dump contents into slot
+                    if (addToSlot(selSlotId, cursorItem, cursorItem.amount) == null) {
+                        cursorItem = null;
+                    }
+                } else {
+                    if (containerSlotId == null) { //only drop if not over container
+                        World.dropItem(cursorItem);
+                    }
                     cursorItem = null;
                 }
                 interactCD = 5;
@@ -72,7 +104,7 @@ public class Inventory {
         if (cursorItem != null) {
             if (cursorItem == null || cursorItem.amount <= 0 || cursorItem.type == ItemTypes.AIR) {
                 cursorItem = null;
-            } else if (interactCD <= 0) {
+            } else if (interactCD <= 0 && selectedSlot != null) {
                 int slotId = selectedSlot.x+(selectedSlot.y*9);
                 if (Main.wasLMBDown) { //split evenly across several slots
 //                    if (addToSlot(slotId, cursorItem, cursorItem.amount, false) == null) {
@@ -146,6 +178,24 @@ public class Inventory {
         out.close();
     }
 
+    public Item getSelectedItem(boolean ignoreCursorItem) {
+        if (!ignoreCursorItem && cursorItem != null) {
+            return cursorItem;
+        } else if (selectedSlot != null) {
+            return getItem(selectedSlot);
+        } else if (selectedContainerSlot != null) {
+            return getContainerItem(selectedContainerSlot);
+        }
+        return null;
+    }
+
+    public Item getContainerItem(Vector2i xy) {
+        return xy == null ? null : getContainerItem((xy.y*9)+xy.x);
+    }
+    public Item getContainerItem(int index) {
+        ItemType type = ItemTypes.itemTypeMap.get(index);
+        return type == null ? null : new Item().type(type).amount(type.maxStackSize);
+    }
     public Item getItem(int index) {
         return items[index];
     }
@@ -153,7 +203,7 @@ public class Inventory {
         return getItem((y*9)+x);
     }
     public Item getItem(Vector2i xy) {
-        return getItem((xy.y*9)+xy.x);
+        return xy == null ? null : getItem((xy.y*9)+xy.x);
     }
     public void setItem(int slotId, Item item) {
         Item existing = items[slotId];
@@ -177,14 +227,14 @@ public class Inventory {
     public void addToInventory(ArrayList<Item> items) {
         if (items != null && !items.isEmpty()) {
             for (Item item : items) {
-                addToInventory(item);
+                addToInventory(item, false);
             }
         }
     }
 
-    public Item addToInventory(Item item) {
+    public Item addToInventory(Item item, boolean hotbarFirst) {
         loop:
-        for (int y = 3; y >= 0; y--) { //first try merging with existing stacks
+        for (int y = hotbarFirst ? 0 : 3; hotbarFirst ? (y < 4) : (y >= 0); y += (hotbarFirst ? 1 : -1)) { //first try merging with existing stacks
             for (int x = 0; x < 9; x++) {
                 int i = (y*9)+x;
                 Item slotItem = getItem(i);
@@ -198,7 +248,7 @@ public class Inventory {
         }
         if (item != null) {
             loop:
-            for (int y = 3; y >= 0; y--) { //then try adding to an empty slot
+            for (int y = hotbarFirst ? 0 : 3; hotbarFirst ? (y < 4) : (y >= 0); y += (hotbarFirst ? 1 : -1)) { //then try adding to an empty slot
                 for (int x = 0; x < 9; x++) {
                     int i = (y*9)+x;
                     Item slotItem = getItem(i);

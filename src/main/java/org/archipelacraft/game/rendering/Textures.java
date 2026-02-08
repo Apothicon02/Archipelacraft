@@ -66,7 +66,7 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_T, GL40.GL_CLAMP_TO_EDGE,
             GL40.GL_TEXTURE_WRAP_R, GL40.GL_CLAMP_TO_EDGE
     },Constants.width, Constants.height);
-    public static Texture gui = create(3840, 2160, 4);
+    public static Texture gui = create(3840, 2160, 5);
     public static Texture items = create(1024, 16, 1);
 
     public static Texture create(int width, int height) {

@@ -232,7 +232,7 @@ public class Player {
         for (int i = 0; i < World.items.size(); i++) {
             Item item = World.items.get(i);
             if (item.timeExisted > 500 && item.pos.y() >= pos.y() && item.pos.y() <= pos.y()+height && new Vector2f(item.pos.x(), item.pos.z()).distance(new Vector2f(pos.x(), pos.z())) < 1f) { //500ms = 0.5s
-                item = inv.addToInventory(item);
+                item = inv.addToInventory(item, false);
                 if (item == null) {
                     World.items.remove(i);
                     i--;

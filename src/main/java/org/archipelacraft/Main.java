@@ -10,6 +10,7 @@ import org.archipelacraft.game.gameplay.HandManager;
 import org.archipelacraft.game.gameplay.Player;
 import org.archipelacraft.game.audio.AudioController;
 import org.archipelacraft.game.items.Item;
+import org.archipelacraft.game.items.ItemTypes;
 import org.archipelacraft.game.rendering.Models;
 import org.archipelacraft.game.world.LightHelper;
 import org.archipelacraft.game.world.World;
@@ -84,6 +85,8 @@ public class Main {
     boolean wasF4Down = false;
     boolean wasF5Down = false;
     boolean wasF11Down = false;
+    public static boolean isShiftDown = false;
+    public static boolean isCtrlDown = false;
     public static boolean isClosing = false;
     public static boolean isSaving = false;
     public static boolean shouldActuallySave = false;
@@ -102,8 +105,8 @@ public class Main {
                 boolean isRMBDown = window.rightButtonPressed;
                 isLMBClick = wasLMBDown && !isLMBDown;
                 isRMBClick = wasRMBDown & !isRMBDown;
-                boolean isShiftDown = window.isKeyPressed(SDL_SCANCODE_LSHIFT);
-                boolean isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
+                isShiftDown = window.isKeyPressed(SDL_SCANCODE_LSHIFT);
+                isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
                 boolean isF11Down = window.isKeyPressed(SDL_SCANCODE_F11);
 
                 if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
@@ -174,10 +177,10 @@ public class Main {
                 }
 
                 if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
-                    Item item = player.inv.getItem(player.inv.selectedSlot);
+                    Item item = player.inv.getSelectedItem(false);
                     if (item != null) {
-                        World.items.add(item.clone().timeExisted(-2000).moveTo(player.getCameraMatrixWithoutPitch().invert().translate(0, -player.eyeHeight + 0.2f, -1f).getTranslation(new Vector3f())));
-                        player.inv.setItem(player.inv.selectedSlot, null);
+                        World.dropItem(item);
+                        item.amount(0).type(ItemTypes.AIR);
                     }
                 }
                 if (player.inv.open) {
@@ -205,10 +208,6 @@ public class Main {
                     }
                     if (wasXDown && !window.isKeyPressed(SDL_SCANCODE_X)) {
                         player.flying = !player.flying;
-                    }
-
-                    if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
-                        //drop item in hand.
                     }
 
                     if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {

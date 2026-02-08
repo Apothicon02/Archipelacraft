@@ -13,6 +13,7 @@ import org.archipelacraft.game.rendering.Textures;
 import org.archipelacraft.game.world.types.WorldType;
 import org.archipelacraft.game.world.types.WorldTypes;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
 
@@ -56,6 +57,10 @@ public class World {
         blocksLOD2 = new short[height/16][(size*size)/16];
         lights = new byte[height][(size*size)*4];
         heightmap = new short[size*size];
+    }
+
+    public static void dropItem(Item item) {
+        World.items.add(item.clone().timeExisted(-2000).moveTo(Main.player.getCameraMatrixWithoutPitch().invert().translate(0, -Main.player.eyeHeight + 0.2f, -1f).getTranslation(new Vector3f())));
     }
 
     public static boolean inBounds(int x, int y, int z) {
