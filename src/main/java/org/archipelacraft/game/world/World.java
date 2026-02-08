@@ -135,7 +135,7 @@ public class World {
             }
 
             if (lightChanged) {
-                LightHelper.recalculateLight(pos, org.joml.Math.max(oldLight.x, r), org.joml.Math.max(oldLight.y, g), org.joml.Math.max(oldLight.z, b), oldLight.w);
+                LightHelper.recalculateLight(pos, Math.max(oldLight.x, r), Math.max(oldLight.y, g), Math.max(oldLight.z, b), oldLight.w);
             }
 
             if (block == 0) {
@@ -157,23 +157,10 @@ public class World {
                 glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
                 boolean clear = true;
                 loop:
-                for (int cX = (int) Math.floor(x/4f)*4; cX < (Math.floor(x/4f)*4)+4; cX++) {
-                    for (int cY = (int) Math.floor(y/4f)*4; cY < (Math.floor(y/4f)*4)+4; cY++) {
-                        for (int cZ = (int) Math.floor(z/4f)*4; cZ < (Math.floor(z/4f)*4)+4; cZ++) {
-                            if (blocks[y][condensePos(cX, cZ)*2] > 0) {
-                                clear = false;
-                                break loop;
-                            }
-                        }
-                    }
-                }
-                glTexSubImage3D(GL_TEXTURE_3D, 2, z/4, y/4, x/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(clear ? 0 : 1);
-                loop:
                 for (int cX = (int) Math.floor(x/16f)*16; cX < (Math.floor(x/16f)*16)+16; cX++) {
                     for (int cY = (int) Math.floor(y/16f)*16; cY < (Math.floor(y/16f)*16)+16; cY++) {
                         for (int cZ = (int) Math.floor(z/16f)*16; cZ < (Math.floor(z/16f)*16)+16; cZ++) {
-                            if (blocks[y][condensePos(cX, cZ)*2] > 0) {
+                            if (blocks[cY][condensePos(cX, cZ)*2] > 0) {
                                 clear = false;
                                 break loop;
                             }
@@ -182,9 +169,25 @@ public class World {
                 }
                 glTexSubImage3D(GL_TEXTURE_3D, 4, z/16, y/16, x/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
                 blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(clear ? 0 : 1);
+                if (!clear) {
+                    clear = true;
+                    loop:
+                    for (int cX = (int) Math.floor(x / 4f) * 4; cX < (Math.floor(x / 4f) * 4) + 4; cX++) {
+                        for (int cY = (int) Math.floor(y / 4f) * 4; cY < (Math.floor(y / 4f) * 4) + 4; cY++) {
+                            for (int cZ = (int) Math.floor(z / 4f) * 4; cZ < (Math.floor(z / 4f) * 4) + 4; cZ++) {
+                                if (blocks[cY][condensePos(cX, cZ) * 2] > 0) {
+                                    clear = false;
+                                    break loop;
+                                }
+                            }
+                        }
+                    }
+                }
+                glTexSubImage3D(GL_TEXTURE_3D, 2, z/4, y/4, x/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(clear ? 0 : 1);
             } else if (block > 0) {
-                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(block);
                 blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(block);
+                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(block);
             }
         }
     }
@@ -212,6 +215,7 @@ public class World {
     }
 
     public static void updateHeightmap(int x, int z) {
+        int prevHeight = heightmap[condensePos(x, z)];
         boolean setHeightmap = false;
         for (int y = height-1; y >= 0; y--) {
             Vector2i block = getBlock(x, y, z);
@@ -224,13 +228,17 @@ public class World {
             }
             if (!setHeightmap) {
                 if (!blockType.obstructingHeightmap(block)) {
-                    setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 15));
+                    Vector4i light = getLight(x, y, z);
+                    setLight(x, y, z, light.x, light.y, light.z, Math.min(15, 15+Math.max(-15, y-Math.max(y, prevHeight))));
+                    LightHelper.updateLight(new Vector3i(x, y, z), block, getLight(x, y, z));
                 } else {
                     setHeightmap = true;
                     heightmap[condensePos(x, z)] = (short) (y);
                 }
             } else {
-                setLight(x, y, z, new Vector4i(rgb.x, rgb.y, rgb.z, 0));
+                Vector4i light = getLight(x, y, z);
+                setLight(x, y, z, light.x, light.y, light.z, 0);
+                LightHelper.recalculateLight(new Vector3i(x, y, z), light.x, light.y, light.z, light.w);
             }
         }
     }

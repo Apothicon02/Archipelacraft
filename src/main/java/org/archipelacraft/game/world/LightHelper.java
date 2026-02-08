@@ -130,7 +130,7 @@ public class LightHelper {
                                 ng = lBlock.lightBlockProperties().g;
                                 nb = lBlock.lightBlockProperties().b;
                             }
-                            World.setLight(neighborPos.x, neighborPos.y, neighborPos.z, nr, ng, nb, (byte) (neighborLight.w() == 20 ? 20 : 0));
+                            World.setLight(neighborPos.x, neighborPos.y, neighborPos.z, nr, ng, nb, (byte) (neighborLight.w() == 15 ? 15 : 0));
                             recalculateLight(neighborPos, neighborLight.x(), neighborLight.y(), neighborLight.z(), neighborLight.w());
                         }
                         queueLightUpdate(pos);
