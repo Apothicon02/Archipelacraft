@@ -230,7 +230,9 @@ public class World {
                 if (!blockType.obstructingHeightmap(block)) {
                     Vector4i light = getLight(x, y, z);
                     setLight(x, y, z, light.x, light.y, light.z, Math.min(15, 15+Math.max(-15, y-Math.max(y, prevHeight))));
-                    LightHelper.updateLight(new Vector3i(x, y, z), block, getLight(x, y, z));
+                    if (generated) {
+                        LightHelper.updateLight(new Vector3i(x, y, z), block, getLight(x, y, z));
+                    }
                 } else {
                     setHeightmap = true;
                     heightmap[condensePos(x, z)] = (short) (y);
@@ -238,7 +240,9 @@ public class World {
             } else {
                 Vector4i light = getLight(x, y, z);
                 setLight(x, y, z, light.x, light.y, light.z, 0);
-                LightHelper.recalculateLight(new Vector3i(x, y, z), light.x, light.y, light.z, light.w);
+                if (generated) {
+                    LightHelper.recalculateLight(new Vector3i(x, y, z), light.x, light.y, light.z, light.w);
+                }
             }
         }
     }
