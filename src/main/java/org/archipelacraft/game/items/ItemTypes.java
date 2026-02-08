@@ -46,10 +46,20 @@ public class ItemTypes {
             ORANGE = create(new ItemType("food/texture/orange").maxStackSize(2)),
             CHERRY = create(new ItemType("food/texture/cherry").maxStackSize(2)),
             OAK_LOG = create(new ItemType("resource/texture/oak_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.OAK_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            BIRCH_LOG = create(new ItemType("resource/texture/birch_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.BIRCH_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            CHERRY_LOG = create(new ItemType("resource/texture/cherry_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.CHERRY_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            MAHOGANY_LOG = create(new ItemType("resource/texture/mahogany_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.MAHOGANY_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            ACACIA_LOG = create(new ItemType("resource/texture/acacia_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.ACACIA_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            PALM_LOG = create(new ItemType("resource/texture/palm_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.PALM_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            SPRUCE_LOG = create(new ItemType("resource/texture/spruce_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.SPRUCE_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            WILLOW_LOG = create(new ItemType("resource/texture/willow_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.WILLOW_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
+            REDWOOD_LOG = create(new ItemType("resource/texture/redwood_log").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.REDWOOD_LOG), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.5f, 1))),
             STICK = create(new ItemType("resource/texture/stick").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.STICK), 0).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.33f, 1.33f))),
             STONE = create(new ItemType("resource/texture/stone").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.STONE), 0).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.5f, 0.75f))),
             MARBLE = create(new ItemType("resource/texture/marble").blockToPlace(BlockTypes.getId(BlockTypes.MARBLE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.45f, 0.85f))),
-            GLASS = create(new ItemType("component/texture/glass").blockToPlace(BlockTypes.getId(BlockTypes.GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f)));
+            GLASS = create(new ItemType("component/texture/glass").blockToPlace(BlockTypes.getId(BlockTypes.GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
+            MAGENTA_STAINED_GLASS = create(new ItemType("component/texture/magenta_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.PURPLE_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
+            LIME_STAINED_GLASS = create(new ItemType("component/texture/lime_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.LIME_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f)));
 
     private static ItemType create(ItemType type) {
         itemTypeMap.put(itemTypeMap.size(), type);
