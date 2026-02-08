@@ -97,7 +97,8 @@ public class Window {
     }
 
     public void cleanup() {
-
+        SDL_DestroyWindow(Window.window);
+        SDL_Quit();
     }
 
     public int getHeight() {
@@ -187,8 +188,9 @@ public class Window {
         return projectionMatrix;
     }
 
+    public boolean shouldClose = false;
     public boolean windowShouldClose() {
-        return false;
+        return shouldClose;
     }
 
     public static class WindowOptions {

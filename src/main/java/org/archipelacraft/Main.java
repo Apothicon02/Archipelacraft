@@ -280,8 +280,7 @@ public class Main {
         timeMS = time;
         if (isClosing) {
             //World.saveWorld(World.worldPath+"/");
-            SDL_DestroyWindow(Window.window);
-            SDL_Quit();
+            window.shouldClose = true;
         } else {
             if (!renderingEnabled) {
                 renderingEnabled = true;

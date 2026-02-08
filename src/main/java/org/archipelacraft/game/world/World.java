@@ -220,12 +220,6 @@ public class World {
         for (int y = height-1; y >= 0; y--) {
             Vector2i block = getBlock(x, y, z);
             BlockType blockType = BlockTypes.blockTypeMap.get(block.x);
-            Vector3i rgb = new Vector3i(0);
-            if (blockType instanceof LightBlockType lBlock) {
-                rgb.x = lBlock.lightBlockProperties().r;
-                rgb.y = lBlock.lightBlockProperties().g;
-                rgb.z = lBlock.lightBlockProperties().b;
-            }
             if (!setHeightmap) {
                 if (!blockType.obstructingHeightmap(block)) {
                     Vector4i light = getLight(x, y, z);
