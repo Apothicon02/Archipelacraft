@@ -36,7 +36,7 @@ public class Main {
     public static String resourcesPath = mainFolder+"resources/";
     public static Gson gson = new Gson();
     public static Player player;
-    private static final float MOUSE_SENSITIVITY = 0.01f;
+    private static final float MOUSE_SENSITIVITY = 0.1f;
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();

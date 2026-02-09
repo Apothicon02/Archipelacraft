@@ -391,8 +391,8 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                     }
                 } else {
                     shade += 0.1f;
-                    if (shade > 0.33f) {
-                        shade = 0.33f;
+                    if (shade > 0.25F) {
+                        shade = 0.25F;
                     }
                     hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     if (!isShadow) {
@@ -411,7 +411,7 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                         }
                         voxelColor.rgb *= min(highlight, 1.33f);
                     }
-                    if (!isShadow || shade >= 0.33f || castsFullShadow(block)) {
+                    if (!isShadow || shade >= 0.25f || castsFullShadow(block)) {
                         texColor = baseColor;
                         return vec4(voxelColor.rgb, 1);
                     }
@@ -577,7 +577,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
         isShadow = true;
         bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
         if (shade > 0.f) {
-            shadowFactor *= solidCaster ? min(0.9f, mix(0.66f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
+            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
         }
         isShadow = false;
         tint = prevTint;
@@ -651,7 +651,7 @@ void main() {
             fragColor = getShadow(fragColor, true);
         } else if (fragColor.a >= 10) {
             fragColor.a -= 10;
-            shadowFactor = 0.66f;
+            shadowFactor = 0.75f;
         }
     }
     float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
