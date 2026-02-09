@@ -16,7 +16,7 @@ void main() {
     gl_FragDepth = alwaysUpfront ? 1.f : gl_FragCoord.z;
     if (tex <= 0) {
         fragColor = color;
-        if (fragColor.a < 2) {
+        if (max(fragColor.r, max(fragColor.g, fragColor.b)) < 1f) {
             vec3 source = mun.y > sun.y ? mun : sun;
             source.y = max(source.y, 500);
             float brightness = dot(norm.xy, source.xy)*0.0005f;

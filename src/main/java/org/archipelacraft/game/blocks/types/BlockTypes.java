@@ -36,7 +36,8 @@ public class BlockTypes {
                     .needsSupport(true))),
             ROSE = create(List.of(Tags.shortFlowers, Tags.flowers, Tags.survivesOnGrass), new PlantBlockType(TALL_GRASS.blockProperties)), //5
             TORCH = create(new LightBlockType((LightBlockProperties) new LightBlockProperties().r(20).g(18).ttb(100).obstructsHeightmap(false).isSolid(false).blocksLight(false)
-                    .isCollidable(false).isFluidReplaceable(true).needsSupport(true))),
+                    .isCollidable(false).isFluidReplaceable(true).needsSupport(true).blockSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1,
+                            new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1))),
             KYANITE = create(List.of(Tags.rocks, Tags.crystals, Tags.blunt), new LightBlockType((LightBlockProperties) (new LightBlockProperties().g(2).b(4)
                     .blockSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1, new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1)))),
             MARBLE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties()

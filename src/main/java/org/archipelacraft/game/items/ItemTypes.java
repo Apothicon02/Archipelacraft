@@ -59,7 +59,8 @@ public class ItemTypes {
             MARBLE = create(new ItemType("resource/texture/marble").blockToPlace(BlockTypes.getId(BlockTypes.MARBLE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.45f, 0.85f))),
             GLASS = create(new ItemType("component/texture/glass").blockToPlace(BlockTypes.getId(BlockTypes.GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
             MAGENTA_STAINED_GLASS = create(new ItemType("component/texture/magenta_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.PURPLE_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
-            LIME_STAINED_GLASS = create(new ItemType("component/texture/lime_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.LIME_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f)));
+            LIME_STAINED_GLASS = create(new ItemType("component/texture/lime_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.LIME_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
+            TORCH = create(new ItemType("block/texture/torch").blockToPlace(BlockTypes.getId(BlockTypes.TORCH), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.4f, 1.25f)));
 
     private static ItemType create(ItemType type) {
         itemTypeMap.put(itemTypeMap.size(), type);

@@ -263,12 +263,12 @@ public class Renderer {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(sunPos).scale(80).get(stack.mallocFloat(16)));
         }
-        glUniform4f(raster.uniforms.get("color"), 1, 1, 0.05f, 2);
+        glUniform4f(raster.uniforms.get("color"), 1.25f, 1.2f, 0, 1);
         drawCube();
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateXYZ(0.5f, 0.5f, 0.5f).setTranslation(munPos).scale(50).get(stack.mallocFloat(16)));
         }
-        glUniform4f(raster.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 2);
+        glUniform4f(raster.uniforms.get("color"), 0.63f, 0.58f, 0.66f, 1);
         drawCube();
     }
     public static Vector3f[] starColors = new Vector3f[]{new Vector3f(0.9f, 0.95f, 1.f), new Vector3f(1, 0.95f, 0.4f), new Vector3f(0.72f, 0.05f, 0), new Vector3f(0.42f, 0.85f, 1.f), new Vector3f(0.04f, 0.3f, 1.f), new Vector3f(1, 1, 0.1f)};
@@ -345,13 +345,15 @@ public class Renderer {
         if (!Main.isClosing) {
             boolean tiltShift = false;
             boolean dof = false;
+            if (player.inv.open) {
+                dof = true;
+            }
             if (player.blockBreathing.x() == 1) {
                 tiltShift = true;
                 dof = true;
             }
             if (isSwappingWorldType) {
                 tiltShift = true;
-                dof = false;
             }
             if (forceTiltShift) {
                 tiltShift = true;
