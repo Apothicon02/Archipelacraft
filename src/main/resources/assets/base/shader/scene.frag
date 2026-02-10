@@ -169,14 +169,15 @@ vec4 getLight(float x, float y, float z) {
 vec3 ogPos = vec3(0);
 vec3 sunColor = vec3(0);
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess) {
+    float ogY = ogPos.y;
     float sunHeight = sun.y/size;
-    float scattering = gradient(lightPos.y, ogPos.y-63, ogPos.y+437, 1.5f, -0.5f);
+    float scattering = gradient(lightPos.y, ogY-63, ogY+437, 1.5f, -0.5f);
     float sunDist = (distance(lightPos.xz, sun.xz)/(size*1.5f));
     float adjustedTime = clamp((sunDist*abs(1-clamp(sunHeight, 0.05f, 0.5f)))+scattering, 0.f, 1.f);
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
     float sunBrightness = clamp(sunHeight+0.5, 0.33f, 1.f);
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
-    float skyWhiteness = mix(max(0.2f, gradient(lightPos.y, (ogPos.y/4)+47, (ogPos.y/2)+436, 0, 0.9)), 0.9f, clamp(abs(1-sunSetness), 0, 1));
+    float skyWhiteness = mix(max(0.33f, gradient(lightPos.y, (ogY/4)+47, (ogY/2)+436, 0, 0.9)), 0.9f, clamp(abs(1-sunSetness), 0, 1));
     float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
     sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, sunSetness), vec3(sunBrightness), whiteness);
     return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
@@ -606,6 +607,11 @@ void main() {
         if (isLightSource(block.xy) && max(texColor.r, max(texColor.g, texColor.b)) > 0.9f) {
             fragColor.rgb *= 1.5f;
             isLight = true;
+        } else {
+            if (!inBounds(mapPos, worldSize) && mapPos.y <= 63 && fragColor.a < 1.f) {
+                shade = 0.25f;
+                fragColor = vec4(0.0f, 0.0f, 0.0f, 1.f);
+            }
         }
     }
     isFirstRay = false;
@@ -654,7 +660,7 @@ void main() {
             shadowFactor = 0.75f;
         }
     }
-    float fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+    float fogginess = clamp((clamp(((sqrt(distance(ogPos, lightPos)/(size*0.66f))-0.33f)*1.6f)*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
     if (fragColor.a < 0 && !isSky) {fogginess *= 0.5f;}
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
@@ -667,7 +673,7 @@ void main() {
         lightPos = hitPos;
         vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
         normalizedTint = getShadow(normalizedTint, false);
-        fogginess = clamp((sqrt(sqrt(clamp(distance(ogPos, lightPos)/size, 0, 1)))-0.25f)*1.34f, 0.f, 1.f);
+        fogginess = clamp((clamp(((sqrt(distance(ogPos, lightPos)/(size*0.66f))-0.33f)*1.6f)*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
         lighting = fromLinear(getLight(lightPos.x, lightPos.y, lightPos.z));
         lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
         lighting = powLighting(lighting);
