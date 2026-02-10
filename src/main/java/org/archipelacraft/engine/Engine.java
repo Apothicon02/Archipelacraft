@@ -6,11 +6,9 @@ import org.archipelacraft.Main;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.libsdl4j.api.video.SdlVideo.SDL_SetWindowTitle;
-
 public class Engine {
 
-    public static final int TARGET_UPS = 75;
+    public static final int TARGET_UPS = 20;
     public static final int TARGET_FPS = 360;
     private final Main main;
     public static Window window;

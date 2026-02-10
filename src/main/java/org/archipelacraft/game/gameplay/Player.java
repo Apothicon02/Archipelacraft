@@ -320,12 +320,6 @@ public class Player {
         }
         blockIn = World.getBlockNotNull(blockPos.x, blockPos.y, blockPos.z);
         submerged = BlockTypes.blockTypeMap.get(blockBreathing.x).blockProperties.isFluid;
-        if (blockIn.x == 0 && onGround && realSprint) {
-            Vector2i blockBelow = World.getBlockNotNull(blockPos.x, blockPos.y-1, blockPos.z);
-            if (blockBelow.x == BlockTypes.getId(BlockTypes.GRASS)) {
-                World.setBlock(blockPos.x, blockPos.y-1, blockPos.z, BlockTypes.getId(BlockTypes.DIRT), 0, true, false, 1, false);
-            }
-        }
         float modifiedSpeed = speed;
         float modifiedGrav = grav;
         if (blockIn.x == 1) { //water

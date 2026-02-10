@@ -25,7 +25,6 @@ import org.lwjgl.opengl.GL;
 import java.io.IOException;
 import java.lang.Math;
 
-import static io.github.libsdl4j.api.Sdl.SDL_Quit;
 import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_SetRelativeMouseMode;
 import static io.github.libsdl4j.api.scancode.SDL_Scancode.*;
 import static io.github.libsdl4j.api.video.SdlVideo.*;
@@ -36,7 +35,7 @@ public class Main {
     public static String resourcesPath = mainFolder+"resources/";
     public static Gson gson = new Gson();
     public static Player player;
-    private static final float MOUSE_SENSITIVITY = 0.1f;
+    private static final float MOUSE_SENSITIVITY = 0.01f;
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();

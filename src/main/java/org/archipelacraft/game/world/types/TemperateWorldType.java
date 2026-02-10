@@ -79,7 +79,10 @@ public class TemperateWorldType extends WorldType {
                     } else {
                         setBlock(x, surface, z, 2, 0);
                         double flowerChance = seededRand.nextDouble();
-                        setBlock(x, surface + 1, z, 4 + (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0), seededRand.nextInt(0, 3));
+                        int flower = (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0);
+                        if (flower > 0 || seededRand.nextFloat() < 0.33f) { //grass has 33% chance to place
+                            setBlock(x, surface + 1, z, 4 + flower, seededRand.nextInt(0, 3));
+                        }
                     }
                 } else {
                     if (surface < seaLevel) {

@@ -79,7 +79,9 @@ public class BorealWorldType extends WorldType {
                         setBlock(x, surface, z, 2, 1);
                         double flowerChance = seededRand.nextDouble();
                         int flower = (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0);
-                        setBlock(x, surface + 1, z, 4 + flower, seededRand.nextInt(0, 3) + (flower == 0 ? 4 : 0));
+                        if (flower > 0 || seededRand.nextFloat() < 0.33f) { //grass has 33% chance to place
+                            setBlock(x, surface + 1, z, 4 + flower, seededRand.nextInt(0, 3) + (flower == 0 ? 4 : 0));
+                        }
                     }
                 } else {
                     if (surface < seaLevel) {
