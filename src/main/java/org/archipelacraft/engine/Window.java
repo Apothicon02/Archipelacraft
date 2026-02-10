@@ -147,8 +147,8 @@ public class Window {
                     }
                     break;
                 case SDL_MOUSEMOTION:
-                    displVec.y = event.motion.xrel;
-                    displVec.x = event.motion.yrel;
+                    displVec.y += event.motion.xrel;
+                    displVec.x += event.motion.yrel;
                     currentPos.x = event.motion.x;
                     currentPos.y = event.motion.y;
                     break;

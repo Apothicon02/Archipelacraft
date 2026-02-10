@@ -78,6 +78,7 @@ public class World {
                 unsavedLights[y] = true;
                 glBindTexture(GL_TEXTURE_3D, Textures.lights.id);
                 glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA, GL_BYTE, ByteBuffer.allocateDirect(4).put((byte)r).put((byte)b).put((byte)g).put((byte)s).flip());
+                updateLODS(x, y, z);
             }
         }
     }
@@ -99,6 +100,47 @@ public class World {
     }
     public static int getCorner(int x, int y, int z) {
         return 0;
+    }
+
+    public static void updateLODS(int x, int y, int z) {
+        glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
+        byte[] firstLight = null;
+        boolean clear = true;
+        loop:
+        for (int cX = (int) Math.floor(x / 4f) * 4; cX < (Math.floor(x / 4f) * 4) + 4; cX++) {
+            for (int cY = (int) Math.floor(y / 4f) * 4; cY < (Math.floor(y / 4f) * 4) + 4; cY++) {
+                for (int cZ = (int) Math.floor(z / 4f) * 4; cZ < (Math.floor(z / 4f) * 4) + 4; cZ++) {
+                    if (firstLight == null) {
+                        firstLight = new byte[]{lights[cY][condensePos(cX, cZ)*4], lights[cY][(condensePos(cX, cZ)*4)+1], lights[cY][(condensePos(cX, cZ)*4)+2], lights[cY][(condensePos(cX, cZ)*4)+3]};
+                    }
+                    if (blocks[cY][condensePos(cX, cZ) * 2] > 0 || lights[cY][condensePos(cX, cZ)*4] != firstLight[0] || lights[cY][(condensePos(cX, cZ)*4)+1] != firstLight[1] || lights[cY][(condensePos(cX, cZ)*4)+2] != firstLight[2] || lights[cY][(condensePos(cX, cZ)*4)+3] != firstLight[3]) {
+                        clear = false;
+                        break loop;
+                    }
+                }
+            }
+        }
+        glTexSubImage3D(GL_TEXTURE_3D, 2, z/4, y/4, x/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+        blocksLOD[y/4][condensePosLOD(x, z)] = (short)(clear ? 0 : 1);
+        if (clear) {
+            firstLight = null;
+            loop:
+            for (int cX = (int) Math.floor(x/16f)*16; cX < (Math.floor(x/16f)*16)+16; cX++) {
+                for (int cY = (int) Math.floor(y/16f)*16; cY < (Math.floor(y/16f)*16)+16; cY++) {
+                    for (int cZ = (int) Math.floor(z/16f)*16; cZ < (Math.floor(z/16f)*16)+16; cZ++) {
+                        if (firstLight == null) {
+                            firstLight = new byte[]{lights[cY][condensePos(cX, cZ)*4], lights[cY][(condensePos(cX, cZ)*4)+1], lights[cY][(condensePos(cX, cZ)*4)+2], lights[cY][(condensePos(cX, cZ)*4)+3]};
+                        }
+                        if (blocks[cY][condensePos(cX, cZ)*2] > 0 || lights[cY][condensePos(cX, cZ)*4] != firstLight[0] || lights[cY][(condensePos(cX, cZ)*4)+1] != firstLight[1] || lights[cY][(condensePos(cX, cZ)*4)+2] != firstLight[2] || lights[cY][(condensePos(cX, cZ)*4)+3] != firstLight[3]) {
+                            clear = false;
+                            break loop;
+                        }
+                    }
+                }
+            }
+        }
+        glTexSubImage3D(GL_TEXTURE_3D, 4, z/16, y/16, x/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
+        blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(clear ? 0 : 1);
     }
 
     public static void setBlock(int x, int y, int z, int block, int blockSubType, boolean replace, boolean priority, int tickDelay, boolean silent) {
@@ -155,36 +197,7 @@ public class World {
                 unsavedBlocks[y] = true;
                 glBindTexture(GL_TEXTURE_3D, Textures.blocks.id);
                 glTexSubImage3D(GL_TEXTURE_3D, 0, z, y, x, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{block, blockSubType, 0, 0});
-                boolean clear = true;
-                loop:
-                for (int cX = (int) Math.floor(x/16f)*16; cX < (Math.floor(x/16f)*16)+16; cX++) {
-                    for (int cY = (int) Math.floor(y/16f)*16; cY < (Math.floor(y/16f)*16)+16; cY++) {
-                        for (int cZ = (int) Math.floor(z/16f)*16; cZ < (Math.floor(z/16f)*16)+16; cZ++) {
-                            if (blocks[cY][condensePos(cX, cZ)*2] > 0) {
-                                clear = false;
-                                break loop;
-                            }
-                        }
-                    }
-                }
-                glTexSubImage3D(GL_TEXTURE_3D, 4, z/16, y/16, x/16, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(clear ? 0 : 1);
-                if (!clear) {
-                    clear = true;
-                    loop:
-                    for (int cX = (int) Math.floor(x / 4f) * 4; cX < (Math.floor(x / 4f) * 4) + 4; cX++) {
-                        for (int cY = (int) Math.floor(y / 4f) * 4; cY < (Math.floor(y / 4f) * 4) + 4; cY++) {
-                            for (int cZ = (int) Math.floor(z / 4f) * 4; cZ < (Math.floor(z / 4f) * 4) + 4; cZ++) {
-                                if (blocks[cY][condensePos(cX, cZ) * 2] > 0) {
-                                    clear = false;
-                                    break loop;
-                                }
-                            }
-                        }
-                    }
-                }
-                glTexSubImage3D(GL_TEXTURE_3D, 2, z/4, y/4, x/4, 1, 1, 1, GL_RGBA_INTEGER, GL_INT, new int[]{clear ? 0 : 1, 0, 0, 0});
-                blocksLOD[y/4][condensePosLOD(x, z)] = (short)(clear ? 0 : 1);
+                updateLODS(x, y, z);
             } else if (block > 0) {
                 blocksLOD2[y/16][condensePosLOD2(x, z)] = (short)(block);
                 blocksLOD[y/4][condensePosLOD(x, z)] = (short)(block);
@@ -216,6 +229,7 @@ public class World {
 
     public static void updateHeightmap(int x, int z) {
         int prevHeight = heightmap[condensePos(x, z)];
+        int newHeight = prevHeight;
         boolean setHeightmap = false;
         for (int y = height-1; y >= 0; y--) {
             Vector2i block = getBlock(x, y, z);
@@ -223,12 +237,10 @@ public class World {
             if (!setHeightmap) {
                 if (!blockType.obstructingHeightmap(block)) {
                     Vector4i light = getLight(x, y, z);
-                    setLight(x, y, z, light.x, light.y, light.z, Math.min(15, 15+Math.max(-15, y-Math.max(y, prevHeight))));
-                    if (generated) {
-                        LightHelper.updateLight(new Vector3i(x, y, z), block, getLight(x, y, z));
-                    }
+                    setLight(x, y, z, light.x, light.y, light.z, 15);
                 } else {
                     setHeightmap = true;
+                    newHeight = y;
                     heightmap[condensePos(x, z)] = (short) (y);
                 }
             } else {
@@ -237,6 +249,11 @@ public class World {
                 if (generated) {
                     LightHelper.recalculateLight(new Vector3i(x, y, z), light.x, light.y, light.z, light.w);
                 }
+            }
+        }
+        if (generated) {
+            for (int y = prevHeight-1; y > newHeight; y--) {
+                LightHelper.updateLight(new Vector3i(x, y, z), getBlock(x, y, z), getLight(x, y, z));
             }
         }
     }

@@ -168,6 +168,7 @@ vec4 getLight(float x, float y, float z) {
 }
 vec3 ogPos = vec3(0);
 vec3 sunColor = vec3(0);
+float fogDetractorFactor = 1.f;
 vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess) {
     float ogY = ogPos.y;
     float sunHeight = sun.y/size;
@@ -176,6 +177,9 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess)
     float adjustedTime = clamp((sunDist*abs(1-clamp(sunHeight, 0.05f, 0.5f)))+scattering, 0.f, 1.f);
     float thickness = gradient(lightPos.y, 128, 1500-max(0, sunHeight*1000), 0.33+(sunHeight/2), 1);
     float sunBrightness = clamp(sunHeight+0.5, 0.33f, 1.f);
+    if (fogDetractorFactor == -1) {
+        fogDetractorFactor = max(max(lighting.r, max(lighting.g, lighting.b))*0.8f, (sunBrightness*lighting.a)*1.5f);
+    }
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
     float skyWhiteness = mix(max(0.33f, gradient(lightPos.y, (ogY/4)+47, (ogY/2)+436, 0, 0.9)), 0.9f, clamp(abs(1-sunSetness), 0, 1));
     float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
@@ -206,6 +210,7 @@ vec3 lod2Pos = vec3(0);
 vec3 lodPos = vec3(0);
 ivec4 block = ivec4(0);
 vec4 texColor = vec4(0);
+vec4 lightFog = vec4(0);
 vec3 worldSize = vec3(size, height, size);
 
 void clearVars() {
@@ -244,6 +249,14 @@ bool isGlassSolid(vec3 mapPos, vec3 rayMapPos) {
     return false;
 }
 
+void updateLightFog(vec3 pos) {
+    if (!isShadow) {
+        vec4 light = getLight(pos.x, pos.y, pos.z);
+        light.a = light.a < 15 ? 0 : 15;
+        lightFog = max(lightFog, getLightingColor(mapPos, powLighting(fromLinear(light)), false, 1)/2);
+    }
+}
+
 float one = fromLinear(vec4(1)).a;
 vec4 getVoxelAndBlock(vec3 pos) {
     vec3 rayMapPos = floor(pos);
@@ -279,6 +292,7 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
     for (int i = 0; blockPos.x < 4.0 && blockPos.x >= 0.0 && blockPos.y < 4.0 && blockPos.y >= 0.0 && blockPos.z < 4.0 && blockPos.z >= 0.0 && i < (4*8)*3; i++) {
         if (steppingBlock) {
             mapPos = (lod2Pos*16)+(lodPos*4)+blockPos;
+            updateLightFog(mapPos+0.5f);
             block = isInfiniteSea ? ivec4(1, 15, 0, 0) : (inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : ivec4(0));
             if (block.x > 0 && !(block.x == 1 && underwater)) {
                 steppingBlock = false;
@@ -570,20 +584,20 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
     float brightness = dot(normal.xy, source.xy)*-0.0002f;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
-    if (actuallyCastShadowRay) {
-        vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
-        vec4 prevTint = tint;
-        vec3 prevHitPos = hitPos;
-        clearVars();
-        isShadow = true;
-        bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
-        if (shade > 0.f) {
-            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
-        }
-        isShadow = false;
-        tint = prevTint;
-        hitPos = prevHitPos;
-    }
+//    if (actuallyCastShadowRay) {
+//        vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
+//        vec4 prevTint = tint;
+//        vec3 prevHitPos = hitPos;
+//        clearVars();
+//        isShadow = true;
+//        bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
+//        if (shade > 0.f) {
+//            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
+//        }
+//        isShadow = false;
+//        tint = prevTint;
+//        hitPos = prevHitPos;
+//    }
     return color;
 }
 
@@ -602,6 +616,7 @@ void main() {
     source.y = max(source.y, 500);
     bool isSky = rasterColor.a <= 0.f;
     bool isLight = false;
+    updateLightFog(ogPos);
     if (rasterDepth < 0.05) {
         fragColor = raytrace(ogPos, ogDir);
         if (isLightSource(block.xy) && max(texColor.r, max(texColor.g, texColor.b)) > 0.9f) {
@@ -665,6 +680,7 @@ void main() {
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
     if (!isLight) {
+        fogDetractorFactor = -1;
         vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
         fragColor.rgb *= lightingColor.rgb;
         fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
@@ -682,6 +698,7 @@ void main() {
         normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
     }
+    fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
     fragColor.a = depth;
 }

@@ -78,9 +78,13 @@ public class BorealWorldType extends WorldType {
                     } else {
                         setBlock(x, surface, z, 2, 1);
                         double flowerChance = seededRand.nextDouble();
-                        int flower = (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0);
-                        if (flower > 0 || seededRand.nextFloat() < 0.33f) { //grass has 33% chance to place
-                            setBlock(x, surface + 1, z, 4 + flower, seededRand.nextInt(0, 3) + (flower == 0 ? 4 : 0));
+                        if (flowerChance < 0.0001f) {
+                            setBlock(x, surface+1, z, BlockTypes.getId(BlockTypes.PORECAP), 0);
+                        } else {
+                            int flower = (flowerChance > 0.95f ? (flowerChance > 0.97f ? 14 : 1) : 0);
+                            if (flower > 0 || seededRand.nextFloat() < 0.33f) { //grass has 33% chance to place
+                                setBlock(x, surface + 1, z, 4 + flower, seededRand.nextInt(0, 3) + (flower == 0 ? 4 : 0));
+                            }
                         }
                     }
                 } else {
@@ -96,6 +100,45 @@ public class BorealWorldType extends WorldType {
                 }
             }
         }
+
+        for (int x = (size / 2) - 29; x <= size / 2; x++) {
+            for (int z = (size / 2) - 29; z < size / 2; z++) {
+                setBlock(x, 100, z, 37, 0);
+                if (x == (size / 2) - 29 || x == (size / 2) || z == (size / 2) - 29 || z == (size / 2) - 1) {
+                    setBlock(x, 99, z, 37, 0);
+                    setBlock(x, 98, z, 37, 0);
+                    setBlock(x, 97, z, 37, 0);
+                    setBlock(x, 96, z, 37, 0);
+                    setBlock(x, 95, z, 37, 0);
+                    setBlock(x, 94, z, 37, 0);
+                    setBlock(x, 93, z, 37, 0);
+                    setBlock(x, 92, z, 37, 0);
+                    setBlock(x, 91, z, 37, 0);
+                    setBlock(x, 90, z, 37, 0);
+                    setBlock(x, 89, z, 37, 0);
+                    setBlock(x, 88, z, 37, 0);
+                    setBlock(x, 87, z, 37, 0);
+                    setBlock(x, 86, z, 37, 0);
+                    setBlock(x, 85, z, 37, 0);
+                    setBlock(x, 84, z, 37, 0);
+                    setBlock(x, 83, z, 37, 0);
+                    setBlock(x, 82, z, 37, 0);
+                    setBlock(x, 81, z, 37, 0);
+                    setBlock(x, 80, z, 37, 0);
+                    setBlock(x, 79, z, 37, 0);
+                    setBlock(x, 78, z, 37, 0);
+                    setBlock(x, 77, z, 37, 0);
+                    setBlock(x, 76, z, 37, 0);
+                    setBlock(x, 75, z, 37, 0);
+                    setBlock(x, 74, z, 37, 0);
+                    setBlock(x, 73, z, 37, 0);
+                    setBlock(x, 72, z, 37, 0);
+                    setBlock(x, 71, z, 37, 0);
+                    setBlock(x, 70, z, 37, 0);
+                }
+            }
+        }
+        setBlock(512, 95, 512, 37, 0);
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
@@ -140,20 +183,6 @@ public class BorealWorldType extends WorldType {
                 }
             }
         }
-
-        for (int x = (size / 2) - 19; x <= size / 2; x++) {
-            for (int z = (size / 2) - 20; z < size / 2; z++) {
-                setBlock(x, 100, z, 15, 0);
-                if (x == (size / 2) - 19 || x == (size / 2) || z == (size / 2) - 20 || z == (size / 2) - 1) {
-                    setBlock(x, 99, z, 15, 0);
-                    setBlock(x, 98, z, 15, 0);
-                    setBlock(x, 97, z, 15, 0);
-                    setBlock(x, 96, z, 15, 0);
-                    setBlock(x, 95, z, 15, 0);
-                }
-            }
-        }
-        setBlock(512, 95, 512, 15, 0);
 
 //        for (int x = 0; x < size; x++) {
 //            for (int y= 0; y < height; y++) {
