@@ -252,8 +252,8 @@ bool isGlassSolid(vec3 mapPos, vec3 rayMapPos) {
 void updateLightFog(vec3 pos) {
     if (!isShadow) {
         vec4 light = getLight(pos.x, pos.y, pos.z);
-        light.a = light.a < 15 ? 0 : 15;
-        lightFog = max(lightFog, getLightingColor(mapPos, powLighting(fromLinear(light)), false, 1)/2);
+        light.a = 0;
+        lightFog = max(lightFog, getLightingColor(mapPos, fromLinear(light), false, 1)/2);
     }
 }
 
@@ -584,20 +584,20 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
     float brightness = dot(normal.xy, source.xy)*-0.0002f;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
-//    if (actuallyCastShadowRay) {
-//        vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
-//        vec4 prevTint = tint;
-//        vec3 prevHitPos = hitPos;
-//        clearVars();
-//        isShadow = true;
-//        bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
-//        if (shade > 0.f) {
-//            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
-//        }
-//        isShadow = false;
-//        tint = prevTint;
-//        hitPos = prevHitPos;
-//    }
+    if (actuallyCastShadowRay) {
+        vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
+        vec4 prevTint = tint;
+        vec3 prevHitPos = hitPos;
+        clearVars();
+        isShadow = true;
+        bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
+        if (shade > 0.f) {
+            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
+        }
+        isShadow = false;
+        tint = prevTint;
+        hitPos = prevHitPos;
+    }
     return color;
 }
 
