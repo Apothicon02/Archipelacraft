@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.archipelacraft.game.gameplay.Inventory.invWidth;
 import static org.lwjgl.opengl.GL11.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11.glDrawArrays;
 import static org.lwjgl.opengl.GL20.*;
@@ -33,7 +34,7 @@ public class GUI {
     public static int width = 0;
     public static int height = 0;
 
-    public static int hotbarSizeX = 182;
+    public static int hotbarSizeX = 282;
     public static int hotbarSizeY = 22;
     public static float hotbarPosX = 0.f;
     public static float hotbarPosY = 0.f;
@@ -48,6 +49,7 @@ public class GUI {
         glBindTextureUnit(3, Textures.items.id);
         width = window.getWidth();
         height = window.getHeight();
+        guiScaleMul = (int)(Math.min(width, height)/270f);
         guiScale = width/guiScaleMul;
         aspectRatio = (float) width / height;
     }
@@ -95,23 +97,31 @@ public class GUI {
     }
 
     public static void draw(Window window) {
-        hotbarPosX = (0.5f-((182/2f)/guiScale));
+        hotbarPosX = (0.5f-((hotbarSizeX/2f)/guiScale));
         hotbarPosY = 5.f/height;
         glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), 0, 0);
         glUniform1i(Renderer.gui.uniforms.get("tex"), 0);
         glUniform1i(Renderer.gui.uniforms.get("layer"), 1); //inventory
-        float containerPosY = 0.5f;
+        float containerPosY = hotbarPosY + (((hotbarSizeY*5) / guiScale) * aspectRatio);
         if (Main.player.inv.open) {
             glUniform4f(Renderer.gui.uniforms.get("color"), 0.85f, 0.85f, 0.85f, 0.85f);
             drawQuad(false, false, hotbarPosX, hotbarPosY + ((hotbarSizeY / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
             drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*2) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
             drawQuad(false, false, hotbarPosX, hotbarPosY + (((hotbarSizeY*3) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
+            glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //gui
+            drawText(hotbarPosX, hotbarPosY + ((((hotbarSizeY*4)+3) / guiScale) * aspectRatio), 0, 0, "Inventory".toCharArray());
+            glUniform1i(Renderer.gui.uniforms.get("layer"), 1); //inventory
+            glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), 0, 0);
             if (Main.player.creative) {
                 glUniform4f(Renderer.gui.uniforms.get("color"), 1, 1, 1, 1);
                 drawQuad(false, false, hotbarPosX, containerPosY, hotbarSizeX, hotbarSizeY);
                 drawQuad(false, false, hotbarPosX, containerPosY + ((hotbarSizeY / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
                 drawQuad(false, false, hotbarPosX, containerPosY + (((hotbarSizeY * 2) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
                 drawQuad(false, false, hotbarPosX, containerPosY + (((hotbarSizeY * 3) / guiScale) * aspectRatio), hotbarSizeX, hotbarSizeY);
+                glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //gui
+                drawText(hotbarPosX, containerPosY + ((((hotbarSizeY*4)+3) / guiScale) * aspectRatio), 0, 0, "Creative Supplies".toCharArray());
+                glUniform1i(Renderer.gui.uniforms.get("layer"), 1); //inventory
+                glUniform2i(Renderer.gui.uniforms.get("atlasOffset"), 0, 0);
             }
         }
         glUniform4f(Renderer.gui.uniforms.get("color"), 1.f, 1.f, 1.f, 1.f);
@@ -121,12 +131,12 @@ public class GUI {
         if (Main.player.inv.open) {
             Vector2f clampedPos = confineToMenu(hotbarPosX, hotbarPosY, hotbarSizeX, hotbarSizeY*4);
             if (clampedPos.x() > -1 && clampedPos.y() > -1) {
-                Main.player.inv.selectedSlot = new Vector2i((int) (clampedPos.x() * 9), (int) (clampedPos.y() * 4));
+                Main.player.inv.selectedSlot = new Vector2i((int) (clampedPos.x() * invWidth), (int) (clampedPos.y() * 4));
                 selSlot = Main.player.inv.selectedSlot;
             } else {
                 Main.player.inv.selectedSlot = null;
                 clampedPos = confineToMenu(hotbarPosX, containerPosY, hotbarSizeX, hotbarSizeY*4);
-                Main.player.inv.selectedContainerSlot = new Vector2i((int) (clampedPos.x() * 9), (int) (clampedPos.y() * 4));
+                Main.player.inv.selectedContainerSlot = new Vector2i((int) (clampedPos.x() * invWidth), (int) (clampedPos.y() * 4));
                 selSlot = Main.player.inv.selectedContainerSlot;
             }
         } else {
@@ -141,7 +151,7 @@ public class GUI {
 
         glUniform1i(Renderer.gui.uniforms.get("layer"), 0); //items
         for (int y = 0; y < (Main.player.inv.open ? 4 : 1); y++) {
-            for (int x = 0; x < 9; x++) {
+            for (int x = 0; x < invWidth; x++) {
                 Item item = Main.player.inv.getItem(x, y);
                 if (item != null) {
                     ItemType itemType = item.type;
@@ -166,7 +176,7 @@ public class GUI {
             int itemId = 0;
             done:
             for (int y = 0; y < 4; y++) {
-                for (int x = 0; x < 9; x++) {
+                for (int x = 0; x < invWidth; x++) {
                     ItemType itemType = ItemTypes.itemTypeMap.get(itemId);
                     glUniform1i(Renderer.gui.uniforms.get("tex"), isFirstSlot ? 0 : 1); //use item atlas unless first slot then use gui atlas
                     if (isFirstSlot) {

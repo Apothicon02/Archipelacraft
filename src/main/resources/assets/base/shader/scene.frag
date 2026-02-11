@@ -269,6 +269,15 @@ vec4 getVoxelAndBlock(vec3 pos) {
     }
     return getVoxel(mapPos.x, mapPos.y, mapPos.z, rayMapPos.x, rayMapPos.y, rayMapPos.z, block.x, block.y);
 }
+vec4 getVoxelAndBlockWOLeavesOverride(vec3 pos) {
+    vec3 rayMapPos = floor(pos);
+    vec3 mapPos = (pos-rayMapPos)*8;
+    ivec2 block = getBlock(rayMapPos.x, rayMapPos.y, rayMapPos.z).xy;
+    if (block.x <= 1) {
+        return vec4(0.f);
+    }
+    return getVoxel(mapPos.x, mapPos.y, mapPos.z, rayMapPos.x, rayMapPos.y, rayMapPos.z, block.x, block.y);
+}
 
 vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float chunkDist) {
     rayPos *= 4;
@@ -405,31 +414,34 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                         tint += voxelColor*tintMul;
                     }
                 } else {
-                    shade += 0.1f;
-                    if (shade > 0.25F) {
-                        shade = 0.25F;
-                    }
                     hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
-                    if (!isShadow) {
-                        float xFactor = offsetVoxelPos.x >= 4 ? 0.125f : -0.125f;
-                        float yFactor = offsetVoxelPos.y >= 4 ? 0.125f : -0.125f;
-                        float zFactor = offsetVoxelPos.z >= 4 ? 0.125f : -0.125f;
-                        float highlight = 0.67f;
-                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(xFactor, 0, 0)).a < one) {
-                            highlight+=0.33f;
-                        }
-                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, 0, zFactor)).a < one) {
-                            highlight+=0.33f;
-                        }
-                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, yFactor, 0)).a < one) {
-                            highlight+=0.33f;
-                        }
-                        voxelColor.rgb *= min(highlight, 1.33f);
-                    }
-                    if (!isShadow || shade >= 0.25f || castsFullShadow(block)) {
-                        texColor = baseColor;
-                        return vec4(voxelColor.rgb, 1);
-                    }
+                    shade = 0.25F;
+                    texColor = baseColor;
+                    return vec4(voxelColor.rgb, 1);
+                    //                    shade += 0.1f;
+                    //                    if (shade > 0.25F) {
+                    //                        shade = 0.25F;
+                    //                    }
+                    //                    if (!isShadow) {
+                    //                        float xFactor = offsetVoxelPos.x >= 4 ? 0.125f : -0.125f;
+                    //                        float yFactor = offsetVoxelPos.y >= 4 ? 0.125f : -0.125f;
+                    //                        float zFactor = offsetVoxelPos.z >= 4 ? 0.125f : -0.125f;
+                    //                        float highlight = 0.67f;
+                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(xFactor, 0, 0)).a < one) {
+                    //                            highlight+=0.33f;
+                    //                        }
+                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, 0, zFactor)).a < one) {
+                    //                            highlight+=0.33f;
+                    //                        }
+                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, yFactor, 0)).a < one) {
+                    //                            highlight+=0.33f;
+                    //                        }
+                    //                        voxelColor.rgb *= min(highlight, 1.33f);
+                    //                    }
+                    //                    if (!isShadow || shade >= 0.25f || castsFullShadow(block)) {
+                    //                        texColor = baseColor;
+                    //                        return vec4(voxelColor.rgb, 1);
+                    //                    }
                 }
                 if (isInfiniteSea) {
                     return vec4(-1);
@@ -577,13 +589,36 @@ vec3 worldPosFromDepth(float depth) {
 
 vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
+float eigth = 1f/8f;
 vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     if (actuallyCastShadowRay) {
         shadowFactor = 1.f;
     }
-    vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal));
-    float brightness = dot(normal.xy, source.xy)*-0.0002f;
+    vec3 shadowPosOffset = vec3(0);
+    vec3 vNorm = normal;
+    bool wasY = false;
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)).a < 1) {
+        vNorm.y = -1;
+        shadowPosOffset.y = eigth;
+        wasY = true;
+    }
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)).a < 1) {
+        vNorm.y = wasY ? 0 : 1;
+        shadowPosOffset.y = wasY ? 0 : -eigth;
+    }
+    bool wasX = false;
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)).a < 1) {
+        vNorm.x = -1;
+        shadowPosOffset.x = eigth;
+        wasX = true;
+    }
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)).a < 1) {
+        vNorm.x = wasX ? 0 : 1;
+        shadowPosOffset.x = wasX ? 0 : -eigth;
+    }
+    float brightness = dot(vNorm.xy, source.xy)*-0.0002f;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
+    vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal))+(shadowPosOffset*2);
     if (actuallyCastShadowRay) {
         vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
         vec4 prevTint = tint;
@@ -653,7 +688,7 @@ void main() {
             depth = rasterDepth;
             fragColor.rgb = fromLinear(rasterColor).rgb;
             fragColor.a = rasterColor.a;
-            normal = vec3(1);
+            normal = vec3(0, 1, 0);
             prevPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
             solidHitPos = rasterPos;
             tint = vec4(0);

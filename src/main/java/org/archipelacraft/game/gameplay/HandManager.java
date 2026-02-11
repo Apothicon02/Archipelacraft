@@ -32,13 +32,13 @@ public class HandManager {
     public static void useHands(long timeMillis, Window window) {
         if (window.scroll.y > 0) {
             hotbarSlot++;
-            if (hotbarSlot > 8) {
+            if (hotbarSlot >= Inventory.invWidth) {
                 hotbarSlot = 0;
             }
         } else if (window.scroll.y < 0) {
             hotbarSlot--;
             if (hotbarSlot < 0) {
-                hotbarSlot = 8;
+                hotbarSlot = Inventory.invWidth-1;
             }
         }
         boolean lmbDown = window.leftButtonPressed;

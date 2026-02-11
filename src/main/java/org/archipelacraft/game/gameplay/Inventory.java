@@ -18,8 +18,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 public class Inventory {
+    public static int invWidth = 14;
+
     public boolean open = false;
-    public Item[] items = new Item[9*4];
+    public Item[] items = new Item[invWidth*4];
     public Item cursorItem = null;
     public Vector2i selectedSlot = new Vector2i(0);
     public Vector2i selectedContainerSlot = new Vector2i(0);
@@ -34,8 +36,8 @@ public class Inventory {
             prevRMBDeposit = -1;
         }
         if (interactCD <= 0) {
-            Integer selSlotId = selectedSlot == null || selectedSlot.x() < 0 || selectedSlot.y() < 0 ? null : selectedSlot.x+(selectedSlot.y*9);
-            Integer containerSlotId = selectedContainerSlot == null || selectedContainerSlot.x() < 0 || selectedContainerSlot.y() < 0 ? null : selectedContainerSlot.x+(selectedContainerSlot.y*9);
+            Integer selSlotId = selectedSlot == null || selectedSlot.x() < 0 || selectedSlot.y() < 0 ? null : selectedSlot.x+(selectedSlot.y*invWidth);
+            Integer containerSlotId = selectedContainerSlot == null || selectedContainerSlot.x() < 0 || selectedContainerSlot.y() < 0 ? null : selectedContainerSlot.x+(selectedContainerSlot.y*invWidth);
             Item selItem = getSelectedItem(true);
             if (cursorItem == null) {
                 if (selItem != null) {
@@ -105,7 +107,7 @@ public class Inventory {
             if (cursorItem == null || cursorItem.amount <= 0 || cursorItem.type == ItemTypes.AIR) {
                 cursorItem = null;
             } else if (interactCD <= 0 && selectedSlot != null) {
-                int slotId = selectedSlot.x+(selectedSlot.y*9);
+                int slotId = selectedSlot.x+(selectedSlot.y*invWidth);
                 if (Main.wasLMBDown) { //split evenly across several slots
 //                    if (addToSlot(slotId, cursorItem, cursorItem.amount, false) == null) {
 //                        cursorItem = null;
@@ -132,10 +134,10 @@ public class Inventory {
         setItem(2, 0, new Item().type(ItemTypes.STEEL_HATCHET));
         setItem(3, 0, new Item().type(ItemTypes.STEEL_SPADE));
         setItem(4, 0, new Item().type(ItemTypes.STEEL_HOE));
-        setItem(7, 0, new Item().type(ItemTypes.APPLE).amount(1));
-        setItem(8, 0, new Item().type(ItemTypes.ORANGE).amount(2));
-        setItem(8, 1, new Item().type(ItemTypes.ORANGE).amount(1));
-        setItem(8, 2, new Item().type(ItemTypes.CHERRY).amount(2));
+        setItem(12, 0, new Item().type(ItemTypes.APPLE).amount(1));
+        setItem(13, 0, new Item().type(ItemTypes.ORANGE).amount(2));
+        setItem(13, 1, new Item().type(ItemTypes.ORANGE).amount(1));
+        setItem(13, 2, new Item().type(ItemTypes.CHERRY).amount(2));
         setItem(3, 3, new Item().type(ItemTypes.GLASS).amount(37));
         setItem(3, 2, new Item().type(ItemTypes.GLASS).amount(1));
         setItem(2, 3, new Item().type(ItemTypes.STICK).amount(60));
@@ -190,7 +192,7 @@ public class Inventory {
     }
 
     public Item getContainerItem(Vector2i xy) {
-        return xy == null ? null : getContainerItem((xy.y*9)+xy.x);
+        return xy == null ? null : getContainerItem((xy.y*invWidth)+xy.x);
     }
     public Item getContainerItem(int index) {
         ItemType type = ItemTypes.itemTypeMap.get(index);
@@ -200,10 +202,10 @@ public class Inventory {
         return items[index];
     }
     public Item getItem(int x, int y) {
-        return getItem((y*9)+x);
+        return getItem((y*invWidth)+x);
     }
     public Item getItem(Vector2i xy) {
-        return xy == null ? null : getItem((xy.y*9)+xy.x);
+        return xy == null ? null : getItem((xy.y*invWidth)+xy.x);
     }
     public void setItem(int slotId, Item item) {
         Item existing = items[slotId];
@@ -218,10 +220,10 @@ public class Inventory {
         items[slotId] = item;
     }
     public void setItem(Vector2i xy, Item item) {
-        setItem((xy.y*9)+xy.x, item);
+        setItem((xy.y*invWidth)+xy.x, item);
     }
     public void setItem(int x, int y, Item item) {
-        setItem((y*9)+x, item);
+        setItem((y*invWidth)+x, item);
     }
 
     public void addToInventory(ArrayList<Item> items) {
@@ -235,8 +237,8 @@ public class Inventory {
     public Item addToInventory(Item item, boolean hotbarFirst) {
         loop:
         for (int y = hotbarFirst ? 0 : 3; hotbarFirst ? (y < 4) : (y >= 0); y += (hotbarFirst ? 1 : -1)) { //first try merging with existing stacks
-            for (int x = 0; x < 9; x++) {
-                int i = (y*9)+x;
+            for (int x = 0; x < invWidth; x++) {
+                int i = (y*invWidth)+x;
                 Item slotItem = getItem(i);
                 if (slotItem != null && slotItem.type == item.type) {
                     item = addToSlot(i, item, item.amount);
@@ -249,8 +251,8 @@ public class Inventory {
         if (item != null) {
             loop:
             for (int y = hotbarFirst ? 0 : 3; hotbarFirst ? (y < 4) : (y >= 0); y += (hotbarFirst ? 1 : -1)) { //then try adding to an empty slot
-                for (int x = 0; x < 9; x++) {
-                    int i = (y*9)+x;
+                for (int x = 0; x < invWidth; x++) {
+                    int i = (y*invWidth)+x;
                     Item slotItem = getItem(i);
                     if (slotItem == null || slotItem.type == ItemTypes.AIR) {
                         setItem(i, item.clone());
@@ -287,12 +289,12 @@ public class Inventory {
     public void scrollUp() {
         Item[] newItems = new Item[items.length];
         for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 9; x++) {
+            for (int x = 0; x < invWidth; x++) {
                 int row = y+1;
                 if (row >= 4) {
                     row = 0;
                 }
-                newItems[(y*9)+x] = getItem(x, row);
+                newItems[(y*invWidth)+x] = getItem(x, row);
             }
         }
         items = newItems;
@@ -300,12 +302,12 @@ public class Inventory {
     public void scrollDown() {
         Item[] newItems = new Item[items.length];
         for (int y = 0; y < 4; y++) {
-            for (int x = 0; x < 9; x++) {
+            for (int x = 0; x < invWidth; x++) {
                 int row = y-1;
                 if (row < 0) {
                     row = 3;
                 }
-                newItems[(y*9)+x] = getItem(x, row);
+                newItems[(y*invWidth)+x] = getItem(x, row);
             }
         }
         items = newItems;

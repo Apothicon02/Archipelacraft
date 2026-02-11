@@ -62,7 +62,7 @@ public class ItemTypes {
             LIME_STAINED_GLASS = create(new ItemType("component/texture/lime_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.LIME_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
             TORCH = create(new ItemType("block/texture/torch").blockToPlace(BlockTypes.getId(BlockTypes.TORCH), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.4f, 1.25f))),
             MAGMA = create(new ItemType("resource/texture/magma").blockToPlace(BlockTypes.getId(BlockTypes.MAGMA), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.SIZZLE1, Sounds.SIZZLE2}, 0.45f, 0.95f))),
-            PORECAP = create(new ItemType("block/texture/porecap").blockToPlace(BlockTypes.getId(BlockTypes.PORECAP), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.45f, 0.95f))),
+            PORECAP = create(new ItemType("food/texture/porecap").blockToPlace(BlockTypes.getId(BlockTypes.PORECAP), 0).maxStackSize(2).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.45f, 0.95f))),
             KYANITE = create(new ItemType("resource/texture/kyanite").blockToPlace(BlockTypes.getId(BlockTypes.KYANITE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.6f, 1.2f)));
 
     private static ItemType create(ItemType type) {
