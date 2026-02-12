@@ -1,10 +1,3 @@
-const int size = 1024;
-const int height = 320;
-const vec3 worldSize = vec3(size, height, size);
-const float alphaMax = 0.95f;
-const float one = fromLinear(vec4(1)).a;
-const float eigth = 1f/8f;
-
 uniform mat4 projection;
 uniform mat4 view;
 uniform ivec3 selected;
@@ -107,9 +100,12 @@ vec3 toLinear(vec3 sRGB)
     return vec3(mix(higher, lower, cutoff));
 }
 
-vec4 shortToColor(int color) {
-    return vec4(0xFF & color >> 8, 0xFF & color >> 4, 0xFF & color, 0xFF & color >> 12);
-}
+const int size = 1024;
+const int height = 320;
+const vec3 worldSize = vec3(size, height, size);
+const float alphaMax = 0.95f;
+const float one = fromLinear(vec4(1)).a;
+const float eigth = 1f/8f;
 
 bool inBounds(vec3 pos, vec3 bounds) {
     return !(pos.x < 0 || pos.x >= bounds.x || pos.y < 0 || pos.y >= bounds.y || pos.z < 0 || pos.z >= bounds.z);

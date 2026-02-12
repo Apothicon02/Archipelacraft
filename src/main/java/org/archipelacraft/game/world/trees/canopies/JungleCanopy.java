@@ -42,12 +42,12 @@ public class JungleCanopy extends Canopy {
                                 addToMap(map, abovePos, blockType, 0);
                                 Vector3i aboveAbovePos = new Vector3i(newX, extraY + 2, newZ);
                                 if (!BlockTypes.blockTypeMap.get(getBlock(aboveAbovePos).x).blockProperties.isSolid && !blocks.containsKey(aboveAbovePos) && !map.containsKey(aboveAbovePos)) {
-                                    addToMap(map, new Vector3i(aboveAbovePos), blockType, (int) Math.abs(Math.random() * 6) + 1);
+                                    addToMap(map, new Vector3i(aboveAbovePos), blockType, (int) Math.abs(World.worldType.rand().nextDouble() * 6) + 1);
                                 }
                             }
                         }
                     }
-                    if (Math.random()*10 < 4) {
+                    if (World.worldType.rand().nextDouble()*10 < 4) {
                         addToMap(map, new Vector3i(newX, y-2, newZ), blockType, blockSubType);
                     }
                 }
@@ -75,7 +75,7 @@ public class JungleCanopy extends Canopy {
                                     !BlockTypes.blockTypeMap.get(getBlock(newX, extraY+1, newZ).x).blockProperties.isSolid) {
                                 addToMap(map, new Vector3i(newX, extraY + 1, newZ), blockType, 0);
                                 if (!BlockTypes.blockTypeMap.get(getBlock(newX, extraY+2, newZ).x).blockProperties.isSolid) {
-                                    addToMap(map, new Vector3i(newX, extraY + 2, newZ), blockType, (int) Math.abs(Math.random() * 6) + 1);
+                                    addToMap(map, new Vector3i(newX, extraY + 2, newZ), blockType, (int) Math.abs(World.worldType.rand().nextDouble() * 6) + 1);
                                 }
                             }
                         }

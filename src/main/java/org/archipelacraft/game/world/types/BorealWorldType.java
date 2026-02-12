@@ -23,6 +23,9 @@ public class BorealWorldType extends WorldType {
     public static Random seededRand = new Random(35311350L);
 
     @Override
+    public Random rand() {return seededRand;}
+
+    @Override
     public Path getWorldPath() {
         return worldPath;
     }
@@ -148,12 +151,12 @@ public class BorealWorldType extends WorldType {
                 float randomNumber = seededRand.nextFloat();
                 if (blockOn.x == 2) {
                     float foliageChanceExp = basePerlinNoise * basePerlinNoise;
-                    if (randomNumber * 10 < foliageChanceExp - 0.2f || randomNumber < 0.0002f) { //tree
+                    if (randomNumber * 10 < foliageChanceExp || randomNumber < 0.0002f) { //tree
                         float foliageType = seededRand.nextFloat();
                         if (foliageType < 0.0015f) { //1.5% chance the tree is dead
                             int maxHeight = seededRand.nextInt(6) + 12;
                             DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
-                            Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((Math.random() + 1) * 3), new int[]{2, 23}, true);
+                            Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((rand().nextDouble() + 1) * 3), new int[]{2, 23}, true);
                         } else if (foliageType < ArchipelacraftMath.gradient(surface, 82, 100, 1, 0)) {
                             if (randomNumber < 0.2f) { //80% chance to not generate anything
                                 int maxHeight = seededRand.nextInt(16) + 12;
@@ -162,11 +165,18 @@ public class BorealWorldType extends WorldType {
                                 JungleTree.generate(blockOn, x, surface, z, maxHeight, radius, BlockTypes.getId(BlockTypes.CHERRY_LOG), 0, BlockTypes.getId(BlockTypes.CHERRY_LEAVES), 0, overgrown);
                             }
                         } else {
-                            int maxHeight = seededRand.nextInt(19) + 5;
-                            PineTree.generate(blockOn, x, surface, z, maxHeight, 35, 0, 36, 0);
+                            if (basePerlinNoise > 0.2f) {
+                                int maxHeight = seededRand.nextInt(42, 54);
+                                int radius = seededRand.nextInt(3, 4);
+                                int branchChance = seededRand.nextInt(4, 7);
+                                RedwoodTree.generate(blockOn, x, surface, z, maxHeight, radius, 3, BlockTypes.getId(BlockTypes.REDWOOD_LOG), 0, 36, 0, branchChance);
+                            } else {
+                                int maxHeight = seededRand.nextInt(19) + 5;
+                                PineTree.generate(blockOn, x, surface, z, maxHeight, 35, 0, 36, 0);
+                            }
                         }
                     } else if ((randomNumber * 10) + 0.15f < basePerlinNoise - 0.2f || randomNumber < 0.0005f) { //bush
-                        int maxHeight = (int) (Math.random() + 1);
+                        int maxHeight = (int) (rand().nextDouble() + 1);
                         OakShrub.generate(blockOn, x, surface, z, maxHeight, 3 + (maxHeight * 2), 16, 0, 17, 0);
                     }
                 } else if (blockOn.x == 23) {

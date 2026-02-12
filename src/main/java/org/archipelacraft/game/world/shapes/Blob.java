@@ -5,6 +5,7 @@ import org.archipelacraft.game.ScheduledTicker;
 import org.archipelacraft.game.blocks.types.BlockType;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.CloudBlockType;
+import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 import org.joml.Vector4i;
@@ -42,7 +43,7 @@ public class Blob {
                                 if (update) {
                                     setBlock(lX, lY, lZ, blockType, blockSubType);
                                     if (type instanceof CloudBlockType) {
-                                        ScheduledTicker.scheduleTick(Main.currentTick + 200 + (int) (Math.random() * 1000), new Vector3i(lX, lY, lZ), 1);
+                                        ScheduledTicker.scheduleTick(Main.currentTick + 200 + (int) (World.worldType.rand().nextDouble() * 1000), new Vector3i(lX, lY, lZ), 1);
                                     }
                                 } else {
                                     setBlock(lX, lY, lZ, blockType, blockSubType);

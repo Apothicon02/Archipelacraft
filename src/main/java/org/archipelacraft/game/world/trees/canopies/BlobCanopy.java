@@ -2,12 +2,12 @@ package org.archipelacraft.game.world.trees.canopies;
 
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.blocks.types.BlockTypes;
+import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 
 import java.util.Map;
 
-import static org.archipelacraft.game.world.World.*;
 import static org.archipelacraft.game.world.World.*;
 
 public class BlobCanopy extends Canopy {
@@ -36,7 +36,7 @@ public class BlobCanopy extends Canopy {
                                     Vector3i abovePos = new Vector3i(lX, extraY+1, lZ);
                                     if (BlockTypes.blockTypeMap.get(getBlock(lX, extraY, lZ).x).blockProperties.isSolid &&
                                             !BlockTypes.blockTypeMap.get(getBlock(abovePos).x).blockProperties.isSolid && !blocks.containsKey(abovePos) && !map.containsKey(abovePos)) {
-                                        addToMap(map, abovePos, blockType, (int) Math.abs(Math.random() * 6) + 1);
+                                        addToMap(map, abovePos, blockType, (int) Math.abs(World.worldType.rand().nextDouble() * 6) + 1);
                                     }
                                 }
                             }

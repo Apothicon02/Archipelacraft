@@ -1,6 +1,7 @@
 package org.archipelacraft.game.world.trees.trunks;
 
 import kotlin.Pair;
+import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
 
@@ -23,9 +24,9 @@ public class TwistingTrunk extends Trunk {
             twistable--;
             boolean branch = false;
             Vector3i dir = new Vector3i(0, 0, 0);
-            if (height > oY+2 && twistable <= 0 && Math.random()*10 < 4) {
-                int xOff = (int) ((Math.random()*20)-10);
-                int zOff = (int) ((Math.random()*20)-10);
+            if (height > oY+2 && twistable <= 0 && World.worldType.rand().nextDouble()*10 < 4) {
+                int xOff = (int) ((World.worldType.rand().nextDouble()*20)-10);
+                int zOff = (int) ((World.worldType.rand().nextDouble()*20)-10);
                 boolean xPositive = xOff >= prevXPositive;
                 boolean zPositive = zOff >= prevZPositive;
                 if (xPositive) {
@@ -52,7 +53,7 @@ public class TwistingTrunk extends Trunk {
             if (branch && pos.y >= minBranch) {
                 canopies.add(makeBranch(map, pos, dir, blockType, blockSubType));
                 if (overgrown) {
-                    canopies.add(makeBranch(map, pos, new Vector3i(dir.x * (Math.random() >= 0.5f ? 1 : 0), +2, dir.z * (Math.random() >= 0.5f ? 1 : 0)), blockType, blockSubType));
+                    canopies.add(makeBranch(map, pos, new Vector3i(dir.x * (World.worldType.rand().nextDouble() >= 0.5f ? 1 : 0), +2, dir.z * (World.worldType.rand().nextDouble() >= 0.5f ? 1 : 0)), blockType, blockSubType));
                 }
             }
             if (pos.y == maxHeight) {

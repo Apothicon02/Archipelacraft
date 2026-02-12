@@ -6,6 +6,7 @@ import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.blocks.types.LightBlockType;
 import org.archipelacraft.game.noise.Noises;
 import org.archipelacraft.game.world.LightHelper;
+import org.archipelacraft.game.world.World;
 import org.archipelacraft.game.world.shapes.Blob;
 import org.archipelacraft.game.world.trees.*;
 import org.joml.Vector2i;
@@ -22,6 +23,9 @@ import static org.archipelacraft.game.world.World.getLight;
 public class TemperateWorldType extends WorldType {
     private Path worldPath = Path.of(Main.mainFolder+"world0/temperate");
     public static Random seededRand = new Random(35311350L);
+
+    @Override
+    public Random rand() {return  seededRand;}
 
     @Override
     public Path getWorldPath() {
@@ -154,7 +158,7 @@ public class TemperateWorldType extends WorldType {
                         if (foliageType < 0.0015f) { //1.5% chance the tree is dead
                             int maxHeight = seededRand.nextInt(6) + 12;
                             DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
-                            Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((Math.random() + 1) * 3), new int[]{2, 23}, true);
+                            Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((rand().nextDouble() + 1) * 3), new int[]{2, 23}, true);
                         } else if (foliageType < ArchipelacraftMath.gradient(surface, 82, 100, 1, 0)) {
                             if (randomNumber < 0.2f) { //80% chance to not generate anything
                                 int maxHeight = seededRand.nextInt(19) + 5;
@@ -167,7 +171,7 @@ public class TemperateWorldType extends WorldType {
                             OakTree.generate(blockOn, x, surface, z, maxHeight, radius, leavesHeight, 16, 0, 17, 0);
                         }
                     } else if ((randomNumber * 10) + 0.15f < basePerlinNoise - 0.2f || randomNumber < 0.0005f) { //bush
-                        int maxHeight = (int) (Math.random() + 1);
+                        int maxHeight = (int) (rand().nextDouble() + 1);
                         OakShrub.generate(blockOn, x, surface, z, maxHeight, 3 + (maxHeight * 2), 16, 0, 17, 0);
                     }
                 } else if (blockOn.x == 23) {
