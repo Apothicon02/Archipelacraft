@@ -1,5 +1,6 @@
-int size = 1024;
-int height = 320;
+const int size = 1024;
+const int height = 320;
+const float alphaMax = 0.95f;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -391,7 +392,7 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                 if (hitPos == vec3(0)) {
                     hitPos = solidHitPos;
                 }
-                if (voxelColor.a < 1) {
+                if (voxelColor.a < alphaMax) {
                     if (block.x == 1) {
                         bool topVoxel = voxelPos.y >= 7;
                         if (!underwater && (isInfiniteSea || getVoxel(voxelPos.x, topVoxel ? 0 : voxelPos.y+1, voxelPos.z, mapPos.x, mapPos.y + (topVoxel ? 1 : 0), mapPos.z, block.x, block.y).a <= 0)) {
@@ -406,7 +407,7 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                     float tintMul = 1.f;
                     if (isFullSemitransparentBlock(block.xy)) {
                         steppingBlock = true;
-                        float brightness = dot(normal.xy, source.xy)*-0.0002f;
+                        float brightness = dot(normal, source)*-0.0002f;
                         tintMul = clamp(0.75f+brightness, 0.66f, 1.f);
                     }
                     if (prevTintAddition != voxelColor) {
@@ -597,30 +598,33 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     vec3 shadowPosOffset = vec3(0);
     vec3 vNorm = normal;
     bool wasY = false;
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)).a < 1) {
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)).a < alphaMax) {
         vNorm.y = -1;
         shadowPosOffset.y = eigth;
         wasY = true;
     }
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)).a < 1) {
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)).a < alphaMax) {
         vNorm.y = wasY ? 0 : 1;
         shadowPosOffset.y = wasY ? 0 : -eigth;
     }
     bool wasX = false;
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)).a < 1) {
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)).a < alphaMax) {
         vNorm.x = -1;
         shadowPosOffset.x = eigth;
         wasX = true;
     }
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)).a < 1) {
+    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)).a < alphaMax) {
         vNorm.x = wasX ? 0 : 1;
         shadowPosOffset.x = wasX ? 0 : -eigth;
     }
-    float brightness = dot(vNorm.xy, source.xy)*-0.0002f;
+    if (texColor.a < 1 && texColor.a > alphaMax) {
+        vNorm *= 0;
+    }
+    float brightness = dot(vNorm, source)*-0.0002f;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
     vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal))+(shadowPosOffset*2);
     if (actuallyCastShadowRay) {
-        vec3 sunDir = vec3(normalize(source.xy - (worldSize.xy/2)), 0.1f);
+        vec3 sunDir = vec3(normalize(source - (worldSize/2)));
         vec4 prevTint = tint;
         vec3 prevHitPos = hitPos;
         clearVars();
@@ -649,6 +653,7 @@ void main() {
     float rasterDepth = texture(raster_depth, pos/res).r;
     source = mun.y > sun.y ? mun : sun;
     source.y = max(source.y, 500);
+    source.z += 128;
     bool isSky = rasterColor.a <= 0.f;
     bool isLight = false;
     updateLightFog(ogPos);
@@ -658,7 +663,7 @@ void main() {
             fragColor.rgb *= 1.5f;
             isLight = true;
         } else {
-            if (!inBounds(mapPos, worldSize) && mapPos.y <= 63 && fragColor.a < 1.f) {
+            if (!inBounds(mapPos, worldSize) && mapPos.y <= 63 && fragColor.a < alphaMax) {
                 shade = 0.25f;
                 fragColor = vec4(0.0f, 0.0f, 0.0f, 1.f);
             }
@@ -668,7 +673,7 @@ void main() {
     if (solidHitPos != vec3(0)) {
         isSky = false;
     }
-    if (fragColor.a < 1) {
+    if (fragColor.a < alphaMax) {
         isSky = true;
     }
     if (isSky) {
@@ -682,7 +687,7 @@ void main() {
     float tracedDepth = nearClip/max(0, dot((solidHitPos+(normal/2))-ogPos, camDir));
     float depth = tracedDepth;
     //fragColor = (checker(ivec2(pos/32) ? vec4(tracedDepth) : vec4(rasterDepth)))*4;
-    if (rasterDepth > tracedDepth || fragColor.a < 1.f) {
+    if (rasterDepth > tracedDepth || fragColor.a < alphaMax) {
         vec3 rasterPos = ivec3(worldPosFromDepth(rasterDepth)*8.f)/8.f;
         if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
             depth = rasterDepth;

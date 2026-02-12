@@ -3,9 +3,6 @@ package org.archipelacraft.engine;
 import com.sun.jna.ptr.IntByReference;
 import io.github.libsdl4j.api.SdlSubSystemConst;
 import io.github.libsdl4j.api.event.SDL_Event;
-import io.github.libsdl4j.api.event.events.SDL_KeyboardEvent;
-import io.github.libsdl4j.api.keyboard.SdlKeyboard;
-import io.github.libsdl4j.api.mouse.SDL_Button;
 import io.github.libsdl4j.api.mouse.SDL_ButtonMask;
 import io.github.libsdl4j.api.video.SDL_GLContext;
 import io.github.libsdl4j.api.video.SDL_Window;
@@ -16,19 +13,13 @@ import org.joml.Vector2f;
 import org.tinylog.Logger;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static io.github.libsdl4j.api.Sdl.*;
 import static io.github.libsdl4j.api.error.SdlError.*;
 import static io.github.libsdl4j.api.event.SDL_EventType.*;
 import static io.github.libsdl4j.api.event.SdlEvents.SDL_PollEvent;
-import static io.github.libsdl4j.api.hints.SdlHints.SDL_SetHint;
-import static io.github.libsdl4j.api.hints.SdlHintsConst.SDL_HINT_MOUSE_AUTO_CAPTURE;
 import static io.github.libsdl4j.api.keyboard.SdlKeyboard.SDL_GetKeyboardState;
-import static io.github.libsdl4j.api.keycode.SDL_Keycode.SDLK_SPACE;
 import static io.github.libsdl4j.api.log.SDL_LogCategory.*;
 import static io.github.libsdl4j.api.log.SdlLog.SDL_LogCritical;
 import static io.github.libsdl4j.api.mouse.SdlMouse.SDL_GetMouseState;
@@ -49,6 +40,7 @@ public class Window {
     private int width;
     private final Matrix4f projectionMatrix;
     public byte[] keys;
+    public boolean tenBitColorMode = true;
 
     public Window(String title, WindowOptions opts, Callable<Void> resizeFunc) {
         projectionMatrix = new Matrix4f();
@@ -60,9 +52,7 @@ public class Window {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        int monitorBitDepth = env.getDefaultScreenDevice().getDisplayMode().getBitDepth();
-        if (monitorBitDepth > 32) {
+        if (tenBitColorMode) {
             SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 10);
             SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 10);
             SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 10);
