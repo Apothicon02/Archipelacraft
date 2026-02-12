@@ -108,32 +108,6 @@ public class Main {
                 isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
                 boolean isF11Down = window.isKeyPressed(SDL_SCANCODE_F11);
 
-                if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
-                    if (uiState == 0) {
-                        uiState = 1;
-                        Renderer.forceTiltShift = false;
-                        Renderer.showUI = true;
-                        showDebug = true;
-                    } else if (uiState == 1) {
-                        uiState = 2;
-                        Renderer.forceTiltShift = false;
-                        Renderer.showUI = true;
-                        showDebug = false;
-                    } else if (uiState == 2) {
-                        uiState = 3;
-                        Renderer.forceTiltShift = false;
-                        Renderer.showUI = false;
-                        showDebug = false;
-                    } else if (uiState == 3) {
-                        uiState = 0;
-                        Renderer.forceTiltShift = true;
-                        Renderer.showUI = false;
-                        showDebug = false;
-                    }
-                }
-                if (wasF2Down && !window.isKeyPressed(SDL_SCANCODE_F2)) {
-                    Renderer.screenshot = true;
-                }
                 if (window.isKeyPressed(SDL_SCANCODE_F3)) {
                     if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
                         isSaving = true;
@@ -146,82 +120,114 @@ public class Main {
                             World.nextWorldType = new TemperateWorldType();
                         }
                     }
-                }
+                } else if (window.isKeyPressed(SDL_SCANCODE_F4)) {
+                    if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
+                        Renderer.shadowsEnabled = !Renderer.shadowsEnabled;
+                    }
+                } else {
+                    if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
+                        if (uiState == 0) {
+                            uiState = 1;
+                            Renderer.forceTiltShift = false;
+                            Renderer.showUI = true;
+                            showDebug = true;
+                        } else if (uiState == 1) {
+                            uiState = 2;
+                            Renderer.forceTiltShift = false;
+                            Renderer.showUI = true;
+                            showDebug = false;
+                        } else if (uiState == 2) {
+                            uiState = 3;
+                            Renderer.forceTiltShift = false;
+                            Renderer.showUI = false;
+                            showDebug = false;
+                        } else if (uiState == 3) {
+                            uiState = 0;
+                            Renderer.forceTiltShift = true;
+                            Renderer.showUI = false;
+                            showDebug = false;
+                        }
+                    }
 
-                if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
-                    player.inv.open = !player.inv.open;
-                }
+                    if (wasF2Down && !window.isKeyPressed(SDL_SCANCODE_F2)) {
+                        Renderer.screenshot = true;
+                    }
 
-                if (!isF11Down && wasF11Down) {
-                    if (!isFullScreen) {
-                        isFullScreen = true;
-                        SDL_SetWindowPosition(Window.window, 0, 0);
-                        SDL_SetWindowSize(Window.window, 2560, 1440);
-                        window.resized(2560, 1440);
-                        //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_FALSE);
+                    if (wasTabDown && !window.isKeyPressed(SDL_SCANCODE_TAB)) {
+                        player.inv.open = !player.inv.open;
+                    }
+
+                    if (!isF11Down && wasF11Down) {
+                        if (!isFullScreen) {
+                            isFullScreen = true;
+                            SDL_SetWindowPosition(Window.window, 0, 0);
+                            SDL_SetWindowSize(Window.window, 2560, 1440);
+                            window.resized(2560, 1440);
+                            //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_FALSE);
 //                        glfwSetWindowPos(window.getWindowHandle(), 0, 0);
 //                        GLFWVidMode mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 //                        glfwSetWindowSize(window.getWindowHandle(), mode.width(), mode.height());
-                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
-                    } else {
-                        isFullScreen = false;
-                        SDL_SetWindowPosition(Window.window, 0, 32);
-                        SDL_SetWindowSize(Window.window, (int) (2560*0.8f), (int) (1440*0.8f));
-                        window.resized((int) (2560*0.8f), (int) (1440*0.8f));
-                        //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_TRUE);
+                            //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                        } else {
+                            isFullScreen = false;
+                            SDL_SetWindowPosition(Window.window, 0, 32);
+                            SDL_SetWindowSize(Window.window, (int) (2560 * 0.8f), (int) (1440 * 0.8f));
+                            window.resized((int) (2560 * 0.8f), (int) (1440 * 0.8f));
+                            //glfwSetWindowAttrib(window.getWindowHandle(), GLFW_DECORATED, GLFW_TRUE);
 //                        glfwSetWindowPos(window.getWindowHandle(), 0, 32);
 //                        glfwSetWindowSize(window.getWindowHandle(), Constants.width, Constants.height);
-                        //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
-                    }
-                }
-
-                if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
-                    Item item = player.inv.getSelectedItem(false);
-                    if (item != null) {
-                        World.dropItem(item);
-                        item.amount(0).type(ItemTypes.AIR);
-                    }
-                }
-                if (player.inv.open) {
-                    SDL_SetRelativeMouseMode(false);
-                    player.clearVars();
-                    player.inv.tick(window);
-                } else {
-                    SDL_SetRelativeMouseMode(true);
-                    Vector2f displVec = new Vector2f(window.displVec);
-                    player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
-                            (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
-                    HandManager.useHands(timeMillis, window);
-
-                    player.sprint = isShiftDown;
-                    player.superSprint = window.isKeyPressed(SDL_SCANCODE_CAPSLOCK);
-                    player.forward = window.isKeyPressed(SDL_SCANCODE_W);
-                    player.backward = window.isKeyPressed(SDL_SCANCODE_S);
-                    player.rightward = window.isKeyPressed(SDL_SCANCODE_D);
-                    player.leftward = window.isKeyPressed(SDL_SCANCODE_A);
-                    player.upward = window.isKeyPressed(SDL_SCANCODE_SPACE);
-                    player.downward = isCtrlDown;
-                    player.crouching = isCtrlDown;
-                    if (window.isKeyPressed(SDL_SCANCODE_SPACE) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
-                        player.jump = timeMillis;
-                    }
-                    if (wasXDown && !window.isKeyPressed(SDL_SCANCODE_X)) {
-                        player.flying = !player.flying;
+                            //glfwSetWindowMonitor(window.getWindowHandle(), glfwGetWindowMonitor(window.getWindowHandle()), 0, 0, 2560, 1440, GLFW_DONT_CARE);
+                        }
                     }
 
-                    if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
-                        updateTime(100000L, 1);
+                    if (wasQDown && !window.isKeyPressed(SDL_SCANCODE_Q)) {
+                        Item item = player.inv.getSelectedItem(false);
+                        if (item != null) {
+                            World.dropItem(item);
+                            item.amount(0).type(ItemTypes.AIR);
+                        }
                     }
-                    if (wasUpDown && !window.isKeyPressed(SDL_SCANCODE_UP)) {
-                        timeMul = Math.min(100, timeMul + (isShiftDown ? 10.f : 0.25f));
-                    }
-                    if (wasDownDown && !window.isKeyPressed(SDL_SCANCODE_DOWN)) {
-                        timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
-                    }
+                    if (player.inv.open) {
+                        SDL_SetRelativeMouseMode(false);
+                        player.clearVars();
+                        player.inv.tick(window);
+                    } else {
+                        SDL_SetRelativeMouseMode(true);
+                        Vector2f displVec = new Vector2f(window.displVec);
+                        player.rotate((float) Math.toRadians(displVec.x * MOUSE_SENSITIVITY),
+                                (float) Math.toRadians(displVec.y * MOUSE_SENSITIVITY));
+                        HandManager.useHands(timeMillis, window);
 
-                    if (window.isKeyPressed(SDL_SCANCODE_F3)) {
-                        if (wasCDown && !window.isKeyPressed(SDL_SCANCODE_C)) {
-                            player.creative = !player.creative;
+                        player.sprint = isShiftDown;
+                        player.superSprint = window.isKeyPressed(SDL_SCANCODE_CAPSLOCK);
+                        player.forward = window.isKeyPressed(SDL_SCANCODE_W);
+                        player.backward = window.isKeyPressed(SDL_SCANCODE_S);
+                        player.rightward = window.isKeyPressed(SDL_SCANCODE_D);
+                        player.leftward = window.isKeyPressed(SDL_SCANCODE_A);
+                        player.upward = window.isKeyPressed(SDL_SCANCODE_SPACE);
+                        player.downward = isCtrlDown;
+                        player.crouching = isCtrlDown;
+                        if (window.isKeyPressed(SDL_SCANCODE_SPACE) && timeMillis - player.lastJump > 200) { //only jump at most five times a second
+                            player.jump = timeMillis;
+                        }
+                        if (wasXDown && !window.isKeyPressed(SDL_SCANCODE_X)) {
+                            player.flying = !player.flying;
+                        }
+
+                        if (wasTDown && !window.isKeyPressed(SDL_SCANCODE_T)) {
+                            updateTime(100000L, 1);
+                        }
+                        if (wasUpDown && !window.isKeyPressed(SDL_SCANCODE_UP)) {
+                            timeMul = Math.min(100, timeMul + (isShiftDown ? 10.f : 0.25f));
+                        }
+                        if (wasDownDown && !window.isKeyPressed(SDL_SCANCODE_DOWN)) {
+                            timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
+                        }
+
+                        if (window.isKeyPressed(SDL_SCANCODE_F3)) {
+                            if (wasCDown && !window.isKeyPressed(SDL_SCANCODE_C)) {
+                                player.creative = !player.creative;
+                            }
                         }
                     }
                 }

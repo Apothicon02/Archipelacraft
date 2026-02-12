@@ -6,6 +6,7 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform ivec3 selected;
 uniform bool ui;
+uniform bool shadowsEnabled;
 uniform ivec2 res;
 uniform vec3 sun;
 uniform vec3 mun;
@@ -592,6 +593,9 @@ vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
 float eigth = 1f/8f;
 vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
+    if (!shadowsEnabled) {
+        actuallyCastShadowRay=false;
+    }
     if (actuallyCastShadowRay) {
         shadowFactor = 1.f;
     }
