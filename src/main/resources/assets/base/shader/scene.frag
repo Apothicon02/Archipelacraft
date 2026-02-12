@@ -1,6 +1,9 @@
 const int size = 1024;
 const int height = 320;
+const vec3 worldSize = vec3(size, height, size);
 const float alphaMax = 0.95f;
+const float one = fromLinear(vec4(1)).a;
+const float eigth = 1f/8f;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -213,7 +216,6 @@ vec3 lodPos = vec3(0);
 ivec4 block = ivec4(0);
 vec4 texColor = vec4(0);
 vec4 lightFog = vec4(0);
-vec3 worldSize = vec3(size, height, size);
 
 void clearVars() {
     shade = 0.f;
@@ -259,7 +261,6 @@ void updateLightFog(vec3 pos) {
     }
 }
 
-float one = fromLinear(vec4(1)).a;
 vec4 getVoxelAndBlock(vec3 pos) {
     vec3 rayMapPos = floor(pos);
     vec3 mapPos = (pos-rayMapPos)*8;
@@ -591,7 +592,6 @@ vec3 worldPosFromDepth(float depth) {
 
 vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
-float eigth = 1f/8f;
 vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     if (!shadowsEnabled) {
         actuallyCastShadowRay=false;
