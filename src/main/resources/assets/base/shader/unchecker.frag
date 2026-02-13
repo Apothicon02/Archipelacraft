@@ -16,7 +16,7 @@ bool checker(ivec2 pixel) {
 
 void main() {
     ivec2 pos = ivec2(gl_FragCoord.xy);
-    bool checkerOn = checker(ivec2(gl_FragCoord.xy));
+    bool checkerOn = checker(ivec2(gl_FragCoord.x*8, gl_FragCoord.y));
     bool firstHalf = bool(pos.x < res.x/2);
     if (!((firstHalf && !checkerOn) || (!firstHalf && checkerOn))) {
         pos.y++;
