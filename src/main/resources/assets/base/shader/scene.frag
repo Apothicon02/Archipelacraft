@@ -11,10 +11,11 @@ uniform float timeOfDay;
 
 uniform layout(binding = 0) sampler2D raster_color;
 uniform layout(binding = 1) sampler2D raster_depth;
-uniform layout(binding = 2) sampler3D atlas;
-uniform layout(binding = 3) isampler3D blocks;
-uniform layout(binding = 4) sampler3D lights;
-uniform layout(binding = 5) sampler2D noises;
+uniform layout(binding = 2, rgba32f) writeonly image3D scene;
+uniform layout(binding = 3) sampler3D atlas;
+uniform layout(binding = 4) isampler3D blocks;
+uniform layout(binding = 5) sampler3D lights;
+uniform layout(binding = 6) sampler2D noises;
 
 layout(std430, binding = 0) buffer playerSSBO
 {
@@ -641,8 +642,9 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
 }
 
 void main() {
+    bool checkerOn = checker(ivec2(gl_FragCoord.xy));
+    vec2 pos = gl_FragCoord.xy + (checkerOn ? ivec2(res.x/2, 0) : ivec2(0));
     mat4 invView = inverse(view);
-    vec2 pos = gl_FragCoord.xy;
     vec4 camClipSpace = vec4((inverse(projection) * vec4(0, 0, 1.f, 1.f)).xyz, 0);
     vec3 camDir = normalize((invView*camClipSpace).xyz);
     vec2 uv = ((pos / res)*2.f)-1.f;
@@ -740,5 +742,6 @@ void main() {
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
-    fragColor.a = depth;
+    imageStore(scene, ivec3(gl_FragCoord.xy, 0), vec4(fragColor.rgb, depth));
+    fragColor = vec4(0);
 }

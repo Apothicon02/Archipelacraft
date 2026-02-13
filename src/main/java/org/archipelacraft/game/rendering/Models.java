@@ -19,6 +19,7 @@ public class Models {
     public static List<Model> models = new ArrayList<>(List.of());
 
     public static Model SCREEN_TRIANGLE;
+    public static Model SCREEN_TRIANGLE_HALF;
     public static Model QUAD;
     public static Model QUAD_UNNORMALIZED;
     public static Model PLANE_DB;
@@ -28,6 +29,8 @@ public class Models {
     public static void loadModels() {
         SCREEN_TRIANGLE = new Model(new float[]{-1, -1, 0, 3, -1, 0, -1, 3, 0});
         createVao(SCREEN_TRIANGLE);
+        SCREEN_TRIANGLE_HALF = new Model(new float[]{0, -3, 0, 0, 3, 0, -3, 0, 0});
+        createVao(SCREEN_TRIANGLE_HALF);
         QUAD = loadObj("generic/model/quad");
         QUAD_UNNORMALIZED = loadObj("generic/model/quad_unnormalized");
         PLANE_DB = loadObj("generic/model/plane_db");

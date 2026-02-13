@@ -30,6 +30,7 @@ import static org.lwjgl.opengl.GL46.*;
 public class Renderer {
     public static ShaderProgram raster;
     public static ShaderProgram scene;
+    public static ShaderProgram unchecker;
     public static ShaderProgram blur;
     public static ShaderProgram gui;
 
@@ -73,6 +74,9 @@ public class Renderer {
         glBindTexture(GL_TEXTURE_2D, Textures.rasterDepth.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
+
+        glBindTexture(GL_TEXTURE_3D, Textures.scene.id);
+        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, window.getWidth()/2, window.getHeight(), ((Texture3D)(Textures.scene)).depth, 0, GL_RGBA, GL_FLOAT, new float[window.getWidth()*window.getHeight()*((Texture3D)(Textures.scene)).depth*4]);
 
         if (!resized) {
             if (!alreadyCreatedTextures) {
@@ -139,10 +143,11 @@ public class Renderer {
     public static void bindTextures() {
         glBindTextureUnit(0, Textures.rasterColor.id);
         glBindTextureUnit(1, Textures.rasterDepth.id);
-        glBindTextureUnit(2, Textures.atlas.id);
-        glBindTextureUnit(3, Textures.blocks.id);
-        glBindTextureUnit(4, Textures.lights.id);
-        glBindTextureUnit(5, Textures.noises.id);
+        glBindImageTexture(2, Textures.scene.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
+        glBindTextureUnit(3, Textures.atlas.id);
+        glBindTextureUnit(4, Textures.blocks.id);
+        glBindTextureUnit(5, Textures.lights.id);
+        glBindTextureUnit(6, Textures.noises.id);
     }
 
     public static void createBuffers() {
@@ -169,6 +174,8 @@ public class Renderer {
                 new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+        unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
+                new String[]{"res"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -214,6 +221,12 @@ public class Renderer {
 
     public static void draw() {
         glBindVertexArray(Models.SCREEN_TRIANGLE.vaoId);
+        glEnableVertexAttribArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDisableVertexAttribArray(0);
+    }
+    public static void drawHalf() {
+        glBindVertexArray(Models.SCREEN_TRIANGLE_HALF.vaoId);
         glEnableVertexAttribArray(0);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(0);
@@ -420,6 +433,11 @@ public class Renderer {
             updateUniforms(scene, window);
             bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
+            drawHalf();
+
+            unchecker.bind();
+            glUniform2i(unchecker.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glBindTextureUnit(0, Textures.scene.id);
             draw();
 
             glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
