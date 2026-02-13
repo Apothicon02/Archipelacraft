@@ -15,14 +15,7 @@ bool checker(ivec2 pixel) {
 }
 
 void main() {
-    ivec2 pos = ivec2(gl_FragCoord.xy);
-    bool checkerOn = checker(ivec2(gl_FragCoord.x*8, gl_FragCoord.y));
-    bool firstHalf = bool(pos.x < res.x/2);
-    if (!((firstHalf && !checkerOn) || (!firstHalf && checkerOn))) {
-        pos.y++;
-    }
-    if (!firstHalf) {
-        pos.x -= res.x/2;
-    }
+    bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
+    ivec2 pos = ivec2((gl_FragCoord.x/2) + (yOdd ? 1 : 0), gl_FragCoord.y);
     fragColor = texelFetch(in_color, ivec3(pos, 0), 0);
 }

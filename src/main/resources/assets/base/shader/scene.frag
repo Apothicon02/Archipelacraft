@@ -642,8 +642,9 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
 }
 
 void main() {
-    bool checkerOn = checker(ivec2(gl_FragCoord.x*8, gl_FragCoord.y));
-    vec2 pos = gl_FragCoord.xy + (checkerOn ? ivec2(res.x/2, 0) : ivec2(0));
+    //bool checkerOn = checker(ivec2(gl_FragCoord.xy));
+    bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
+    vec2 pos = ivec2((gl_FragCoord.x*2) + (yOdd ? 1 : 0), gl_FragCoord.y);
     mat4 invView = inverse(view);
     vec4 camClipSpace = vec4((inverse(projection) * vec4(0, 0, 1.f, 1.f)).xyz, 0);
     vec3 camDir = normalize((invView*camClipSpace).xyz);
