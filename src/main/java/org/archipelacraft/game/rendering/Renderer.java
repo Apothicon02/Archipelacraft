@@ -186,7 +186,7 @@ public class Renderer {
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
         aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
-                new String[]{"res"});
+                new String[]{"res", "ui"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -457,6 +457,7 @@ public class Renderer {
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             aa.bind();
             glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform1i(aa.uniforms.get("ui"), showUI ? 1 : 0);
             glBindTextureUnit(0, Textures.scene.id);
             draw();
 
