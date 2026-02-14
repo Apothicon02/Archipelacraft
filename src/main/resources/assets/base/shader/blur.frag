@@ -2,9 +2,10 @@ uniform vec2 dir;
 uniform ivec2 res;
 
 uniform layout(binding = 0) sampler2D in_color;
-uniform layout(binding = 1, rgba32f) image2D out_color;
 
 in vec4 gl_FragCoord;
+
+out vec4 fragColor;
 
 const int SAMPLE_COUNT = 33;
 
@@ -81,13 +82,11 @@ const float WEIGHTS[33] = float[33](
 );
 
 void main() {
-    vec4 result = vec4(0.0);
     for (int i = 0; i < SAMPLE_COUNT; ++i) {
         vec2 offset = dir * OFFSETS[i];
         float weight = WEIGHTS[i];
         ivec2 samplePos = ivec2(clamp(gl_FragCoord.xy + offset, vec2(0), res-1));
         vec4 newResult = texelFetch(in_color, samplePos, 0);
-        result += newResult * weight;
+        fragColor += newResult * weight;
     }
-    imageStore(out_color, ivec2(gl_FragCoord.xy), result);
 }

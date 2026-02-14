@@ -31,11 +31,15 @@ public class Renderer {
     public static ShaderProgram raster;
     public static ShaderProgram scene;
     public static ShaderProgram unchecker;
+    public static ShaderProgram aa;
     public static ShaderProgram blur;
     public static ShaderProgram gui;
 
     public static int rasterFBOId;
     public static int sceneFBOId;
+    public static int uncheckerFBOId;
+    public static int blurryFBOId;
+    public static int blurredFBOId;
 
     public static int playerSSBOId;
 
@@ -75,8 +79,10 @@ public class Renderer {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
         glBindTexture(GL_TEXTURE_2D, Textures.scene.id);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth()/2, window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.scene.id, 0);
 
         if (!resized) {
             if (!alreadyCreatedTextures) {
@@ -133,21 +139,24 @@ public class Renderer {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.sceneColor.id, 0);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, blurryFBOId);
         glBindTexture(GL_TEXTURE_2D, Textures.blurry.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.blurry.id, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, blurredFBOId);
         glBindTexture(GL_TEXTURE_2D, Textures.blurred.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.blurred.id, 0);
         alreadyCreatedTextures = true;
     }
 
     public static void bindTextures() {
         glBindTextureUnit(0, Textures.rasterColor.id);
         glBindTextureUnit(1, Textures.rasterDepth.id);
-        glBindImageTexture(2, Textures.scene.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-        glBindTextureUnit(3, Textures.atlas.id);
-        glBindTextureUnit(4, Textures.blocks.id);
-        glBindTextureUnit(5, Textures.lights.id);
-        glBindTextureUnit(6, Textures.noises.id);
+        glBindTextureUnit(2, Textures.atlas.id);
+        glBindTextureUnit(3, Textures.blocks.id);
+        glBindTextureUnit(4, Textures.lights.id);
+        glBindTextureUnit(5, Textures.noises.id);
     }
 
     public static void createBuffers() {
@@ -176,12 +185,17 @@ public class Renderer {
                 new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
+        aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
+                new String[]{"res"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
                 new String[]{"res", "model", "color", "tex", "layer", "atlasOffset", "offset", "size", "scale", "tiltShift", "dof"});
         rasterFBOId = glGenFramebuffers();
         sceneFBOId = glGenFramebuffers();
+        uncheckerFBOId = glGenFramebuffers();
+        blurryFBOId = glGenFramebuffers();
+        blurredFBOId = glGenFramebuffers();
         glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
 
         createBuffers();
@@ -435,22 +449,30 @@ public class Renderer {
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
             drawHalf();
 
+            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
             unchecker.bind();
+            glBindTextureUnit(0, Textures.sceneColor.id);
+            draw();
+
+            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
+            aa.bind();
+            glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
             glBindTextureUnit(0, Textures.scene.id);
             draw();
 
-            glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
+            glBindFramebuffer(GL_FRAMEBUFFER, blurryFBOId);
+            glClearColor(0, 0, 0, 0);
+            glClear(GL_COLOR_BUFFER_BIT);
             blur.bind();
             glUniform2i(blur.uniforms.get("res"), window.getWidth(), window.getHeight());
             glUniform2f(blur.uniforms.get("dir"), 1f, 0f);
             glBindTextureUnit(0, Textures.sceneColor.id);
-            glBindImageTexture(1, Textures.blurry.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-            glClearTexImage(Textures.blurry.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 0.f, 1.f, 1.f});
             draw();
+            glBindFramebuffer(GL_FRAMEBUFFER, blurredFBOId);
+            glClearColor(0, 0, 0, 0);
+            glClear(GL_COLOR_BUFFER_BIT);
             glUniform2f(blur.uniforms.get("dir"), 0f, 1f);
             glBindTextureUnit(0, Textures.blurry.id);
-            glBindImageTexture(1, Textures.blurred.id, 0, false, 0, GL_READ_WRITE, GL_RGBA32F);
-            glClearTexImage(Textures.blurred.id, 0, GL_RGBA, GL_FLOAT, new float[]{1.f, 1.f, 0.f, 1.f});
             draw();
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
