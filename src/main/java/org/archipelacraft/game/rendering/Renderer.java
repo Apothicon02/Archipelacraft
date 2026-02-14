@@ -74,10 +74,16 @@ public class Renderer {
         glBindTexture(GL_TEXTURE_2D, Textures.rasterColor.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.rasterColor.id, 0);
-
+        glBindTexture(GL_TEXTURE_2D, Textures.rasterPos.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, Textures.rasterPos.id, 0);
+        glBindTexture(GL_TEXTURE_2D, Textures.rasterNorm.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, Textures.rasterNorm.id, 0);
         glBindTexture(GL_TEXTURE_2D, Textures.rasterDepth.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
+        glDrawBuffers(new int[]{GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2});
 
         glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
         glBindTexture(GL_TEXTURE_2D, Textures.scene.id);
@@ -152,11 +158,12 @@ public class Renderer {
 
     public static void bindTextures() {
         glBindTextureUnit(0, Textures.rasterColor.id);
-        glBindTextureUnit(1, Textures.rasterDepth.id);
-        glBindTextureUnit(2, Textures.atlas.id);
-        glBindTextureUnit(3, Textures.blocks.id);
-        glBindTextureUnit(4, Textures.lights.id);
-        glBindTextureUnit(5, Textures.noises.id);
+        glBindTextureUnit(1, Textures.rasterPos.id);
+        glBindTextureUnit(2, Textures.rasterNorm.id);
+        glBindTextureUnit(3, Textures.atlas.id);
+        glBindTextureUnit(4, Textures.blocks.id);
+        glBindTextureUnit(5, Textures.lights.id);
+        glBindTextureUnit(6, Textures.noises.id);
     }
 
     public static void createBuffers() {
@@ -180,9 +187,9 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "selected", "offsetIdx", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
         aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
@@ -205,7 +212,7 @@ public class Renderer {
 
     public static Vector3f sunPos = new Vector3f(0, World.height*2, 0);
     public static Vector3f munPos = new Vector3f(0, World.height*-2, 0);
-    public static Matrix4f defaultCamera = new Matrix4f().translate(World.size/2f, World.seaLevel+32, World.size-1).rotateX(-0.1f).invert();
+    public static int offsetIdx = 0;
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -214,6 +221,7 @@ public class Renderer {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(player.getCameraMatrix()).get(stack.mallocFloat(16)));
         }
+        glUniform1i(program.uniforms.get("offsetIdx"), offsetIdx);
         Vector3f selected = player.selectedBlock;
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
         glUniform1i(program.uniforms.get("ui"), showUI && !screenshot && !Main.isSwappingWorldType ? 1 : 0);
@@ -370,6 +378,7 @@ public class Renderer {
     }
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {
+            offsetIdx = (int)(Math.random()*16);
             boolean tiltShift = false;
             boolean dof = false;
             if (player.inv.open) {
@@ -447,19 +456,19 @@ public class Renderer {
             updateUniforms(scene, window);
             bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
-            drawHalf();
-
-            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
-            unchecker.bind();
-            glBindTextureUnit(0, Textures.sceneColor.id);
             draw();
 
-            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
-            aa.bind();
-            glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
-            glUniform1i(aa.uniforms.get("ui"), showUI ? 1 : 0);
-            glBindTextureUnit(0, Textures.scene.id);
-            draw();
+//            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
+//            unchecker.bind();
+//            glBindTextureUnit(0, Textures.sceneColor.id);
+//            draw();
+//
+//            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
+//            aa.bind();
+//            glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
+//            glUniform1i(aa.uniforms.get("ui"), showUI ? 1 : 0);
+//            glBindTextureUnit(0, Textures.scene.id);
+//            draw();
 
             glBindFramebuffer(GL_FRAMEBUFFER, blurryFBOId);
             glClearColor(0, 0, 0, 0);
