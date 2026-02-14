@@ -12,7 +12,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.tinylog.Logger;
 
-import java.awt.*;
 import java.util.concurrent.Callable;
 
 import static io.github.libsdl4j.api.Sdl.*;

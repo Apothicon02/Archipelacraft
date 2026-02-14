@@ -75,8 +75,8 @@ public class Renderer {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, window.getWidth(), window.getHeight(), 0, GL_DEPTH_COMPONENT, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, Textures.rasterDepth.id, 0);
 
-        glBindTexture(GL_TEXTURE_3D, Textures.scene.id);
-        glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, window.getWidth()/2, window.getHeight(), ((Texture3D)(Textures.scene)).depth, 0, GL_RGBA, GL_FLOAT, new float[window.getWidth()*window.getHeight()*((Texture3D)(Textures.scene)).depth*4]);
+        glBindTexture(GL_TEXTURE_2D, Textures.scene.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth()/2, window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
 
         if (!resized) {
             if (!alreadyCreatedTextures) {
@@ -175,7 +175,7 @@ public class Renderer {
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
-                new String[]{"res"});
+                new String[]{});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -436,7 +436,6 @@ public class Renderer {
             drawHalf();
 
             unchecker.bind();
-            glUniform2i(unchecker.uniforms.get("res"), window.getWidth(), window.getHeight());
             glBindTextureUnit(0, Textures.scene.id);
             draw();
 
