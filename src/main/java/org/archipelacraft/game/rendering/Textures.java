@@ -73,6 +73,7 @@ public class Textures {
             GL40.GL_TEXTURE_WRAP_T, GL40.GL_REPEAT
     }, 2048, 2048);
     public static Texture sceneColor = create(Constants.width, Constants.height);
+    public static Texture sceneColorOld = create(Constants.width, Constants.height);
     public static Texture blurry = create(new int[]{
             GL40.GL_TEXTURE_MIN_FILTER , GL40.GL_LINEAR,
             GL40.GL_TEXTURE_MAG_FILTER,GL40.GL_LINEAR,

@@ -1,6 +1,7 @@
 uniform mat4 projection;
 uniform mat4 view;
 uniform ivec3 selected;
+uniform bool taa;
 uniform bool ui;
 uniform bool shadowsEnabled;
 uniform ivec2 res;
@@ -578,16 +579,6 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     return vec4(0);
 }
 
-float nearClip = 0.01f;
-
-vec3 worldPosFromDepth(float depth) {
-    vec2 coords = gl_FragCoord.xy / res;
-    vec4 clipSpacePos = vec4((coords * 2.0) - 1.0, depth, 1.0);
-    vec4 viewSpacePos = inverse(projection)*clipSpacePos;
-    viewSpacePos /= viewSpacePos.w;
-    return (inverse(view)*viewSpacePos).xyz;
-}
-
 vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
 vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
@@ -642,18 +633,26 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
     return color;
 }
 
-const float[16] xOffsets = float[16](0.0f, -0.5f, 0.5f, -0.75f, 0.25f, -0.25f, 0.75f, -0.875f, 0.125f, -0.375f, 0.625f, -0.625f, 0.375f, -0.125f, 0.875f, -0.9375f);
-const float[16] yOffsets = float[16](-0.333334f, 0.333334f, -0.777778f, -0.111112f, 0.555556f, -0.555556f, 0.111112f, 0.777778f, -0.925926f, -0.25926f, 0.407408f, -0.703704f, -0.037038f, 0.62963f, -0.481482f, 0.185186f);
+const float[16] xOffsets = float[16](0.0f, -0.25f, 0.25f, -0.375f, 0.125f, -0.125f, 0.375f, -0.4375f, 0.0625f, -0.1875f, 0.3125f, -0.3125f, 0.1875f, -0.0625f, 0.4375f, -0.46875f);
+const float[16] yOffsets = float[16](0.0f, 0.166667f, -0.388889f, -0.055556f, 0.277778f, -0.277778f, 0.055556f, 0.388889f, -0.462963f, -0.12963f, 0.203704f, -0.351852f, -0.018519f, 0.314815f, -0.240741f, 0.092593f);
+const float nearClip = 0.01f;
+
+vec3 getDir() {
+    vec2 screenSpace = (gl_FragCoord.xy+vec2(xOffsets[offsetIdx], yOffsets[offsetIdx])) / res;
+    vec4 clipSpace = vec4(screenSpace * 2.0f - 1.0f, -1.0f, 1.0f);
+    vec4 eyeSpace = vec4(vec2(inverse(projection) * clipSpace), -1.0f, 0.0f);
+    return normalize(vec3(inverse(view)*eyeSpace));
+}
 
 void main() {
     vec2 pos = ivec2(gl_FragCoord.x, gl_FragCoord.y);
-    float xOff = xOffsets[offsetIdx];
-    float yOff = yOffsets[offsetIdx];
-    pos.x += xOff;
-    pos.y += yOff;
+    if (taa) {
+        float xOff = xOffsets[offsetIdx];
+        float yOff = yOffsets[offsetIdx];
+        pos.x += xOff;
+        pos.y += yOff;
+    }
     mat4 invView = inverse(view);
-    vec4 camClipSpace = vec4((inverse(projection) * vec4(0, 0, 1.f, 1.f)).xyz, 0);
-    vec3 camDir = normalize((invView*camClipSpace).xyz);
     vec2 uv = ((pos / res)*2.f)-1.f;
     vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
     vec3 ogDir = normalize((invView*clipSpace).xyz);
@@ -700,12 +699,16 @@ void main() {
             texColor = fragColor;
             normal = texture(raster_norm, gl_FragCoord.xy/res).xyz;
             solidHitPos = rasterPos.xyz-(normal/2);
-            prevPos = rasterPos.xyz-(normal*0.001f);
+            prevPos = rasterPos.xyz-(normal*0.002f);
             tint = vec4(0);
             isSky = false;
             isLight = max(rasterColor.r, max(rasterColor.g, rasterColor.b)) >= 1.f;
         }
     }
+    vec3 dPos = solidHitPos+(normal/2)-ogPos;
+    float depth = nearClip/max(0, dot(dPos, ogDir));
+//    vec3 recalculatedSHP = inverse(view)[3].xyz + (getDir() * (depth));
+//    fragColor.rgb = dPos-recalculatedSHP;
     if (inBounds(solidHitPos, worldSize)) {
         lighting = fromLinear(getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
     } else {
@@ -745,4 +748,6 @@ void main() {
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
+    fragColor.a = depth;
+    //fragColor.rgb = vec3(nearClip/depth)/768f;
 }

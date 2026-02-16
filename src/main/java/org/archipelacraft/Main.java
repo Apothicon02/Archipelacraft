@@ -75,6 +75,7 @@ public class Main {
     boolean wasDownDown = false;
     boolean wasEDown = false;
     boolean wasCDown = false;
+    boolean wasADown = false;
     boolean wasSDown = false;
     boolean wasRDown = false;
     boolean wasWDown = false;
@@ -123,6 +124,9 @@ public class Main {
                 } else if (window.isKeyPressed(SDL_SCANCODE_F4)) {
                     if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
                         Renderer.shadowsEnabled = !Renderer.shadowsEnabled;
+                    }
+                    if (wasADown && !window.isKeyPressed(SDL_SCANCODE_A)) {
+                        Renderer.taa = !Renderer.taa;
                     }
                 } else {
                     if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
@@ -242,6 +246,7 @@ public class Main {
                 wasQDown = window.isKeyPressed(SDL_SCANCODE_Q);
                 wasEDown = window.isKeyPressed(SDL_SCANCODE_E);
                 wasCDown = window.isKeyPressed(SDL_SCANCODE_C);
+                wasADown = window.isKeyPressed(SDL_SCANCODE_A);
                 wasSDown = window.isKeyPressed(SDL_SCANCODE_S);
                 wasRDown = window.isKeyPressed(SDL_SCANCODE_R);
                 wasWDown = window.isKeyPressed(SDL_SCANCODE_W);

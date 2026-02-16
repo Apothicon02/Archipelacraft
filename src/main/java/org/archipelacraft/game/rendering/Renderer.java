@@ -43,6 +43,7 @@ public class Renderer {
 
     public static int playerSSBOId;
 
+    public static boolean taa = true;
     public static boolean showUI = true;
     public static boolean shadowsEnabled = true;
     public static boolean reflectionShadows = false;
@@ -89,6 +90,9 @@ public class Renderer {
         glBindTexture(GL_TEXTURE_2D, Textures.scene.id);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Textures.scene.id, 0);
+
+        glBindTexture(GL_TEXTURE_2D, Textures.sceneColorOld.id);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, window.getWidth(), window.getHeight(), 0, GL_RGBA, GL_FLOAT, emptyData);
 
         if (!resized) {
             if (!alreadyCreatedTextures) {
@@ -187,13 +191,13 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "offsetIdx", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "selected", "offsetIdx", "taa", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
-                new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "taa", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
         aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
-                new String[]{"res", "ui"});
+                new String[]{"res", "projection", "view", "prevView", "taa", "offsetIdx", "offsetIdxOld"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -213,17 +217,22 @@ public class Renderer {
     public static Vector3f sunPos = new Vector3f(0, World.height*2, 0);
     public static Vector3f munPos = new Vector3f(0, World.height*-2, 0);
     public static int offsetIdx = 0;
+    public static int offsetIdxOld = 0;
+    public static Matrix4f viewMatrix = new Matrix4f();
+    public static Matrix4f prevViewMatrix = new Matrix4f();
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(program.uniforms.get("projection"), false, window.updateProjectionMatrix().get(stack.mallocFloat(16)));
         }
+        viewMatrix = new Matrix4f(player.getCameraMatrix());
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(program.uniforms.get("view"), false, new Matrix4f(player.getCameraMatrix()).get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(program.uniforms.get("view"), false, viewMatrix.get(stack.mallocFloat(16)));
         }
         glUniform1i(program.uniforms.get("offsetIdx"), offsetIdx);
         Vector3f selected = player.selectedBlock;
         glUniform3i(program.uniforms.get("selected"), (int) selected.x, (int) selected.y, (int) selected.z);
+        glUniform1i(program.uniforms.get("taa"), taa ? 1 : 0);
         glUniform1i(program.uniforms.get("ui"), showUI && !screenshot && !Main.isSwappingWorldType ? 1 : 0);
         glUniform1i(program.uniforms.get("renderDistance"), 200 + (100 * renderDistanceMul));
         glUniform1i(program.uniforms.get("aoQuality"), aoQuality);
@@ -314,7 +323,7 @@ public class Renderer {
             Vector3f starPos = new Vector3f(0, starDist * 2, 0)
                     .rotateX(starRand.nextFloat() * 10)
                     .rotateY(starRand.nextFloat() * 10)
-                    .rotateZ((float) time + starRand.nextFloat() * 10);
+                    .rotateZ((float) (time*100) + starRand.nextFloat() * 10);
             starPos.set(starPos.x + (starDist / 2f), starPos.y, starPos.z + (starDist / 2f));
             float starSize = ((starRand.nextFloat()*6)+3)-Math.max(0, 15*(sunPos.y/World.size));
             if (starSize > 0.01f) {
@@ -378,7 +387,10 @@ public class Renderer {
     }
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {
-            offsetIdx = (int)(Math.random()*16);
+            offsetIdx++;
+            if (offsetIdx > 15) {
+                offsetIdx = 0;
+            }
             boolean tiltShift = false;
             boolean dof = false;
             if (player.inv.open) {
@@ -405,6 +417,7 @@ public class Renderer {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             updateBuffers();
             updateUniforms(raster, window);
+            glUniform2i(raster.uniforms.get("res"), window.getWidth(), window.getHeight());
             glUniform1i(raster.uniforms.get("alwaysUpfront"), 0);
             glUniform1i(raster.uniforms.get("tex"), 0); //not rendering item
             drawClouds();
@@ -448,7 +461,7 @@ public class Renderer {
                 }
             }
 
-            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
+            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
             scene.bind();
             glClearColor(0, 0, 0, 0);
             glClearDepthf(0.f);
@@ -463,12 +476,25 @@ public class Renderer {
 //            glBindTextureUnit(0, Textures.sceneColor.id);
 //            draw();
 //
-//            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
-//            aa.bind();
-//            glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
-//            glUniform1i(aa.uniforms.get("ui"), showUI ? 1 : 0);
-//            glBindTextureUnit(0, Textures.scene.id);
-//            draw();
+            glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
+            aa.bind();
+            glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform1i(aa.uniforms.get("taa"), taa ? 1 : 0);
+            try(MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(aa.uniforms.get("projection"), false, window.updateProjectionMatrix().get(stack.mallocFloat(16)));
+            }
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(aa.uniforms.get("view"), false, viewMatrix.get(stack.mallocFloat(16)));
+            }
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(aa.uniforms.get("prevView"), false, prevViewMatrix.get(stack.mallocFloat(16)));
+            }
+            glUniform1i(aa.uniforms.get("offsetIdx"), offsetIdx);
+            glUniform1i(aa.uniforms.get("offsetIdxOld"), offsetIdxOld);
+            glBindTextureUnit(0, Textures.sceneColorOld.id);
+            glBindTextureUnit(1, Textures.scene.id);
+            draw();
+            glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 0, 0, window.getWidth(), window.getHeight(), 0);
 
             glBindFramebuffer(GL_FRAMEBUFFER, blurryFBOId);
             glClearColor(0, 0, 0, 0);
@@ -503,6 +529,9 @@ public class Renderer {
                 GUI.draw(window);
             }
             GUI.drawAlwaysVisible(window);
+
+            prevViewMatrix = new Matrix4f(viewMatrix);
+            offsetIdxOld = offsetIdx;
         }
     }
 
