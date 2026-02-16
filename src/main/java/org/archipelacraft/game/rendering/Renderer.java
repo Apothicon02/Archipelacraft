@@ -54,6 +54,7 @@ public class Renderer {
     public static double time = 0.5f;
     public static boolean screenshot = false;
     public static boolean forceTiltShift = false;
+    public static boolean upscale = true;
 
     public static void createGLDebugger() {
         glEnable(GL_DEBUG_OUTPUT);
@@ -191,7 +192,7 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "offsetIdx", "taa", "ui", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "selected", "offsetIdx", "taa", "ui", "upscale", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "taa", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
@@ -461,21 +462,26 @@ public class Renderer {
                 }
             }
 
-            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
+            glBindFramebuffer(GL_FRAMEBUFFER, upscale ? sceneFBOId : uncheckerFBOId);
             scene.bind();
             glClearColor(0, 0, 0, 0);
             glClearDepthf(0.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             updateUniforms(scene, window);
+            glUniform1i(scene.uniforms.get("upscale"), upscale ? 1 : 0);
             bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
-            draw();
+            if (upscale) {
+                drawHalf();
 
-//            glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
-//            unchecker.bind();
-//            glBindTextureUnit(0, Textures.sceneColor.id);
-//            draw();
-//
+                glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
+                unchecker.bind();
+                glBindTextureUnit(0, Textures.sceneColor.id);
+                draw();
+            } else {
+                draw();
+            }
+
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             aa.bind();
             glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());

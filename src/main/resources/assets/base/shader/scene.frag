@@ -3,6 +3,7 @@ uniform mat4 view;
 uniform ivec3 selected;
 uniform bool taa;
 uniform bool ui;
+uniform bool upscale;
 uniform bool shadowsEnabled;
 uniform ivec2 res;
 uniform vec3 sun;
@@ -122,7 +123,7 @@ float whiteNoise(vec2 coords) {
 }
 
 bool castsFullShadow(ivec4 block) {
-    return block.x != 4 && block.x != 5 && block.x != 14 && block.x != 18 && block.x != 30 && block.x != 52 && block.x != 53 && block.x != 17;
+    return block.x != 4 && block.x != 5 && block.x != 14 && block.x != 18 && block.x != 30 && block.x != 52 && block.x != 53;
 }
 
 vec4 getVoxel(int x, int y, int z, int bX, int bY, int bZ, int blockType, int blockSubtype) {
@@ -558,6 +559,7 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
     return vec4(0);
 }
 
+vec3 ogDir = vec3(0);
 vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
 vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, float dist) {
@@ -567,70 +569,76 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
     if (actuallyCastShadowRay) {
         shadowFactor = 1.f;
     }
-    vec3 avgNColor = vec3(0);
-    float neighborsSolid = 0.f;
-    vec3 shadowPosOffset = vec3(0);
+    vec3 subbed = vec3(dot(normal.x, ogDir.x), dot(normal.y, ogDir.y), dot(normal.z, ogDir.z));
+    bool xHighest = subbed.x > subbed.y && subbed.x > subbed.z;
+    bool yHighest = subbed.y > subbed.x && subbed.y > subbed.z;
+    bool zHighest = subbed.z > subbed.x && subbed.z > subbed.y;
     vec3 vNorm = normal;
-    bool wasY = false;
-    vec4 above = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)));
-    if (above.a < alphaMax) {
-        vNorm.y = -1;
-        shadowPosOffset.y = eigth;
-        wasY = true;
-    } else {
-        float brightness = max(above.r, max(above.g, above.b));
-        avgNColor.rgb += (above.rgb)*brightness;
-        neighborsSolid+=1*brightness;
-    }
-    vec4 below = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)));
-    if (below.a < alphaMax) {
-        vNorm.y = wasY ? 0 : 1;
-        shadowPosOffset.y = wasY ? 0 : -eigth;
-    } else {
-        float brightness = max(below.r, max(below.g, below.b));
-        avgNColor.rgb += (below.rgb)*brightness;
-        neighborsSolid+=1*brightness;
-    }
-    bool wasX = false;
-    vec4 east = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)));
-    if (east.a < alphaMax) {
-        vNorm.x = -1;
-        shadowPosOffset.x = eigth;
-        wasX = true;
-    } else {
-        float brightness = max(east.r, max(east.g, east.b));
-        avgNColor.rgb += (east.rgb)*brightness;
-        neighborsSolid+=1*brightness;
-    }
-    vec4 west = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)));
-    if (west.a < alphaMax) {
-        vNorm.x = wasX ? 0 : 1;
-        shadowPosOffset.x = wasX ? 0 : -eigth;
-    } else {
-        float brightness = max(west.r, max(west.g, west.b));
-        avgNColor.rgb += (west.rgb)*brightness;
-        neighborsSolid+=1*brightness;
-    }
-    if (isTracedObject) {
-        vec4 north = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, 0, eigth)));
-        if (north.a >= alphaMax) {
-            float brightness = max(north.r, max(north.g, north.b));
-            avgNColor.rgb += (north.rgb)*brightness;
+    vec3 shadowPosOffset = vec3(0);
+    if (castsFullShadow(block) && isTracedObject) {
+        vec3 avgNColor = vec3(0);
+        float neighborsSolid = 0.f;
+        bool wasY = false;
+        vec4 above = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, eigth, 0)));
+        if (above.a < alphaMax) {
+            vNorm.y = -1;
+            shadowPosOffset.y = eigth;
+            wasY = true;
+        } else if (!yHighest) {
+            float brightness = max(above.r, max(above.g, above.b));
+            avgNColor.rgb += (above.rgb)*brightness;
             neighborsSolid+=1*brightness;
         }
-        vec4 south = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, 0, eigth)));
-        if (south.a >= alphaMax) {
-            float brightness = max(south.r, max(south.g, south.b));
-            avgNColor.rgb += (south.rgb)*brightness;
+        vec4 below = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, eigth, 0)));
+        if (below.a < alphaMax) {
+            vNorm.y = wasY ? 0 : 1;
+            shadowPosOffset.y = wasY ? 0 : -eigth;
+        } else if (!yHighest) {
+            float brightness = max(below.r, max(below.g, below.b));
+            avgNColor.rgb += (below.rgb)*brightness;
             neighborsSolid+=1*brightness;
         }
-        if (neighborsSolid > 2) {
+        bool wasX = false;
+        vec4 east = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(eigth, 0, 0)));
+        if (east.a < alphaMax) {
+            vNorm.x = -1;
+            shadowPosOffset.x = eigth;
+            wasX = true;
+        } else if (!xHighest) {
+            float brightness = max(east.r, max(east.g, east.b));
+            avgNColor.rgb += (east.rgb)*brightness;
+            neighborsSolid+=1*brightness;
+        }
+        vec4 west = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(eigth, 0, 0)));
+        if (west.a < alphaMax) {
+            vNorm.x = wasX ? 0 : 1;
+            shadowPosOffset.x = wasX ? 0 : -eigth;
+        } else if (!xHighest) {
+            float brightness = max(west.r, max(west.g, west.b));
+            avgNColor.rgb += (west.rgb)*brightness;
+            neighborsSolid+=1*brightness;
+        }
+        if (!zHighest) {
+            vec4 north = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, 0, eigth)));
+            if (north.a >= alphaMax) {
+                float brightness = max(north.r, max(north.g, north.b));
+                avgNColor.rgb += (north.rgb)*brightness;
+                neighborsSolid+=1*brightness;
+            }
+            vec4 south = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, 0, eigth)));
+            if (south.a >= alphaMax) {
+                float brightness = max(south.r, max(south.g, south.b));
+                avgNColor.rgb += (south.rgb)*brightness;
+                neighborsSolid+=1*brightness;
+            }
+        }
+        if (neighborsSolid > 1) {
             avgNColor /= neighborsSolid;
             color.rgb = clamp(mix(color.rgb, avgNColor, clamp(min(dist/100, 1)-max(0, 4*(max(color.r, max(color.g, color.b))-0.5f)), 0, 1)), 0, 1);
         }
-    }
-    if (texColor.a < 1 && texColor.a > alphaMax) {
-        vNorm *= 0;
+        if (texColor.a < 1 && texColor.a > alphaMax) {
+            vNorm *= 0;
+        }
     }
     float brightness = dot(vNorm, source)*-0.0002f;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
@@ -664,7 +672,9 @@ vec3 getDir() {
 }
 
 void main() {
-    vec2 pos = ivec2(gl_FragCoord.x, gl_FragCoord.y);
+    vec2 pos = upscale ? ivec2(gl_FragCoord.x*2, gl_FragCoord.y) : ivec2(gl_FragCoord.xy);
+    bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
+    vec2 normalizedPos = (upscale ? vec2(pos.x+(yOdd ? 1 : 0), pos.y) : pos)/res;
     if (taa) {
         float xOff = xOffsets[offsetIdx];
         float yOff = yOffsets[offsetIdx];
@@ -674,10 +684,10 @@ void main() {
     mat4 invView = inverse(view);
     vec2 uv = ((pos / res)*2.f)-1.f;
     vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
-    vec3 ogDir = normalize((invView*clipSpace).xyz);
+    ogDir = normalize((invView*clipSpace).xyz);
     ogPos = invView[3].xyz;
-    vec4 rasterColor = texture(raster_color, gl_FragCoord.xy/res);
-    vec4 rasterPos = texture(raster_pos, gl_FragCoord.xy/res);
+    vec4 rasterColor = texture(raster_color, normalizedPos);
+    vec4 rasterPos = texture(raster_pos, normalizedPos);
     source = mun.y > sun.y ? mun : sun;
     source.y = max(source.y, 500);
     source.z += 128;
@@ -718,7 +728,7 @@ void main() {
             fragColor.rgb = fromLinear(rasterColor).rgb;
             fragColor.a = rasterColor.a;
             texColor = fragColor;
-            normal = texture(raster_norm, gl_FragCoord.xy/res).xyz;
+            normal = texture(raster_norm, normalizedPos).xyz;
             solidHitPos = rasterPos.xyz-(normal/2);
             prevPos = rasterPos.xyz-(normal*0.002f);
             tint = vec4(0);
@@ -728,8 +738,6 @@ void main() {
     }
     vec3 dPos = solidHitPos+(normal/2)-ogPos;
     float depth = nearClip/max(0, dot(dPos, ogDir));
-//    vec3 recalculatedSHP = inverse(view)[3].xyz + (getDir() * (depth));
-//    fragColor.rgb = dPos-recalculatedSHP;
     if (inBounds(solidHitPos, worldSize)) {
         lighting = fromLinear(getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
     } else {
@@ -770,5 +778,4 @@ void main() {
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
     fragColor.a = depth;
-    //fragColor.rgb = vec3(nearClip/depth)/768f;
 }
