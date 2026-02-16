@@ -215,6 +215,7 @@ vec3 lodPos = vec3(0);
 ivec4 block = ivec4(0);
 vec4 texColor = vec4(0);
 vec4 lightFog = vec4(0);
+bool hitSolidVoxel = false;
 
 void clearVars() {
     shade = 0.f;
@@ -233,6 +234,7 @@ void clearVars() {
     lodPos = vec3(0);
     block = ivec4(0);
     texColor = vec4(0);
+    hitSolidVoxel = false;
 }
 vec3 source = vec3(0);
 bool isBlockLeaves(ivec2 block) {
@@ -416,34 +418,11 @@ vec4 traceBlock(vec3 rayPos, vec3 rayDir, vec3 iMask, float subChunkDist, float 
                         tint += voxelColor*tintMul;
                     }
                 } else {
+                    hitSolidVoxel = true;
                     hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     shade = 0.25F;
                     texColor = baseColor;
                     return vec4(voxelColor.rgb, 1);
-                    //                    shade += 0.1f;
-                    //                    if (shade > 0.25F) {
-                    //                        shade = 0.25F;
-                    //                    }
-                    //                    if (!isShadow) {
-                    //                        float xFactor = offsetVoxelPos.x >= 4 ? 0.125f : -0.125f;
-                    //                        float yFactor = offsetVoxelPos.y >= 4 ? 0.125f : -0.125f;
-                    //                        float zFactor = offsetVoxelPos.z >= 4 ? 0.125f : -0.125f;
-                    //                        float highlight = 0.67f;
-                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(xFactor, 0, 0)).a < one) {
-                    //                            highlight+=0.33f;
-                    //                        }
-                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, 0, zFactor)).a < one) {
-                    //                            highlight+=0.33f;
-                    //                        }
-                    //                        if (getVoxelAndBlock(mapPos+(offsetVoxelPos/8)+vec3(0, yFactor, 0)).a < one) {
-                    //                            highlight+=0.33f;
-                    //                        }
-                    //                        voxelColor.rgb *= min(highlight, 1.33f);
-                    //                    }
-                    //                    if (!isShadow || shade >= 0.25f || castsFullShadow(block)) {
-                    //                        texColor = baseColor;
-                    //                        return vec4(voxelColor.rgb, 1);
-                    //                    }
                 }
                 if (isInfiniteSea) {
                     return vec4(-1);
@@ -581,34 +560,74 @@ vec4 raytrace(vec3 ogPos, vec3 rayDir) {
 
 vec3 lightPos = vec3(0);
 float shadowFactor = 1.f;
-vec4 getShadow(vec4 color, bool actuallyCastShadowRay) {
+vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, float dist) {
     if (!shadowsEnabled) {
         actuallyCastShadowRay=false;
     }
     if (actuallyCastShadowRay) {
         shadowFactor = 1.f;
     }
+    vec3 avgNColor = vec3(0);
+    float neighborsSolid = 0.f;
     vec3 shadowPosOffset = vec3(0);
     vec3 vNorm = normal;
     bool wasY = false;
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)).a < alphaMax) {
+    vec4 above = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, eigth, 0)));
+    if (above.a < alphaMax) {
         vNorm.y = -1;
         shadowPosOffset.y = eigth;
         wasY = true;
+    } else {
+        float brightness = max(above.r, max(above.g, above.b));
+        avgNColor.rgb += (above.rgb)*brightness;
+        neighborsSolid+=1*brightness;
     }
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)).a < alphaMax) {
+    vec4 below = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, eigth, 0)));
+    if (below.a < alphaMax) {
         vNorm.y = wasY ? 0 : 1;
         shadowPosOffset.y = wasY ? 0 : -eigth;
+    } else {
+        float brightness = max(below.r, max(below.g, below.b));
+        avgNColor.rgb += (below.rgb)*brightness;
+        neighborsSolid+=1*brightness;
     }
     bool wasX = false;
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)).a < alphaMax) {
+    vec4 east = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(eigth, 0, 0)));
+    if (east.a < alphaMax) {
         vNorm.x = -1;
         shadowPosOffset.x = eigth;
         wasX = true;
+    } else {
+        float brightness = max(east.r, max(east.g, east.b));
+        avgNColor.rgb += (east.rgb)*brightness;
+        neighborsSolid+=1*brightness;
     }
-    if (getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)).a < alphaMax) {
+    vec4 west = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(eigth, 0, 0)));
+    if (west.a < alphaMax) {
         vNorm.x = wasX ? 0 : 1;
         shadowPosOffset.x = wasX ? 0 : -eigth;
+    } else {
+        float brightness = max(west.r, max(west.g, west.b));
+        avgNColor.rgb += (west.rgb)*brightness;
+        neighborsSolid+=1*brightness;
+    }
+    if (isTracedObject) {
+        vec4 north = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)+vec3(0, 0, eigth)));
+        if (north.a >= alphaMax) {
+            float brightness = max(north.r, max(north.g, north.b));
+            avgNColor.rgb += (north.rgb)*brightness;
+            neighborsSolid+=1*brightness;
+        }
+        vec4 south = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+normal)-vec3(0, 0, eigth)));
+        if (south.a >= alphaMax) {
+            float brightness = max(south.r, max(south.g, south.b));
+            avgNColor.rgb += (south.rgb)*brightness;
+            neighborsSolid+=1*brightness;
+        }
+        if (neighborsSolid > 2) {
+            avgNColor /= neighborsSolid;
+            color.rgb = clamp(mix(color.rgb, avgNColor, clamp(min(dist/100, 1)-max(0, 4*(max(color.r, max(color.g, color.b))-0.5f)), 0, 1)), 0, 1);
+        }
     }
     if (texColor.a < 1 && texColor.a > alphaMax) {
         vNorm *= 0;
@@ -692,8 +711,10 @@ void main() {
     }
     vec4 lighting = vec4(-1);
     lightPos = ogPos + ogDir * size;
+    bool isTracedObject = true;
     if (distance(ogPos, rasterPos.xyz) < distance(ogPos, hitPos+(normal/2)) || fragColor.a < alphaMax) {
         if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
+            isTracedObject = false;
             fragColor.rgb = fromLinear(rasterColor).rgb;
             fragColor.a = rasterColor.a;
             texColor = fragColor;
@@ -717,7 +738,7 @@ void main() {
     if (!isSky) {
         lightPos = solidHitPos;
         if (!isLight) {
-            fragColor = getShadow(fragColor, true);
+            fragColor = getShadow(fragColor, true, isTracedObject && !isSky && hitSolidVoxel, distance(ogPos, solidHitPos));
         } else if (fragColor.a >= 10) {
             fragColor.a -= 10;
             shadowFactor = 0.75f;
@@ -736,7 +757,7 @@ void main() {
     if (tint.a > 0) {
         lightPos = hitPos;
         vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
-        normalizedTint = getShadow(normalizedTint, false);
+        normalizedTint = getShadow(normalizedTint, false, false, 0.f);
         fogginess = clamp((clamp(((sqrt(distance(ogPos, lightPos)/(size*0.66f))-0.33f)*1.6f)*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
         lighting = fromLinear(getLight(lightPos.x, lightPos.y, lightPos.z));
         lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
