@@ -195,7 +195,8 @@ vec4 powLighting(vec4 lighting) {
     return vec4(lighting.r, lighting.g, lighting.b, pow(lighting.a, 2));
 }
 
-bool isFirstRay = true;
+bool shouldSelectBlock = true;
+ivec3 hitBlock = ivec3(0);
 vec3 hitPos = vec3(0);
 vec3 solidHitPos = vec3(0);
 vec3 mapPos = vec3(0);
@@ -204,7 +205,6 @@ vec4 prevTintAddition = vec4(0);
 vec4 tint = vec4(0);
 bool underwater = false;
 bool hitCaustic = false;
-bool hitSelection = false;
 bool isInfiniteSea = false;
 bool isShadow = false;
 float shade = 0.f;
@@ -220,13 +220,13 @@ bool hitSolidVoxel = false;
 
 void clearVars() {
     shade = 0.f;
+    hitBlock = ivec3(0);
     hitPos = vec3(0);
     solidHitPos = vec3(0);
     mapPos = vec3(0);
     normal = vec3(0);
     underwater = false;
     hitCaustic = false;
-    hitSelection = false;
     isInfiniteSea = false;
     prevTintAddition = vec4(0);
     tint = vec4(0);
@@ -385,8 +385,9 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
             vec4 voxelColor = baseColor;
             if (voxelColor.a > 0) {
                 vec3 voxelHitPos = mapPos+(voxelPos/8);
-                if (isFirstRay) {
+                if (shouldSelectBlock) {
                     if (ivec2(gl_FragCoord.xy) == (upscale ? ivec2(res/vec2(4, 2)) : ivec2(res/2))) {
+                        shouldSelectBlock = false;
                         playerData[0] = voxelHitPos.x;
                         playerData[1] = voxelHitPos.y;
                         playerData[2] = voxelHitPos.z;
@@ -408,6 +409,9 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                 solidHitPos = (prevVoxelPos/8)+floor(mapPos)+(uv3d/8)-(normal/2);
                 if (hitPos == vec3(0)) {
                     hitPos = solidHitPos;
+                }
+                if (hitBlock == ivec3(0) && block.x > 1) { //dont detect water
+                    hitBlock = ivec3(mapPos);
                 }
                 if (voxelColor.a < alphaMax) {
                     if (block.x == 1) {
@@ -439,7 +443,6 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                     }
                 } else {
                     hitSolidVoxel = true;
-                    hitSelection = (ivec3(voxelHitPos) == ivec3(playerData[0], playerData[1], playerData[2]));
                     shade = 0.25F;
                     texColor = baseColor;
                     return vec4(voxelColor.rgb, 1);
@@ -733,7 +736,7 @@ void main() {
             }
         }
     }
-    isFirstRay = false;
+    shouldSelectBlock = false;
     if (solidHitPos != vec3(0)) {
         isSky = false;
     }
@@ -743,7 +746,7 @@ void main() {
     if (isSky) {
         solidHitPos = mapPos;
     }
-    if (hitSelection && ui) {
+    if (hitBlock == ivec3(playerData[0], playerData[1], playerData[2]) && ui) {
         fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
     }
     vec4 lighting = vec4(-1);
