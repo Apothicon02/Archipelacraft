@@ -286,16 +286,17 @@ vec4 getVoxelAndBlockWOLeavesOverride(vec3 pos) {
 
 vec3 ogDir = vec3(0);
 vec3 rayDir = vec3(0);
-void roundDir() {
-    if (rayDir.x == 0.0f) {
-        rayDir.x = 0.001f;
+vec3 roundDir(vec3 dir) {
+    if (dir.x == 0.0f) {
+        dir.x = 0.001f;
     }
-    if (rayDir.y == 0.0f) {
-        rayDir.y = 0.001f;
+    if (dir.y == 0.0f) {
+        dir.y = 0.001f;
     }
-    if (rayDir.z == 0.0f) {
-        rayDir.z = 0.001f;
+    if (dir.z == 0.0f) {
+        dir.z = 0.001f;
     }
+    return dir;
 }
 vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
     rayPos *= 4;
@@ -432,13 +433,7 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                         tintMul = clamp(0.75f+brightness, 0.66f, 1.f);
                     }
                     if (prevTintAddition != voxelColor) {
-                        if (!isShadow) {
-                            rayDir = refract(normalize(rayDir), normalize(normal*-1), 1/1.5f);
-                            roundDir();
-                            raySign = sign(rayDir);
-                            deltaDist = 1.0/rayDir;
-                            sideDist = ((blockPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
-                        }
+                        prevTintAddition = voxelColor;
                         tint += voxelColor*tintMul;
                     }
                 } else {
@@ -450,14 +445,7 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                 if (isInfiniteSea) {
                     return vec4(-1);
                 }
-            } else if (!isShadow && prevTintAddition != voxelColor) {
-                rayDir = refract(normalize(rayDir), normalize(normal*-1), 1/1.5f);
-                roundDir();
-                raySign = sign(rayDir);
-                deltaDist = 1.0/rayDir;
-                sideDist = ((blockPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
             }
-            prevTintAddition = voxelColor;
             if (!steppingBlock) {
                 voxelMask = stepMask(voxelSideDist);
                 prevVoxelPos = voxelPos;
@@ -524,10 +512,6 @@ vec4 traceLOD(vec3 rayPos, vec3 iMask, float chunkDist) {
             vec4 voxelColor = traceBlock(uv3d, mask, lodDist, chunkDist);
             if (voxelColor.a >= 1 || voxelColor.a <= -1) {
                 return voxelColor;
-            } else if (rayDir != prevRayDir) {
-                raySign = sign(rayDir);
-                deltaDist = 1.0/rayDir;
-                sideDist = ((lodPos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
             }
         }
 
@@ -541,8 +525,7 @@ vec4 traceLOD(vec3 rayPos, vec3 iMask, float chunkDist) {
 
 vec3 lod2Size = vec3(size/16, height/16, size/16);
 vec4 raytrace(vec3 ogPos, vec3 newRayDir) {
-    rayDir = newRayDir;
-    roundDir();
+    rayDir = roundDir(newRayDir);
     ogRayPos = ogPos;
     vec3 rayPos = ogPos/16;
     lod2Pos = floor(rayPos);
@@ -575,10 +558,6 @@ vec4 raytrace(vec3 ogPos, vec3 newRayDir) {
             if (voxelColor.a >= 1 || voxelColor.a <= -1) {
                 voxelColor.rgb = fromLinear(voxelColor.rgb)*0.8;
                 return voxelColor;
-            } else if (rayDir != prevRayDir) {
-                raySign = sign(rayDir);
-                deltaDist = 1.0/rayDir;
-                sideDist = ((lod2Pos - rayPos) + 0.5 + raySign * 0.5) * deltaDist;
             }
         }
 
@@ -701,6 +680,20 @@ vec3 getDir() {
     return normalize(vec3(inverse(view)*eyeSpace));
 }
 
+bool skyChecks() {
+    bool isSky = false;
+    if (solidHitPos != vec3(0)) {
+        isSky = false;
+    }
+    if (fragColor.a < alphaMax) {
+        isSky = true;
+    }
+    if (isSky) {
+        solidHitPos = mapPos;
+    }
+    return isSky;
+}
+
 void main() {
     vec2 pos = upscale ? ivec2(gl_FragCoord.x*2, gl_FragCoord.y) : ivec2(gl_FragCoord.xy);
     bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
@@ -714,7 +707,7 @@ void main() {
     mat4 invView = inverse(view);
     vec2 uv = ((pos / res)*2.f)-1.f;
     vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
-    ogDir = normalize((invView*clipSpace).xyz);
+    ogDir = roundDir(normalize((invView*clipSpace).xyz));
     ogPos = invView[3].xyz;
     vec4 rasterColor = texture(raster_color, normalizedPos);
     vec4 rasterPos = texture(raster_pos, normalizedPos);
@@ -750,7 +743,7 @@ void main() {
         fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
     }
     vec4 lighting = vec4(-1);
-    lightPos = ogPos + ogDir * size;
+    lightPos = ogPos + ogDir * size; //this is only used if it's the sky
     bool isTracedObject = true;
     if (distance(ogPos, rasterPos.xyz) < distance(ogPos, hitPos+(normal/2)) || fragColor.a < alphaMax) {
         if (rasterPos.y > 63 || (rasterPos.y < height && rasterPos.x > 0 && rasterPos.x < size && rasterPos.z > 0 && rasterPos.z < size)) { //if out of bounds, only render when above sea level.
