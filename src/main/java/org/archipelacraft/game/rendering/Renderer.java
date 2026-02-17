@@ -324,7 +324,7 @@ public class Renderer {
             Vector3f starPos = new Vector3f(0, starDist * 2, 0)
                     .rotateX(starRand.nextFloat() * 10)
                     .rotateY(starRand.nextFloat() * 10)
-                    .rotateZ((float) (time*100) + starRand.nextFloat() * 10);
+                    .rotateZ((float) (time*3) + starRand.nextFloat() * 10);
             starPos.set(starPos.x + (starDist / 2f), starPos.y, starPos.z + (starDist / 2f));
             float starSize = ((starRand.nextFloat()*6)+3)-Math.max(0, 15*(sunPos.y/World.size));
             if (starSize > 0.01f) {
