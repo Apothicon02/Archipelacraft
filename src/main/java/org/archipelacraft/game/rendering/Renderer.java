@@ -279,6 +279,18 @@ public class Renderer {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
     }
+    public static void drawHuman() {
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(506, 101, 504).scale(0.5f).get(stack.mallocFloat(16)));
+        }
+        glUniform4f(raster.uniforms.get("color"), 0.5f, 0.5f, 0.53f, 1);
+        glBindVertexArray(Models.HUMAN.vaoId);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glDrawArrays(GL_TRIANGLES, 0, Models.HUMAN.positions.length);
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }
     public static void drawDebugWheel() {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().translate(512, 75, 512).scale(10).get(stack.mallocFloat(16)));//.translate(Main.player.pos).translate(10, 0, 0).get(stack.mallocFloat(16)));
@@ -406,9 +418,7 @@ public class Renderer {
             }
             if (forceTiltShift) {
                 tiltShift = true;
-                Constants.FOV = (float) Math.toRadians(57);
-            } else {
-                Constants.FOV = (float) Math.toRadians(73);
+                Constants.FOV = (float) Math.toRadians(45);
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
@@ -426,6 +436,7 @@ public class Renderer {
             drawStars();
             drawCenter();
             drawDebugWheel();
+            drawHuman();
             glUniform1i(raster.uniforms.get("tex"), 1); // rendering item
             glBindTextureUnit(0, Textures.items.id);
             glUniform4f(raster.uniforms.get("color"), 1, 1, 1, 1);

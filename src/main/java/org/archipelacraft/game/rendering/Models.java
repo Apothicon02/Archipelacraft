@@ -25,6 +25,7 @@ public class Models {
     public static Model PLANE_DB;
     public static Model CUBE;
     public static Model TORUS;
+    public static Model HUMAN;
 
     public static void loadModels() {
         SCREEN_TRIANGLE = new Model(new float[]{-1, -1, 0, 3, -1, 0, -1, 3, 0});
@@ -36,6 +37,7 @@ public class Models {
         PLANE_DB = loadObj("generic/model/plane_db");
         CUBE = loadObj("generic/model/cube");
         TORUS = loadObj("generic/model/torus");
+        HUMAN = loadObj("npc/model/human");
     }
 
     public static FloatArrayList verts = new FloatArrayList();
