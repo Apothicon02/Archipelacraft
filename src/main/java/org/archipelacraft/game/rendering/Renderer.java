@@ -221,11 +221,13 @@ public class Renderer {
     public static int offsetIdxOld = 0;
     public static Matrix4f viewMatrix = new Matrix4f();
     public static Matrix4f prevViewMatrix = new Matrix4f();
+    public static Matrix4f projMatrix = new Matrix4f();
     public static Matrix4f prevProjMatrix = new Matrix4f();
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
+        projMatrix = new Matrix4f(window.updateProjectionMatrix());
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            glUniformMatrix4fv(program.uniforms.get("projection"), false, window.updateProjectionMatrix().get(stack.mallocFloat(16)));
+            glUniformMatrix4fv(program.uniforms.get("projection"), false, projMatrix.get(stack.mallocFloat(16)));
         }
         viewMatrix = new Matrix4f(player.getCameraMatrix());
         try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -551,7 +553,7 @@ public class Renderer {
             GUI.drawAlwaysVisible(window);
 
             prevViewMatrix = new Matrix4f(viewMatrix);
-            prevProjMatrix = new Matrix4f(prevProjMatrix);
+            prevProjMatrix = new Matrix4f(projMatrix);
             offsetIdxOld = offsetIdx;
         }
     }
