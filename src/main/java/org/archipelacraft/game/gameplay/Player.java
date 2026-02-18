@@ -39,6 +39,7 @@ public class Player {
     public float baseSpeed = Math.max(0.15f, 0.15f*scale);
     public float speed = baseSpeed;
     public float sprintSpeed = 1.5f;
+    public float baseFOV = 65.f;
     public boolean onGround = false;
     public boolean crawling = false;
     public boolean crouching = false;

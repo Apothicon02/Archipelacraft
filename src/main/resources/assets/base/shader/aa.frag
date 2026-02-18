@@ -1,4 +1,5 @@
 uniform mat4 projection;
+uniform mat4 prevProj;
 uniform mat4 view;
 uniform mat4 prevView;
 uniform ivec2 res;
@@ -17,7 +18,7 @@ const float[16] xOffsets = float[16](0.0f, -0.25f, 0.25f, -0.375f, 0.125f, -0.12
 const float[16] yOffsets = float[16](0.0f, 0.166667f, -0.388889f, -0.055556f, 0.277778f, -0.277778f, 0.055556f, 0.388889f, -0.462963f, -0.12963f, 0.203704f, -0.351852f, -0.018519f, 0.314815f, -0.240741f, 0.092593f);
 
 vec2 reproject(vec3 worldPos) {
-    vec4 projectionVec = projection * prevView * vec4(worldPos, 1.0f);
+    vec4 projectionVec = prevProj * prevView * vec4(worldPos, 1.0f);
     projectionVec.xyz /= projectionVec.w;
     projectionVec.xy = projectionVec.xy * 0.5f + 0.5f;
     return projectionVec.xy;

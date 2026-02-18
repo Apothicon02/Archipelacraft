@@ -198,7 +198,7 @@ public class Renderer {
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
         aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
-                new String[]{"res", "projection", "view", "prevView", "taa", "offsetIdx", "offsetIdxOld"});
+                new String[]{"res", "projection", "prevProj", "view", "prevView", "taa", "offsetIdx", "offsetIdxOld"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -221,6 +221,7 @@ public class Renderer {
     public static int offsetIdxOld = 0;
     public static Matrix4f viewMatrix = new Matrix4f();
     public static Matrix4f prevViewMatrix = new Matrix4f();
+    public static Matrix4f prevProjMatrix = new Matrix4f();
 
     public static void  updateUniforms(ShaderProgram program, Window window) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
@@ -418,7 +419,6 @@ public class Renderer {
             }
             if (forceTiltShift) {
                 tiltShift = true;
-                Constants.FOV = (float) Math.toRadians(45);
             }
 
             glBindFramebuffer(GL_FRAMEBUFFER, rasterFBOId);
@@ -506,6 +506,9 @@ public class Renderer {
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 glUniformMatrix4fv(aa.uniforms.get("prevView"), false, prevViewMatrix.get(stack.mallocFloat(16)));
             }
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                glUniformMatrix4fv(aa.uniforms.get("prevProj"), false, prevProjMatrix.get(stack.mallocFloat(16)));
+            }
             glUniform1i(aa.uniforms.get("offsetIdx"), offsetIdx);
             glUniform1i(aa.uniforms.get("offsetIdxOld"), offsetIdxOld);
             glBindTextureUnit(0, Textures.sceneColorOld.id);
@@ -548,6 +551,7 @@ public class Renderer {
             GUI.drawAlwaysVisible(window);
 
             prevViewMatrix = new Matrix4f(viewMatrix);
+            prevProjMatrix = new Matrix4f(prevProjMatrix);
             offsetIdxOld = offsetIdx;
         }
     }

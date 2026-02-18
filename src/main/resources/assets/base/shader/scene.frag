@@ -186,10 +186,11 @@ vec4 getLightingColor(vec3 lightPos, vec4 lighting, bool isSky, float fogginess)
         fogDetractorFactor = max(max(lighting.r, max(lighting.g, lighting.b))*0.8f, (sunBrightness*lighting.a)*1.5f);
     }
     float sunSetness = min(1.f, max(abs(sunHeight*1.5f), adjustedTime));
-    float skyWhiteness = mix(max(0.33f, gradient(lightPos.y, (ogY/4)+47, (ogY/2)+436, 0, 0.9)), 0.9f, clamp(abs(1-sunSetness), 0, 1));
+    float whiteY = max(ogY, 200)-135.f;
+    float skyWhiteness = mix(max(0.33f, gradient(lightPos.y, (whiteY/4)+47, (whiteY/2)+436, 0, 0.9)), 0.9f, clamp(abs(1-sunSetness), 0, 1.f));
     float whiteness = isSky ? skyWhiteness : mix(0.9f, skyWhiteness, max(0, fogginess-0.8f)*5.f);
     sunColor = mix(mix(vec3(1, 0.65f, 0.25f)*(1+((10*clamp(sunHeight, 0.f, 0.1f))*(15*min(0.5f, abs(1-sunBrightness))))), vec3(0.36f, 0.54f, 1.2f)*sunBrightness, sunSetness), vec3(sunBrightness), whiteness);
-    return vec4(max(lighting.rgb, min(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4), lighting.a*sunColor)).rgb, thickness);
+    return vec4(max(lighting.rgb, min(fromLinear(mix(vec3(1), vec3(1, 0.95f, 0.85f), sunSetness/4)), lighting.a*sunColor)).rgb, thickness);
 }
 vec4 powLighting(vec4 lighting) {
     return vec4(lighting.r, lighting.g, lighting.b, pow(lighting.a, 2));
@@ -783,7 +784,7 @@ void main() {
         fogDetractorFactor = -1;
         vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
         fragColor.rgb *= lightingColor.rgb;
-        fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
+        fragColor.rgb = mix(fragColor.rgb*1.33f, lightingColor.rgb*0.95f, fogginess);
     }
     if (tint.a > 0) {
         lightPos = hitPos;
@@ -796,7 +797,7 @@ void main() {
         lighting = powLighting(lighting);
         vec4 lightingColor = getLightingColor(lightPos, lighting, false, fogginess);
         normalizedTint.rgb *= lightingColor.rgb;
-        normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
+        normalizedTint.rgb = mix(normalizedTint.rgb*1.33f, lightingColor.rgb*0.95f, fogginess);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));

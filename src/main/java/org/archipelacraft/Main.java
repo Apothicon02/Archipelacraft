@@ -132,6 +132,12 @@ public class Main {
                     if (wasUDown && !window.isKeyPressed(SDL_SCANCODE_U)) {
                         Renderer.upscale = !Renderer.upscale;
                     }
+                    if (wasUpDown && !window.isKeyPressed(SDL_SCANCODE_UP)) {
+                        player.baseFOV += isShiftDown ? 10 : 5;
+                    }
+                    if (wasDownDown && !window.isKeyPressed(SDL_SCANCODE_DOWN)) {
+                        player.baseFOV -= isShiftDown ? 10 : 5;
+                    }
                 } else {
                     if (wasF1Down && !window.isKeyPressed(SDL_SCANCODE_F1)) {
                         if (uiState == 0) {
@@ -318,7 +324,7 @@ public class Main {
                 }
                 interpolationTime = timePassed/tickTime;
                 float speed = Utils.getInterpolatedFloat(player.dynamicSpeedOld, player.dynamicSpeed);
-                float dFOV = (float) Math.toRadians(65+(30*Math.min(0.3f, speed*1.5f)));
+                float dFOV = (float) Math.toRadians(Main.player.baseFOV+(30*Math.min(0.3f, speed*1.5f)));
                 Constants.FOV = Constants.FOV > dFOV ? Math.max(dFOV, Constants.FOV-(factor*1.5f)) : (Constants.FOV < dFOV ? Math.min(dFOV, Constants.FOV+(factor*1.5f)) : Constants.FOV);
                 if (player.onGround) {
                     float bobbingInc = Math.min(0.009f, 0.75f*speed*(player.height*((float) (factor*(1.5f+Math.random())))));
