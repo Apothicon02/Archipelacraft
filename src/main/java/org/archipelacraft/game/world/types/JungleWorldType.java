@@ -18,8 +18,8 @@ import static org.archipelacraft.engine.Utils.condensePos;
 import static org.archipelacraft.engine.Utils.distance;
 import static org.archipelacraft.game.world.World.*;
 
-public class BorealWorldType extends WorldType {
-    private Path worldPath = Path.of(Main.mainFolder+"world0/boreal");
+public class JungleWorldType extends WorldType {
+    private Path worldPath = Path.of(Main.mainFolder+"world0/jungle");
     public static Random seededRand = new Random(35311350L);
 
     @Override
@@ -32,18 +32,20 @@ public class BorealWorldType extends WorldType {
 
     @Override
     public String getWorldTypeName() {
-        return "Boreal Meadow";
+        return "Jungle Crater";
     }
 
     @Override
     public void createNew() {
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
+                float basePerlinNoise = (Noises.COHERERENT_NOISE.sample(x/2, z/2) + 0.5f) / 2;
                 float baseCellularNoise = Noises.CELLULAR_NOISE.sample(x, z) / 2;
-                float centDist = (float) (distance(x, z, size / 2.f, size / 2.f) / halfSize);
-                float centDistExp = (Math.max(0.75f, centDist) - 0.75f)*2;
+                float centDist = (float) (distance(x, z, size / 2, size / 2) / halfSize);
+                basePerlinNoise *= Math.min(0.2f, 4f*(Math.max(0.2f, centDist)-0.2f))*10;
+                float centDistExp = (Math.max(0.5f, centDist) - 0.5f);
                 centDistExp *= centDistExp;
-                int surface = (int) (((75 * baseCellularNoise) + 75) - (centDistExp * 300));
+                int surface = (int) (((200 * (Math.max(0.1f, baseCellularNoise) * basePerlinNoise)) + 70) - (centDistExp * 300));
                 surface = Math.max(8, surface);
                 heightmap[condensePos(x, z)] = (short) (surface);
                 for (int y = surface; y >= 0; y--) {
@@ -156,6 +158,13 @@ public class BorealWorldType extends WorldType {
                             int maxHeight = seededRand.nextInt(6) + 12;
                             DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
                             Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((rand().nextDouble() + 1) * 3), new int[]{2, 23}, true);
+                        } else if (foliageType < ArchipelacraftMath.gradient(surface, 82, 100, 1, 0)) {
+                            if (randomNumber < 0.2f) { //80% chance to not generate anything
+                                int maxHeight = seededRand.nextInt(16) + 12;
+                                int radius = seededRand.nextInt(2) + 3;
+                                boolean overgrown = seededRand.nextInt(4) == 0;
+                                JungleTree.generate(blockOn, x, surface, z, maxHeight, radius, BlockTypes.getId(BlockTypes.CHERRY_LOG), 0, BlockTypes.getId(BlockTypes.CHERRY_LEAVES), 0, overgrown);
+                            }
                         } else {
                             if (basePerlinNoise > 0.2f) {
                                 int maxHeight = seededRand.nextInt(42, 54);

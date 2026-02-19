@@ -14,11 +14,10 @@ in vec3 wPos;
 layout (location = 0) out vec4 fragColor;
 layout (location = 1) out vec4 rasterPos;
 layout (location = 2) out vec4 rasterNorm;
-layout (location = 3) out float rasterDepth;
 
 void main() {
-    rasterDepth = alwaysUpfront ? 1.f : gl_FragCoord.z;
-    rasterPos = vec4(wPos, rasterDepth);
+    float depth = alwaysUpfront ? 1.f : gl_FragCoord.z;
+    rasterPos = vec4(wPos, depth);
     rasterNorm = vec4(norm*-1, 0);
     if (tex <= 0) {
         fragColor = color;

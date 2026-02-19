@@ -543,7 +543,7 @@ vec4 raytrace(vec3 ogPos, vec3 newRayDir) {
     for (int i = 0; distance(rayPos, lod2Pos) < size/16 && i < size/8; i++) {
         mapPos = lod2Pos*16;
         bool inBound = inBounds(lod2Pos, lod2Size);
-        if (!inBound && rayDir.y >= 0.f) {
+        if (!inBound && rayDir.y >= 0.f && inBounds(ogPos, worldSize)) {
             break;
         }
         isInfiniteSea = !inBound && (lod2Pos.y == 3) && ogPos.y > 63;
