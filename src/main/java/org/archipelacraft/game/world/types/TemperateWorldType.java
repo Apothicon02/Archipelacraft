@@ -160,7 +160,7 @@ public class TemperateWorldType extends WorldType {
                         boolean overgrown = seededRand.nextInt(4) == 0;
                         JungleTree.generate(blockOn, x, surface, z, maxHeight, radius, BlockTypes.getId(BlockTypes.CHERRY_LOG), 0, BlockTypes.getId(BlockTypes.CHERRY_LEAVES), 0, overgrown);
                     } else if (randomNumber * 10 < foliageChanceExp - 0.2f || randomNumber < 0.0002f) { //tree
-                        if (foliageType < 0.0015f) { //1.5% chance the tree is dead
+                        if (foliageType < 0.0015f) { //0.15% chance the tree is dead
                             int maxHeight = seededRand.nextInt(6) + 12;
                             DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
                             Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((rand().nextDouble() + 1) * 3), new int[]{2, 23}, true);
@@ -170,6 +170,9 @@ public class TemperateWorldType extends WorldType {
                             int radius = seededRand.nextInt(4) + 6;
                             OakTree.generate(blockOn, x, surface, z, maxHeight, radius, leavesHeight, 16, 0, 17, 0);
                         }
+                    } else if (foliageChanceExp < 0.2f && foliageType < 0.0005f) { //0.05% chance to generate spruce tree
+                        int maxHeight = seededRand.nextInt(6) + 12;
+                        SpruceTree.generate(blockOn, x, surface, z, maxHeight, BlockTypes.getId(BlockTypes.SPRUCE_LOG), 0, BlockTypes.getId(BlockTypes.SPRUCE_LEAVES), 0);
                     } else if ((randomNumber * 10) + 0.15f < basePerlinNoise - 0.2f || randomNumber < 0.0005f) { //bush
                         int maxHeight = (int) (rand().nextDouble() + 1);
                         OakShrub.generate(blockOn, x, surface, z, maxHeight, 3 + (maxHeight * 2), 16, 0, 17, 0);

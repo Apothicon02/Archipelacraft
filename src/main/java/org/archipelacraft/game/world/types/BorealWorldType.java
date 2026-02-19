@@ -150,12 +150,15 @@ public class BorealWorldType extends WorldType {
                 float randomNumber = seededRand.nextFloat();
                 if (blockOn.x == 2) {
                     float foliageChanceExp = basePerlinNoise * basePerlinNoise;
+                    float foliageType = seededRand.nextFloat();
                     if (randomNumber * 10 < foliageChanceExp || randomNumber < 0.0002f) { //tree
-                        float foliageType = seededRand.nextFloat();
                         if (foliageType < 0.0015f) { //1.5% chance the tree is dead
                             int maxHeight = seededRand.nextInt(6) + 12;
                             DeadOakTree.generate(blockOn, x, surface, z, maxHeight, 47, 0);
                             Blob.generate(blockOn, x, surface, z, 3, 0, (int) ((rand().nextDouble() + 1) * 3), new int[]{2, 23}, true);
+                        } else if (foliageType < 0.0175f) { //1.5% chance to generate spruce tree
+                            int maxHeight = seededRand.nextInt(6) + 12;
+                            SpruceTree.generate(blockOn, x, surface, z, maxHeight, BlockTypes.getId(BlockTypes.SPRUCE_LOG), 0, BlockTypes.getId(BlockTypes.SPRUCE_LEAVES), 0);
                         } else {
                             if (basePerlinNoise > 0.2f) {
                                 int maxHeight = seededRand.nextInt(42, 54);
@@ -167,6 +170,9 @@ public class BorealWorldType extends WorldType {
                                 PineTree.generate(blockOn, x, surface, z, maxHeight, 35, 0, 36, 0);
                             }
                         }
+                    } else if (foliageChanceExp < 0.2f && foliageType < 0.001f) { //0.1% chance to generate spruce tree
+                        int maxHeight = seededRand.nextInt(6) + 12;
+                        SpruceTree.generate(blockOn, x, surface, z, maxHeight, BlockTypes.getId(BlockTypes.SPRUCE_LOG), 0, BlockTypes.getId(BlockTypes.SPRUCE_LEAVES), 0);
                     } else if ((randomNumber * 10) + 0.15f < basePerlinNoise - 0.2f || randomNumber < 0.0005f) { //bush
                         int maxHeight = (int) (rand().nextDouble() + 1);
                         OakShrub.generate(blockOn, x, surface, z, maxHeight, 3 + (maxHeight * 2), 16, 0, 17, 0);
