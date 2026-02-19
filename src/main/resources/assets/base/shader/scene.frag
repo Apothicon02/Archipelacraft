@@ -585,17 +585,19 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
     if (actuallyCastShadowRay) {
         shadowFactor = 1.f;
     }
+    float normalRounding = eigth*3;//*(1+min(3, dist/10));
     vec3 subbed = vec3(dot(normal.x, ogDir.x), dot(normal.y, ogDir.y), dot(normal.z, ogDir.z));
     bool xHighest = subbed.x > subbed.y && subbed.x > subbed.z;
     bool yHighest = subbed.y > subbed.x && subbed.y > subbed.z;
     bool zHighest = subbed.z > subbed.x && subbed.z > subbed.y;
     vec3 vNorm = normal;
     vec3 shadowPosOffset = vec3(0);
+    vec3 blockPos = ivec3(solidHitPos)+0.5f;
     if (castsFullShadow(block) && isTracedObject) {
         vec3 avgNColor = vec3(0);
         float neighborsSolid = 0.f;
         bool wasY = false;
-        vec4 above = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, eigth, 0)));
+        vec4 above = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, normalRounding, 0)));
         if (above.a < alphaMax) {
             vNorm.y = -1;
             shadowPosOffset.y = eigth;
@@ -605,7 +607,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             avgNColor.rgb += (above.rgb)*brightness;
             neighborsSolid+=1*brightness;
         }
-        vec4 below = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, eigth, 0)));
+        vec4 below = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, normalRounding, 0)));
         if (below.a < alphaMax) {
             vNorm.y = wasY ? 0 : 1;
             shadowPosOffset.y = wasY ? 0 : -eigth;
@@ -615,7 +617,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             neighborsSolid+=1*brightness;
         }
         bool wasX = false;
-        vec4 east = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(eigth, 0, 0)));
+        vec4 east = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(normalRounding, 0, 0)));
         if (east.a < alphaMax) {
             vNorm.x = -1;
             shadowPosOffset.x = eigth;
@@ -625,7 +627,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             avgNColor.rgb += (east.rgb)*brightness;
             neighborsSolid+=1*brightness;
         }
-        vec4 west = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(eigth, 0, 0)));
+        vec4 west = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(normalRounding, 0, 0)));
         if (west.a < alphaMax) {
             vNorm.x = wasX ? 0 : 1;
             shadowPosOffset.x = wasX ? 0 : -eigth;
@@ -635,13 +637,13 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             neighborsSolid+=1*brightness;
         }
         if (!zHighest) {
-            vec4 north = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, 0, eigth)));
+            vec4 north = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))+vec3(0, 0, normalRounding)));
             if (north.a >= alphaMax) {
                 float brightness = max(north.r, max(north.g, north.b));
                 avgNColor.rgb += (north.rgb)*brightness;
                 neighborsSolid+=1*brightness;
             }
-            vec4 south = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, 0, eigth)));
+            vec4 south = fromLinear(getVoxelAndBlockWOLeavesOverride((solidHitPos+(normal*0.75f))-vec3(0, 0, normalRounding)));
             if (south.a >= alphaMax) {
                 float brightness = max(south.r, max(south.g, south.b));
                 avgNColor.rgb += (south.rgb)*brightness;
@@ -776,7 +778,7 @@ void main() {
             shadowFactor = 0.75f;
         }
     }
-    float fogginess = clamp((clamp(((sqrt(distance(ogPos, lightPos)/(size*0.66f))-0.33f)*1.6f)*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
+    float fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
     if (fragColor.a < 0 && !isSky) {fogginess *= 0.5f;}
     lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
@@ -784,20 +786,20 @@ void main() {
         fogDetractorFactor = -1;
         vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
         fragColor.rgb *= lightingColor.rgb;
-        fragColor.rgb = mix(fragColor.rgb*1.33f, lightingColor.rgb*0.95f, fogginess);
+        fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
     }
     if (tint.a > 0) {
         lightPos = hitPos;
         normal = tintNormal;
         vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
         normalizedTint = getShadow(normalizedTint, false, false, 0.f);
-        fogginess = clamp((clamp(((sqrt(distance(ogPos, lightPos)/(size*0.66f))-0.33f)*1.6f)*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
+        fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
         lighting = fromLinear(getLight(lightPos.x, lightPos.y, lightPos.z));
         lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
         lighting = powLighting(lighting);
         vec4 lightingColor = getLightingColor(lightPos, lighting, false, fogginess);
         normalizedTint.rgb *= lightingColor.rgb;
-        normalizedTint.rgb = mix(normalizedTint.rgb*1.33f, lightingColor.rgb*0.95f, fogginess);
+        normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
