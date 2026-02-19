@@ -718,8 +718,8 @@ void main() {
     vec4 clipSpace = vec4((inverse(projection) * vec4(uv, 1.f, 1.f)).xyz, 0);
     ogDir = roundDir(normalize((invView*clipSpace).xyz));
     ogPos = invView[3].xyz;
-    vec4 rasterColor = texture(raster_color, normalizedPos);
-    vec4 rasterPos = texture(raster_pos, normalizedPos);
+    vec4 rasterColor = texture(raster_color, pos/res);
+    vec4 rasterPos = texture(raster_pos, pos/res);
     source = mun.y > sun.y ? mun : sun;
     source.y = max(source.y, 500);
     source.z += 128;
