@@ -148,12 +148,8 @@ vec3 stepMask(vec3 sideDist) {
     return vec3(mask);
 }
 
-bool isCaustic(vec2 checkPos) {
-    float samp = noise((checkPos + (float(time) * 100)) * (16+(float(time)/(float(time)/32))))+0.5f;
-    if (samp > -0.033 && samp < 0.033) {
-        return true;
-    }
-    return false;
+float getCaustic(vec2 checkPos) {
+    return noise((checkPos + (float(time) * 100)) * (16+(float(time)/(float(time)/32))))+0.5f;
 }
 
 bool checker(ivec2 pixel) {
@@ -428,9 +424,12 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                     if (block.x == 1) {
                         bool topVoxel = voxelPos.y >= 7; //-(block.y/16)
                         if (!underwater && (isInfiniteSea || getVoxel(voxelPos.x, topVoxel ? 0 : voxelPos.y+1, voxelPos.z, mapPos.x, mapPos.y + (topVoxel ? 1 : 0), mapPos.z, block.x, block.y).a <= 0)) {
-                            if (isCaustic(vec2(mapPos.x, mapPos.z)+(voxelPos.xz/8)+voxelPos.y)) {
+                            float causticness = getCaustic(vec2(mapPos.x, mapPos.z)+(voxelPos.xz/8)+voxelPos.y);
+                            if (causticness > -0.033 && causticness < 0.033) {
                                 hitCaustic = true;
                                 return vec4(fromLinear(vec3(1)), 1);
+                            } else {
+                                voxelColor.rgb = mix(voxelColor.rgb, vec3(1), abs(1-abs(causticness))/3);
                             }
                         }
                         underwater = true;
