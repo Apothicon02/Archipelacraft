@@ -207,7 +207,7 @@ public class TemperateWorldType extends WorldType {
 
         for (int x = 0; x < size; x++) {
             for (int z = 0; z < size; z++) {
-                for (int y = seaLevel; y <= heightmap[(x * size) + z] + 1; y++) {
+                for (int y = 0; y <= heightmap[(x * size) + z] + 1; y++) {
                     Vector2i thisBlock = getBlock(x, y, z);
                     if (BlockTypes.blockTypeMap.get(thisBlock.x) instanceof LightBlockType ||
                             getLight(x, y, z + 1, false).w() > 0 || getLight(x + 1, y, z, false).w() > 0 || getLight(x, y, z - 1, false).w() > 0 ||

@@ -38,7 +38,7 @@ public class WaterBlockType extends BlockType {
                 for (Vector3i nPos : new Vector3i[]{new Vector3i(pos.x, pos.y - 1, pos.z), new Vector3i(pos.x - 1, pos.y, pos.z), new Vector3i(pos.x + 1, pos.y, pos.z),
                         new Vector3i(pos.x, pos.y, pos.z - 1), new Vector3i(pos.x, pos.y, pos.z + 1)}) {
                     Vector2i nBlock = World.getBlock(nPos.x, nPos.y, nPos.z);
-                    if (nBlock.x == BlockTypes.getId(BlockTypes.MAGMA)) {
+                    if (nBlock != null && nBlock.x == BlockTypes.getId(BlockTypes.MAGMA)) {
                         World.setBlock(nPos.x, nPos.y, nPos.z, BlockTypes.getId(BlockTypes.OBSIDIAN), 0, true, false, 3, false);
                         fluid.x = Fluids.liquidGasMap.get(fluid.x);
                         break;

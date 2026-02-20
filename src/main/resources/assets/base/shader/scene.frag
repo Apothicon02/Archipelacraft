@@ -164,6 +164,7 @@ bool checker(ivec2 pixel) {
 ivec4 getBlock(float x, float y, float z) {
     return texelFetch(blocks, ivec3(z, y, x), 0);
 }
+float waterDepth = 1.f;
 vec4 getLight(float x, float y, float z) {
     return texture(lights, vec3(z, y, x)/vec3(size, height, size), 0)*vec4(7.5f, 7.5f, 7.5f, 10);
 }
@@ -198,13 +199,11 @@ vec3 hitPos = vec3(0);
 vec3 solidHitPos = vec3(0);
 vec3 mapPos = vec3(0);
 vec3 normal = vec3(0);
-vec4 prevTintAddition = vec4(0);
 vec4 tint = vec4(0);
 bool underwater = false;
 bool hitCaustic = false;
 bool isInfiniteSea = false;
 bool isShadow = false;
-float shade = 0.f;
 
 vec3 ogRayPos = vec3(0);
 vec3 prevPos = vec3(0);
@@ -215,10 +214,11 @@ vec4 texColor = vec4(0);
 vec4 lightFog = vec4(0);
 bool hitSolidVoxel = false;
 float maxRayDist = 2500.f;
+vec4 prevTintAddition = vec4(0);
 
 void clearVars() {
+    prevTintAddition = vec4(0);
     maxRayDist = 2500.f;
-    shade = 0.f;
     hitBlock = ivec3(0);
     hitPos = vec3(0);
     solidHitPos = vec3(0);
@@ -227,7 +227,6 @@ void clearVars() {
     underwater = false;
     hitCaustic = false;
     isInfiniteSea = false;
-    prevTintAddition = vec4(0);
     tint = vec4(0);
     prevPos = vec3(0);
     lod2Pos = vec3(0);
@@ -253,12 +252,11 @@ bool isGlassSolid(vec3 mapPos, vec3 rayMapPos) {
     }
     return false;
 }
-
+vec4 lightFogLastCheck = vec4(0);
 void updateLightFog(vec3 pos) {
     if (!isShadow) {
-        vec4 light = getLight(pos.x, pos.y, pos.z);
-        light.a = 0;
-        lightFog = max(lightFog, getLightingColor(mapPos, fromLinear(light), false, 1)/2);
+        lightFogLastCheck = fromLinear(getLight(pos.x, pos.y, pos.z));
+        lightFog = max(lightFog, getLightingColor(mapPos, vec4(lightFogLastCheck.rgb, 0), false, 1)/2);
     }
 }
 
@@ -316,12 +314,16 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
     vec3 prevVoxelPos = vec3(0);
 
     bool steppingBlock = true;
-
+    bool firstStep = true;
     for (int i = 0; blockPos.x < 4.0 && blockPos.x >= 0.0 && blockPos.y < 4.0 && blockPos.y >= 0.0 && blockPos.z < 4.0 && blockPos.z >= 0.0 && i < (4*8)*3; i++) {
+        vec4 tintAddition = vec4(0.f);
         if (steppingBlock) {
-            mapPos = (lod2Pos*16)+(lodPos*4)+blockPos;
+            if (firstStep) {
+                firstStep = false;
+                mapPos = (lod2Pos*16)+(lodPos*4)+blockPos;
+                block = inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : (mapPos.y > 63 ? ivec4(0) : (mapPos.y == 63 ? ivec4(1, 14, 0, 0) : ivec4(0)));
+            }
             updateLightFog(mapPos+0.5f);
-            block = inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : (mapPos.y > 63 ? ivec4(0) : (mapPos.y == 63 ? ivec4(1, 14, 0, 0) : ivec4(0)));
             if (block.x > 0 && !(block.x == 1 && underwater)) {
                 steppingBlock = false;
                 mini = ((blockPos-rayPos) + 0.5 - 0.5*vec3(raySign))*deltaDist;
@@ -389,7 +391,7 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
             vec4 voxelColor = baseColor;
             if (voxelColor.a > 0) {
                 vec3 voxelHitPos = mapPos+(voxelPos/8);
-                if (shouldSelectBlock) {
+                if (shouldSelectBlock && block.x > 1) {
                     if (ivec2(gl_FragCoord.xy) == (upscale ? ivec2(res/vec2(4, 2)) : ivec2(res/2))) {
                         shouldSelectBlock = false;
                         playerData[0] = voxelHitPos.x;
@@ -422,6 +424,7 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                         tintNormal = normal;
                     }
                     if (block.x == 1) {
+                        voxelColor = mix(voxelColor, mix(vec4(1.f, 0.6f, 0.f, 0.95f), voxelColor, clamp(distance(sun.y, 64)/256, 0.f, 1.f)), lightFogLastCheck.a);
                         bool topVoxel = voxelPos.y >= 7; //-(block.y/16)
                         if (!underwater && (isInfiniteSea || getVoxel(voxelPos.x, topVoxel ? 0 : voxelPos.y+1, voxelPos.z, mapPos.x, mapPos.y + (topVoxel ? 1 : 0), mapPos.z, block.x, block.y).a <= 0)) {
                             float causticness = getCaustic(vec2(mapPos.x, mapPos.z)+(voxelPos.xz/8)+voxelPos.y);
@@ -438,16 +441,15 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                     float tintMul = 1.f;
                     if (isFullSemitransparentBlock(block.xy)) {
                         steppingBlock = true;
-                        float brightness = dot(normal, source)*-0.0002f;
-                        tintMul = clamp(0.75f+brightness, 0.66f, 1.f);
                     }
+                    float brightness = dot(normal, source)*-0.0002f;
+                    tintMul = clamp(0.75f+brightness, 0.66f, 1.f);
                     if (prevTintAddition != voxelColor) {
                         prevTintAddition = voxelColor;
                         tint += voxelColor*tintMul;
                     }
                 } else {
                     hitSolidVoxel = true;
-                    shade = 0.25F;
                     texColor = baseColor;
                     return vec4(voxelColor.rgb, 1);
                 }
@@ -480,11 +482,36 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
             steppingBlock = true;
         }
         if (steppingBlock) {
+            vec3 entered = vec3(0.f);
+            if (block.x == 1) {
+                vec3 intersect = rayPos + rayDir * blockDist;
+                vec3 uv3d = intersect - blockPos;
+                if (uv3d == floor(voxelRayPos)) { // Handle edge case where camera origin is inside of block
+                    uv3d = rayPos - blockPos;
+                }
+                entered = floor(mapPos)+uv3d;
+            }
+
             mask = stepMask(sideDist);
             blockPos += mask * raySign;
             sideDist += mask * raySign * deltaDist;
             mini = ((blockPos - rayPos) + 0.5 - 0.5 * vec3(raySign)) * deltaDist;
             blockDist = max(mini.x, max(mini.y, mini.z));
+            mapPos = (lod2Pos*16)+(lodPos*4)+blockPos;
+            block = inBounds(mapPos, worldSize) ? getBlock(mapPos.x, mapPos.y, mapPos.z) : (mapPos.y > 63 ? ivec4(0) : (mapPos.y == 63 ? ivec4(1, 14, 0, 0) : ivec4(0)));
+
+            if (entered != vec3(0)) {
+                vec3 intersect = rayPos + rayDir * blockDist;
+                vec3 uv3d = intersect - blockPos;
+                if (uv3d == floor(voxelRayPos)) { // Handle edge case where camera origin is inside of block
+                    uv3d = rayPos - blockPos;
+                }
+                vec3 exited = floor(mapPos)+uv3d;
+                float dist = distance(entered, exited);
+                if (underwater && isShadow) {
+                    waterDepth -= dist/30f;
+                }
+            }
         }
     }
 
@@ -657,8 +684,6 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             vNorm *= 0;
         }
     }
-    float brightness = dot(vNorm, source)*-0.0002f;
-    color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
     vec3 shadowPos = mix((floor(prevPos*8)+0.5f)/8, prevPos, abs(normal))+(shadowPosOffset*2);
     if (actuallyCastShadowRay) {
         vec3 sunDir = vec3(normalize(source - (worldSize/2)));
@@ -667,13 +692,18 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
         clearVars();
         isShadow = true;
         bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
-        if (shade > 0.f) {
-            shadowFactor *= solidCaster ? min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))) : 1-shade;
+        if (solidCaster) {
+            if (waterDepth < 1.f) {
+                waterDepth = 0.f;
+            }
+            shadowFactor = min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420)));
         }
         isShadow = false;
         tint = prevTint;
         hitPos = prevHitPos;
     }
+    float brightness = (dot(vNorm, source)*-0.0002f)*waterDepth;
+    color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
     return color;
 }
 
@@ -736,7 +766,6 @@ void main() {
         }
         isSky = skyChecks();
         if (mapPos.y <= 63 && fragColor.a < alphaMax) {
-            shade = 0.25f;
             fragColor = vec4(1.0f, 0.0f, 0.0f, 1.f);
             isSky = false;
         }
@@ -783,6 +812,7 @@ void main() {
     lighting = powLighting(lighting);
     if (!isLight) {
         fogDetractorFactor = -1;
+        lighting.a*=waterDepth;
         vec4 lightingColor = getLightingColor(lightPos, lighting, isSky, fogginess);
         fragColor.rgb *= lightingColor.rgb;
         fragColor.rgb = mix(fragColor.rgb*1.2f, lightingColor.rgb, fogginess);
@@ -790,7 +820,7 @@ void main() {
     if (tint.a > 0) {
         lightPos = hitPos;
         normal = tintNormal;
-        vec4 normalizedTint = tint/max(tint.r, max(tint.g, tint.b));
+        vec4 normalizedTint = tint/max(1.f, max(tint.r, max(tint.g, tint.b)));
         normalizedTint = getShadow(normalizedTint, false, false, 0.f);
         fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
         lighting = fromLinear(getLight(lightPos.x, lightPos.y, lightPos.z));
