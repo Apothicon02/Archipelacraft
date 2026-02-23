@@ -688,7 +688,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
     if (actuallyCastShadowRay) {
         vec3 sunDir = vec3(normalize(source - (worldSize/2)));
         vec4 prevTint = tint;
-        vec3 prevHitPos = hitPos;
+        vec3 oldHitPos = hitPos;
         clearVars();
         isShadow = true;
         bool solidCaster = raytrace(shadowPos, sunDir).a > 0.0f;
@@ -700,7 +700,7 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
         }
         isShadow = false;
         tint = prevTint;
-        hitPos = prevHitPos;
+        hitPos = oldHitPos;
     }
     float brightness = (dot(vNorm, source)*-0.0002f)*waterDepth;
     color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
@@ -829,7 +829,8 @@ void main() {
         vec4 lightingColor = getLightingColor(lightPos, lighting, false, fogginess);
         normalizedTint.rgb *= lightingColor.rgb;
         normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
-        fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, normalizedTint.a);
+        float reflectivity = dot(normal, ogDir);
+        fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, mix(1.f, normalizedTint.a, reflectivity));
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
