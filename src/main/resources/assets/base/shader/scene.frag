@@ -12,6 +12,7 @@ uniform double time;
 uniform float timeOfDay;
 uniform int offsetIdx;
 uniform bool reverseChecker;
+uniform ivec2 checkerStep;
 
 uniform layout(binding = 0) sampler2D raster_color;
 uniform layout(binding = 1) sampler2D raster_pos;
@@ -725,13 +726,21 @@ bool skyChecks() {
 }
 
 void main() {
-    vec2 pos = upscale ? ivec2(gl_FragCoord.x*2, gl_FragCoord.y) : ivec2(gl_FragCoord.xy);
-    bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
-    if (reverseChecker) {
-        yOdd = !yOdd;
-    }
-    if (upscale && yOdd) {
-        pos.x += 1;
+    vec2 pos = ivec2(gl_FragCoord.xy);
+    if (upscale) {
+        pos *= 2;
+        bool xOdd = bool(int(gl_FragCoord.x) % 2 == 1);
+        bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
+        if (reverseChecker) {
+            xOdd = !xOdd;
+            yOdd = !yOdd;
+        }
+        if (xOdd) {
+            pos.y += checkerStep.y;
+        }
+        if (yOdd) {
+            pos.x += checkerStep.x;
+        }
     }
     vec2 normalizedPos = pos/res;
     if (taa) {

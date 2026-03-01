@@ -123,9 +123,6 @@ public class Main {
                         }
                     }
                 } else if (window.isKeyPressed(SDL_SCANCODE_F4)) {
-                    if (wasRDown && !window.isKeyPressed(SDL_SCANCODE_R)) {
-                        Renderer.doReverseChecker = !Renderer.doReverseChecker;
-                    }
                     if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
                         Renderer.shadowsEnabled = !Renderer.shadowsEnabled;
                     }

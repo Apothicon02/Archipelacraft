@@ -5,7 +5,7 @@ in vec4 gl_FragCoord;
 out vec4 fragColor;
 
 void main() {
-    fragColor = texelFetch(in_color, ivec2(gl_FragCoord.x/2, gl_FragCoord.y), 0);
+    fragColor = texelFetch(in_color, ivec2(gl_FragCoord.x/2, gl_FragCoord.y/2), 0);
 //    vec4 offsetColor = texelFetch(in_color, ivec2((gl_FragCoord.x-1)/2, gl_FragCoord.y), 0);
 //    ivec4 offsetColorLod = ivec4(offsetColor*10);
 //    vec4 neighborColor = texelFetch(in_color, ivec2(gl_FragCoord.x/2, gl_FragCoord.y-1), 0);

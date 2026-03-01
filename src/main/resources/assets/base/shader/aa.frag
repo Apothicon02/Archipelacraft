@@ -4,6 +4,7 @@ uniform mat4 view;
 uniform mat4 prevView;
 uniform ivec2 res;
 uniform bool taa;
+uniform bool upscale;
 uniform int offsetIdx;
 uniform int offsetIdxOld;
 
@@ -40,15 +41,16 @@ void main() {
         vec2 reprojected = reproject(worldPos);
         vec4 oldColor = (reprojected.x >= 0.f && reprojected.x < 1.f && reprojected.y >= 0.f && reprojected.y < 1.f) ? texture(in_color_old, reprojected) : currentColor;
 
-        vec3 nearColor0 = texelFetch(in_color, ivec2(gl_FragCoord.x+1, gl_FragCoord.y), 0).rgb;
-        vec3 nearColor1 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y+1), 0).rgb;
-        vec3 nearColor2 = texelFetch(in_color, ivec2(gl_FragCoord.x-1, gl_FragCoord.y), 0).rgb;
-        vec3 nearColor3 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y-1), 0).rgb;
+        int offFactor = upscale ? 2 : 1;
+        vec3 nearColor0 = texelFetch(in_color, ivec2(gl_FragCoord.x+offFactor, gl_FragCoord.y), 0).rgb;
+        vec3 nearColor1 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y+offFactor), 0).rgb;
+        vec3 nearColor2 = texelFetch(in_color, ivec2(gl_FragCoord.x-offFactor, gl_FragCoord.y), 0).rgb;
+        vec3 nearColor3 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y-offFactor), 0).rgb;
         vec3 boxMin = min(currentColor.rgb, min(nearColor0, min(nearColor1, min(nearColor2, nearColor3))));
         vec3 boxMax = max(currentColor.rgb, max(nearColor0, max(nearColor1, max(nearColor2, nearColor3))));
         oldColor.rgb = clamp(oldColor.rgb, boxMin, boxMax);
 
-        fragColor.rgb = mix(currentColor.rgb, oldColor.rgb, 0.9f);
+        fragColor.rgb = mix(currentColor.rgb, oldColor.rgb, 0.95f);
         fragColor.w = currentColor.w;
     } else {
         fragColor = currentColor;

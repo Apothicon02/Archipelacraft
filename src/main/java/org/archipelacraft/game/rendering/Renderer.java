@@ -192,13 +192,13 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "offsetIdx", "reverseChecker", "taa", "ui", "upscale", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "selected", "offsetIdx", "checkerStep", "reverseChecker", "taa", "ui", "upscale", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "taa", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
                 new String[]{});
         aa = new ShaderProgram("scene.vert", new String[]{"aa.frag"},
-                new String[]{"res", "projection", "prevProj", "view", "prevView", "taa", "offsetIdx", "offsetIdxOld"});
+                new String[]{"res", "projection", "prevProj", "view", "prevView", "upscale", "taa", "offsetIdx", "offsetIdxOld"});
         blur = new ShaderProgram("scene.vert", new String[]{"blur.frag"},
                 new String[]{"res","dir"});
         gui = new ShaderProgram("gui.vert", new String[]{"gui.frag"},
@@ -311,7 +311,7 @@ public class Renderer {
         float brightness = Math.clamp((640+sunPos.y())/640, 0.3f, 1.f);
         for (int i = 0; i < 512; i++) {
             float b = Math.max(0.25f, brightness-(cloudRand.nextFloat()/2));
-            Vector3f pos = new Vector3f(0, 0, 2000*(cloudRand.nextFloat()+0.05f)).rotateY((float) ((cloudRand.nextFloat()*10)+(time*(7+cloudRand.nextInt(5)))));
+            Vector3f pos = new Vector3f(0, 0, 2000*(cloudRand.nextFloat()+0.05f)).rotateY((float) ((cloudRand.nextFloat()*10)+(time*(3+cloudRand.nextInt(2)))));
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY(cloudRand.nextFloat()/10).setTranslation(pos.set(pos.x + 512, cloudRand.nextInt(200)+320-((Math.abs(pos.x)+Math.abs(pos.z))/10), pos.z + 512)).scale(10+cloudRand.nextInt(10), 3+cloudRand.nextInt(6), 10+cloudRand.nextInt(10)).get(stack.mallocFloat(16)));
             }
@@ -401,8 +401,9 @@ public class Renderer {
         }
         drawCube();
     }
-    public static boolean doReverseChecker = true;
     public static boolean reverseChecker = false;
+    public static int checkerStepX = 0;
+    public static int checkerStepY = 0;
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {
             offsetIdx++;
@@ -450,9 +451,9 @@ public class Renderer {
                     World.items.remove(i);
                     i--;
                 } else {
-                    try(MemoryStack stack = MemoryStack.stackPush()) {
+                    try (MemoryStack stack = MemoryStack.stackPush()) {
                         item.tick();
-                        glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float)Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover, 0)).scale(0.5f).get(stack.mallocFloat(16)));
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, new Matrix4f().rotateY((float) Math.toRadians(item.rot)).setTranslation(new Vector3f(item.pos).add(0, item.hover, 0)).scale(0.5f).get(stack.mallocFloat(16)));
                     }
                     glUniform2i(raster.uniforms.get("atlasOffset"), item.type.atlasOffset.x(), item.type.atlasOffset.y());
                     drawDoubleSidedPlane();
@@ -462,7 +463,7 @@ public class Renderer {
             glUniform1i(raster.uniforms.get("alwaysUpfront"), 1);
             if (item != null) {
                 try (MemoryStack stack = MemoryStack.stackPush()) {
-                    glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.045f+Math.max(0, handTilt()*0.03f), -0.115f + (player.bobbing * 0.05f) - Math.min(0, handTilt()*0.1f),  -0.03f+(handTilt()*0.1f)).rotateY((float)Math.toRadians(-90.f)).rotateZ((float)Math.toRadians(55.f+(handTilt() < 0 ? (handTilt()*80) : (handTilt()*40))+HandManager.getTilt())).scale(0.125f).get(stack.mallocFloat(16)));
+                    glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.045f + Math.max(0, handTilt() * 0.03f), -0.115f + (player.bobbing * 0.05f) - Math.min(0, handTilt() * 0.1f), -0.03f + (handTilt() * 0.1f)).rotateY((float) Math.toRadians(-90.f)).rotateZ((float) Math.toRadians(55.f + (handTilt() < 0 ? (handTilt() * 80) : (handTilt() * 40)) + HandManager.getTilt())).scale(0.125f).get(stack.mallocFloat(16)));
                 }
                 glUniform2i(raster.uniforms.get("atlasOffset"), item.type.atlasOffset.x(), item.type.atlasOffset.y());
                 drawDoubleSidedPlane();
@@ -471,7 +472,7 @@ public class Renderer {
                 if (showUI && !Main.isSwappingWorldType) {
                     glUniform4f(raster.uniforms.get("color"), 0.6f, 0.45f, 0.35f, 1);
                     try (MemoryStack stack = MemoryStack.stackPush()) {
-                        glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.35f + (player.bobbing * 0.325f), 0.f).rotateX((float)Math.toRadians((handTilt()*-88)+(HandManager.getTilt()/2))).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
+                        glUniformMatrix4fv(raster.uniforms.get("model"), false, player.getCameraMatrixWithoutPitch().invert().translate(0.55f, -0.35f + (player.bobbing * 0.325f), 0.f).rotateX((float) Math.toRadians((handTilt() * -88) + (HandManager.getTilt() / 2))).scale(0.1375f, 0.1375f, 0.5f).get(stack.mallocFloat(16)));
                     }
                     drawCube();
                 }
@@ -483,14 +484,22 @@ public class Renderer {
             glClearDepthf(0.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             updateUniforms(scene, window);
-            glUniform1i(scene.uniforms.get("upscale"), upscale ? 1 : 0);
-            if (doReverseChecker) {
-                reverseChecker = !reverseChecker;
-            }
-            glUniform1i(scene.uniforms.get("reverseChecker"), reverseChecker ? 1 : 0);
-            bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform1i(scene.uniforms.get("upscale"), upscale ? 1 : 0);
+            bindTextures();
             if (upscale) {
+                checkerStepX++;
+                if (checkerStepX > 1) {
+                    checkerStepX = 0;
+                    checkerStepY++;
+                    if (checkerStepY > 1) {
+                        checkerStepY = 0;
+                        reverseChecker = !reverseChecker;
+                    }
+                }
+                glUniform1i(scene.uniforms.get("reverseChecker"), reverseChecker ? 1 : 0);
+                glUniform2i(scene.uniforms.get("checkerStep"), checkerStepX, checkerStepY);
+
                 drawHalf();
 
                 glBindFramebuffer(GL_FRAMEBUFFER, uncheckerFBOId);
@@ -504,6 +513,7 @@ public class Renderer {
             glBindFramebuffer(GL_FRAMEBUFFER, sceneFBOId);
             aa.bind();
             glUniform2i(aa.uniforms.get("res"), window.getWidth(), window.getHeight());
+            glUniform1i(aa.uniforms.get("upscale"), upscale ? 1 : 0);
             glUniform1i(aa.uniforms.get("taa"), taa ? 1 : 0);
             try(MemoryStack stack = MemoryStack.stackPush()) {
                 glUniformMatrix4fv(aa.uniforms.get("projection"), false, window.updateProjectionMatrix().get(stack.mallocFloat(16)));
