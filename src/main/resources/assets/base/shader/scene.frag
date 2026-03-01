@@ -757,7 +757,6 @@ void main() {
     bool isSky = rasterColor.a <= 0.f;
     bool isLight = false;
     updateLightFog(ogPos);
-    if (rasterPos.w < 0.05) {
         if (rasterColor.a >= 1) {
             maxRayDist = distance(ogPos, rasterPos.xyz);
         }
@@ -771,7 +770,6 @@ void main() {
             fragColor = vec4(1.0f, 0.0f, 0.0f, 1.f);
             isSky = false;
         }
-    }
     shouldSelectBlock = false;
     if (hitBlock == ivec3(playerData[0], playerData[1], playerData[2]) && ui) {
         fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
