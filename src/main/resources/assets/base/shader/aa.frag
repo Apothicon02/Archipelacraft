@@ -41,13 +41,17 @@ void main() {
         vec2 reprojected = reproject(worldPos);
         vec4 oldColor = (reprojected.x >= 0.f && reprojected.x < 1.f && reprojected.y >= 0.f && reprojected.y < 1.f) ? texture(in_color_old, reprojected) : currentColor;
 
-        int offFactor = upscale ? 2 : 1;
-        vec3 nearColor0 = texelFetch(in_color, ivec2(gl_FragCoord.x+offFactor, gl_FragCoord.y), 0).rgb;
-        vec3 nearColor1 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y+offFactor), 0).rgb;
-        vec3 nearColor2 = texelFetch(in_color, ivec2(gl_FragCoord.x-offFactor, gl_FragCoord.y), 0).rgb;
-        vec3 nearColor3 = texelFetch(in_color, ivec2(gl_FragCoord.x, gl_FragCoord.y-offFactor), 0).rgb;
-        vec3 boxMin = min(currentColor.rgb, min(nearColor0, min(nearColor1, min(nearColor2, nearColor3))));
-        vec3 boxMax = max(currentColor.rgb, max(nearColor0, max(nearColor1, max(nearColor2, nearColor3))));
+        float velocity = distance((reprojected*res), gl_FragCoord.xy);
+        int radius = velocity < 0.6f ? 2 : 1;
+        vec3 boxMin = vec3(1);
+        vec3 boxMax = vec3(0);
+        for (int x = int(gl_FragCoord.x-radius); x < gl_FragCoord.x+radius; x++) {
+            for (int y = int(gl_FragCoord.y-radius); y < gl_FragCoord.y+radius; y++) {
+                vec3 nearColor = texelFetch(in_color, ivec2(x, y), 0).rgb;
+                boxMin = min(boxMin, nearColor);
+                boxMax = max(boxMax, nearColor);
+            }
+        }
         oldColor.rgb = clamp(oldColor.rgb, boxMin, boxMax);
 
         fragColor.rgb = mix(currentColor.rgb, oldColor.rgb, 0.95f);

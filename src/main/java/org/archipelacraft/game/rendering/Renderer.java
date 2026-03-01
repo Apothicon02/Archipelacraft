@@ -491,7 +491,11 @@ public class Renderer {
                 checkerStepX++;
                 if (checkerStepX > 1) {
                     checkerStepX = 0;
-                    reverseChecker = !reverseChecker;
+                    checkerStepY++;
+                    if (checkerStepY > 1) {
+                        checkerStepY = 0;
+                        reverseChecker = !reverseChecker;
+                    }
                 }
                 glUniform1i(scene.uniforms.get("reverseChecker"), reverseChecker ? 1 : 0);
                 glUniform2i(scene.uniforms.get("checkerStep"), checkerStepX, checkerStepY);
