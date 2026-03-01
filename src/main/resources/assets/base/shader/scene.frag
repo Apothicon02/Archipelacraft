@@ -11,6 +11,7 @@ uniform vec3 mun;
 uniform double time;
 uniform float timeOfDay;
 uniform int offsetIdx;
+uniform bool reverseChecker;
 
 uniform layout(binding = 0) sampler2D raster_color;
 uniform layout(binding = 1) sampler2D raster_pos;
@@ -150,15 +151,6 @@ vec3 stepMask(vec3 sideDist) {
 
 float getCaustic(vec2 checkPos) {
     return noise((checkPos + (float(time) * 100)) * (16+(float(time)/(float(time)/32))))+0.5f;
-}
-
-bool checker(ivec2 pixel) {
-    bool xOdd = bool(pixel.x % 2 == 1);
-    bool yOdd = bool(pixel.y % 2 == 1);
-    if ((xOdd && yOdd) || (!xOdd && !yOdd)) { //both even or both odd
-        return true;
-    }
-    return false;
 }
 
 ivec4 getBlock(float x, float y, float z) {
@@ -735,7 +727,13 @@ bool skyChecks() {
 void main() {
     vec2 pos = upscale ? ivec2(gl_FragCoord.x*2, gl_FragCoord.y) : ivec2(gl_FragCoord.xy);
     bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
-    vec2 normalizedPos = (upscale ? vec2(pos.x+(yOdd ? 1 : 0), pos.y) : pos)/res;
+    if (reverseChecker) {
+        yOdd = !yOdd;
+    }
+    if (upscale && yOdd) {
+        pos.x += 1;
+    }
+    vec2 normalizedPos = pos/res;
     if (taa) {
         float xOff = xOffsets[offsetIdx];
         float yOff = yOffsets[offsetIdx];

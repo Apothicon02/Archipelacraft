@@ -192,7 +192,7 @@ public class Renderer {
     public static void init(Window window) throws Exception {
         createGLDebugger();
         scene = new ShaderProgram("scene.vert", new String[]{"scene.frag"},
-                new String[]{"res", "projection", "view", "selected", "offsetIdx", "taa", "ui", "upscale", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
+                new String[]{"res", "projection", "view", "selected", "offsetIdx", "reverseChecker", "taa", "ui", "upscale", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         raster = new ShaderProgram("debug.vert", new String[]{"debug.frag"},
                 new String[]{"res", "projection", "view", "model", "selected", "offsetIdx", "color", "tex", "atlasOffset", "taa", "ui", "alwaysUpfront", "renderDistance", "aoQuality", "timeOfDay", "time", "shadowsEnabled", "reflectionShadows", "sun", "mun"});
         unchecker = new ShaderProgram("scene.vert", new String[]{"unchecker.frag"},
@@ -401,6 +401,8 @@ public class Renderer {
         }
         drawCube();
     }
+    public static boolean doReverseChecker = true;
+    public static boolean reverseChecker = false;
     public static void render(Window window) throws IOException {
         if (!Main.isClosing) {
             offsetIdx++;
@@ -482,6 +484,10 @@ public class Renderer {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             updateUniforms(scene, window);
             glUniform1i(scene.uniforms.get("upscale"), upscale ? 1 : 0);
+            if (doReverseChecker) {
+                reverseChecker = !reverseChecker;
+            }
+            glUniform1i(scene.uniforms.get("reverseChecker"), reverseChecker ? 1 : 0);
             bindTextures();
             glUniform2i(scene.uniforms.get("res"), window.getWidth(), window.getHeight());
             if (upscale) {
