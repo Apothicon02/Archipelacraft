@@ -54,7 +54,9 @@ void main() {
         }
         oldColor.rgb = clamp(oldColor.rgb, boxMin, boxMax);
 
-        fragColor.rgb = mix(currentColor.rgb, oldColor.rgb, 0.95f);
+        vec3 comparedColors = currentColor.rgb-oldColor.rgb;
+        float brightDif = clamp(max(comparedColors.r, max(comparedColors.g, comparedColors.b))*6.66f, 0.f, 1.f);
+        fragColor.rgb = mix(currentColor.rgb, oldColor.rgb, mix(0.95f, 0.85f, brightDif));
         fragColor.w = currentColor.w;
     } else {
         fragColor = currentColor;
