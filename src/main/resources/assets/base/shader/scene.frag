@@ -248,7 +248,7 @@ bool isGlassSolid(vec3 mapPos, vec3 rayMapPos) {
 vec4 lightFogLastCheck = vec4(0);
 void updateLightFog(vec3 pos) {
     if (!isShadow) {
-        lightFogLastCheck = fromLinear(getLight(pos.x, pos.y, pos.z));
+        lightFogLastCheck = (getLight(pos.x, pos.y, pos.z));
         lightFog = max(lightFog, getLightingColor(mapPos, vec4(lightFogLastCheck.rgb, 0), false, 1)/2);
     }
 }
@@ -793,9 +793,9 @@ void main() {
     vec3 dPos = solidHitPos+(normal/2)-ogPos;
     float depth = nearClip/max(0, dot(dPos, ogDir));
     if (inBounds(solidHitPos, worldSize)) {
-        lighting = fromLinear(getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
+        lighting = (getLight(solidHitPos.x, solidHitPos.y, solidHitPos.z));
     } else {
-        lighting = fromLinear(vec4(0, 0, 0, 1));
+        lighting = (vec4(0, 0, 0, 1));
     }
     if (!isSky) {
         lightPos = solidHitPos;
@@ -808,7 +808,7 @@ void main() {
     }
     float fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
     if (fragColor.a < 0 && !isSky) { fogginess *= 0.5f; }
-    lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
+    lighting.a = mix(lighting.a*shadowFactor, (vec4(0, 0, 0, 1)).a, fogginess);
     lighting = powLighting(lighting);
     if (!isLight) {
         fogDetractorFactor = -1;
@@ -823,8 +823,8 @@ void main() {
         vec4 normalizedTint = tint/max(1.f, max(tint.r, max(tint.g, tint.b)));
         normalizedTint = getShadow(normalizedTint, false, false, 0.f);
         fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
-        lighting = fromLinear(getLight(lightPos.x, lightPos.y, lightPos.z));
-        lighting.a = mix(lighting.a*shadowFactor, fromLinear(vec4(0, 0, 0, 1)).a, fogginess);
+        lighting = (getLight(lightPos.x, lightPos.y, lightPos.z));
+        lighting.a = mix(lighting.a*shadowFactor, (vec4(0, 0, 0, 1)).a, fogginess);
         lighting = powLighting(lighting);
         vec4 lightingColor = getLightingColor(lightPos, lighting, false, fogginess);
         normalizedTint.rgb *= lightingColor.rgb;
@@ -832,7 +832,7 @@ void main() {
         float reflectivity = dot(normal, ogDir);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, mix(1.f, normalizedTint.a, reflectivity));
     }
-    fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
+//    fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
     fragColor.a = depth;
 }
