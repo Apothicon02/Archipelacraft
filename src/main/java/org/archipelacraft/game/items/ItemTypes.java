@@ -71,8 +71,19 @@ public class ItemTypes {
             LIME_STAINED_GLASS = create(new ItemType("component/texture/lime_stained_glass").blockToPlace(BlockTypes.getId(BlockTypes.LIME_STAINED_GLASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.5f, 0.8f))),
             TORCH = create(new ItemType("block/texture/torch").blockToPlace(BlockTypes.getId(BlockTypes.TORCH), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 0.4f, 1.25f))),
             MAGMA = create(new ItemType("resource/texture/magma").blockToPlace(BlockTypes.getId(BlockTypes.MAGMA), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.SIZZLE1, Sounds.SIZZLE2}, 0.45f, 0.95f))),
-            PORECAP = create(new ItemType("food/texture/porecap").blockToPlace(BlockTypes.getId(BlockTypes.PORECAP), 0).maxStackSize(2).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.45f, 0.95f))),
-            KYANITE = create(new ItemType("resource/texture/kyanite").blockToPlace(BlockTypes.getId(BlockTypes.KYANITE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.6f, 1.2f)));
+            PORECAP = create(new ItemType("plant/texture/porecap").blockToPlace(BlockTypes.getId(BlockTypes.PORECAP), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.45f, 0.95f))),
+            GRASS = create(new ItemType("plant/texture/grass").blockToPlace(BlockTypes.getId(BlockTypes.TALL_GRASS), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GRASS_STEP1, Sounds.GRASS_STEP2, Sounds.GRASS_STEP3}, 0.45f, 1.f))),
+            ROSE = create(new ItemType("plant/texture/rose").blockToPlace(BlockTypes.getId(BlockTypes.ROSE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GRASS_STEP1, Sounds.GRASS_STEP2, Sounds.GRASS_STEP3}, 0.45f, 1.f))),
+            HYDRANGEA = create(new ItemType("plant/texture/hydrangea").blockToPlace(BlockTypes.getId(BlockTypes.HYDRANGEA), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GRASS_STEP1, Sounds.GRASS_STEP2, Sounds.GRASS_STEP3}, 0.45f, 1.f))),
+            KYANITE = create(new ItemType("resource/texture/kyanite").blockToPlace(BlockTypes.getId(BlockTypes.KYANITE), 0).maxStackSize(64).sfx(new ItemSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 0.6f, 1.2f))),
+            FLINT = create(new ItemType("resource/texture/flint").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.FLINT), 0).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.5f, 1.05f))),
+            GRAVEL = create(new ItemType("resource/texture/gravel").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.GRAVEL), 0).sfx(new ItemSFX(new SFX[]{Sounds.GRAVEL_STEP1, Sounds.GRAVEL_STEP2}, 0.4f, 1.f))),
+            SANDSTONE = create(new ItemType("resource/texture/sandstone").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.SANDSTONE), 0).sfx(new ItemSFX(new SFX[]{Sounds.ROCK_PLACE1, Sounds.ROCK_PLACE2}, 0.5f, 1.f))),
+            SAND = create(new ItemType("resource/texture/sand").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.SAND), 0).sfx(new ItemSFX(new SFX[]{Sounds.SAND_STEP1, Sounds.SAND_STEP2}, 0.4f, 1.f))),
+            DIRT = create(new ItemType("resource/texture/dirt").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.DIRT), 0).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.5f, 1.f))),
+            GRASSY_DIRT = create(new ItemType("resource/texture/grassy_dirt").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.GRASS), 0).sfx(new ItemSFX(new SFX[]{Sounds.DIRT_STEP1, Sounds.DIRT_STEP2, Sounds.DIRT_STEP3}, 0.5f, 1.f))),
+            CLAY = create(new ItemType("resource/texture/clay").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.CLAY), 0).sfx(new ItemSFX(new SFX[]{Sounds.MUD_STEP1, Sounds.MUD_STEP2}, 0.5f, 0.66f))),
+            MUD = create(new ItemType("resource/texture/mud").maxStackSize(64).blockToPlace(BlockTypes.getId(BlockTypes.MUD), 0).sfx(new ItemSFX(new SFX[]{Sounds.MUD_STEP1, Sounds.MUD_STEP2}, 0.5f, 0.66f)));
 
     private static ItemType create(ItemType type) {
         itemTypeMap.put(itemTypeMap.size(), type);
