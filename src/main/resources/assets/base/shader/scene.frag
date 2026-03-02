@@ -385,7 +385,7 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
             if (voxelColor.a > 0) {
                 vec3 voxelHitPos = mapPos+(voxelPos/8);
                 if (shouldSelectBlock && block.x > 1) {
-                    if (ivec2(gl_FragCoord.xy) == (upscale ? ivec2(res/vec2(4, 2)) : ivec2(res/2))) {
+                    if (ivec2(gl_FragCoord.xy) == (upscale ? ivec2(res/vec2(4)) : ivec2(res/2))) {
                         shouldSelectBlock = false;
                         playerData[0] = voxelHitPos.x;
                         playerData[1] = voxelHitPos.y;
