@@ -121,6 +121,8 @@ public class Main {
                         } else if (World.worldType instanceof BorealWorldType) {
                             World.nextWorldType = new TemperateWorldType();
                         }
+                    } else if (wasCDown && !window.isKeyPressed(SDL_SCANCODE_C)) {
+                        player.creative = !player.creative;
                     }
                 } else if (window.isKeyPressed(SDL_SCANCODE_F4)) {
                     if (wasSDown && !window.isKeyPressed(SDL_SCANCODE_S)) {
@@ -236,12 +238,6 @@ public class Main {
                         }
                         if (wasDownDown && !window.isKeyPressed(SDL_SCANCODE_DOWN)) {
                             timeMul = Math.max(0, timeMul - (isShiftDown ? 10.f : 0.25f));
-                        }
-
-                        if (window.isKeyPressed(SDL_SCANCODE_F3)) {
-                            if (wasCDown && !window.isKeyPressed(SDL_SCANCODE_C)) {
-                                player.creative = !player.creative;
-                            }
                         }
                     }
                 }

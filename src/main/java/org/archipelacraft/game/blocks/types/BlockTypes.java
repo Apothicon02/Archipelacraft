@@ -46,10 +46,10 @@ public class BlockTypes {
             STONE = create(List.of(Tags.rocks, Tags.blunt), new BlockType(new BlockProperties())), //10
             GLASS = create(List.of(Tags.blunt), new BlockType(new BlockProperties().blockSFX(new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1,
                     new SFX[]{Sounds.GLASS_STEP1, Sounds.GLASS_STEP2}, 1, 1).blocksLight(false))),
-            PURPLE_STAINED_GLASS = create(List.of(Tags.blunt), new BlockType(GLASS.blockProperties)),
+            MAGENTA_STAINED_GLASS = create(List.of(Tags.blunt), new BlockType(GLASS.blockProperties)),
             LIME_STAINED_GLASS = create(List.of(Tags.blunt), new BlockType(GLASS.blockProperties)),
             PORECAP = create(List.of(Tags.sediment), new PlantLightBlockType(((LightBlockProperties)TORCH.blockProperties.copy().ttb(50)).r(0).g(12).b(6))),
-            OAK_PLANKS = create(List.of(Tags.planks), new BlockType(new BlockProperties().ttb(200).blockSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1,
+            OAK_PLANK = create(List.of(Tags.planks), new BlockType(new BlockProperties().ttb(200).blockSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1,
                     new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1))), //15
             OAK_LOG = create(new BlockType(new BlockProperties().ttb(200).blockSFX(new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1,
                     new SFX[]{Sounds.WOOD_STEP1, Sounds.WOOD_STEP2}, 1, 1))),
@@ -65,31 +65,31 @@ public class BlockTypes {
                     new SFX[]{Sounds.SAND_STEP1, Sounds.SAND_STEP2}, 0.45f, 1.33f).needsSupport(true).blocksLight(true).obstructsHeightmap(true))),
             SANDSTONE = create(List.of(Tags.blunt), new BlockType(new BlockProperties())),
             PALM_LOG = create(new BlockType(OAK_LOG.blockProperties)), //25
-            PALM_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            PALM_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             PALM_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
-            MAHOGANY_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            MAHOGANY_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             CACTUS = create(List.of(Tags.survivesOnSand), new PlantBlockType(new BlockProperties().isSolid(false).blocksLight(false).obstructsHeightmap(false).isCollidable(true).isFluidReplaceable(true).needsSupport(true))),
             DEAD_BUSH = create(List.of(Tags.survivesOnSediment), new PlantBlockType(ROSE.blockProperties)), //30
             CLOUD = create(new BlockType(new BlockProperties().blockSFX(new SFX[]{Sounds.CLOUD}, 0.75f, 0.75f, new SFX[]{Sounds.CLOUD}, 0.75f, 0.75f)
                     .isSolid(false).isCollidable(false).blocksLight(false).obstructsHeightmap(false))),
             RAIN_CLOUD = create(new CloudBlockType(CLOUD.blockProperties)),
             DRY_MUD = create(List.of(Tags.soakers, Tags.sediment), new BlockType(DIRT.blockProperties)),
-            SPRUCE_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            SPRUCE_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             SPRUCE_LOG = create(new BlockType(OAK_LOG.blockProperties)), //35
             SPRUCE_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
-            CHERRY_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            CHERRY_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             CHERRY_LOG = create(new BlockType(OAK_LOG.blockProperties)),
             CHERRY_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
-            BIRCH_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)), //40
+            BIRCH_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)), //40
             BIRCH_LOG = create(new BlockType(OAK_LOG.blockProperties)),
             BIRCH_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
-            ACACIA_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            ACACIA_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             ACACIA_LOG = create(new BlockType(OAK_LOG.blockProperties)),
             ACACIA_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)), //45
-            WILLOW_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            WILLOW_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             WILLOW_LOG = create(new BlockType(OAK_LOG.blockProperties)),
             WILLOW_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
-            REDWOOD_PLANKS = create(List.of(Tags.planks), new BlockType(OAK_PLANKS.blockProperties)),
+            REDWOOD_PLANK = create(List.of(Tags.planks), new BlockType(OAK_PLANK.blockProperties)),
             REDWOOD_LOG = create(new BlockType(OAK_LOG.blockProperties)), //50
             REDWOOD_LEAVES = create(List.of(Tags.leaves), new LeafBlockType(OAK_LEAVES.blockProperties)),
             HIBISCUS = create(List.of(Tags.flowers, Tags.survivesOnGrass), new PlantLightBlockType(((LightBlockProperties)(PORECAP.blockProperties)).copy().r(17).g(1).b(17))),
