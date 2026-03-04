@@ -1,7 +1,7 @@
 package org.archipelacraft.game.blocks.types;
 
 import org.archipelacraft.game.blocks.Fluids;
-import org.archipelacraft.game.blocks.Tags;
+import org.archipelacraft.game.blocks.BlockTags;
 import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 import org.joml.Vector3i;
@@ -20,16 +20,16 @@ public class WaterBlockType extends BlockType {
                 fluid.x = fluid.y <= 1 ? 0 : fluid.x;
                 fluid.y--;
                 World.setBlock(pos.x, pos.y - 1, pos.z, BlockTypes.getId(BlockTypes.MUD), 0, true, false, 3, false);
-            } else if (Tags.crystals.tagged.contains(belowBlock.x)) {
+            } else if (BlockTags.crystals.tagged.contains(belowBlock.x)) {
                 fluid.x = belowBlock.x;
                 fluid.y = belowBlock.y;
-            } else if (Tags.soakers.tagged.contains(belowBlock.x)) {
+            } else if (BlockTags.soakers.tagged.contains(belowBlock.x)) {
                 fluid.x = 0;
                 fluid.y = 0;
             } else if (fluid.y == 1 && belowBlock.x == BlockTypes.getId(BlockTypes.GRASS)) {
                 int blockType = 4;
                 if (Math.random() < 0.33f) { //33% chance to generate a flower
-                    blockType = Tags.shortFlowers.tagged.get((int) (Math.random() * Tags.shortFlowers.tagged.size()));
+                    blockType = BlockTags.shortFlowers.tagged.get((int) (Math.random() * BlockTags.shortFlowers.tagged.size()));
                 }
                 fluid.x = 0;
                 World.setBlock(pos.x, pos.y, pos.z, blockType, (int) (Math.random() * 4), true, false, 3, false);

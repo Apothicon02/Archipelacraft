@@ -1,6 +1,6 @@
 package org.archipelacraft.game.blocks.types;
 
-import org.archipelacraft.game.blocks.Tag;
+import org.archipelacraft.game.blocks.BlockTag;
 import org.archipelacraft.game.world.FluidHelper;
 import org.archipelacraft.game.world.GasHelper;
 import org.archipelacraft.game.world.World;
@@ -15,10 +15,10 @@ import static org.archipelacraft.game.world.World.*;
 
 public class BlockType {
     public BlockProperties blockProperties;
-    public List<Tag> tags = List.of();
+    public List<BlockTag> tags = List.of();
 
     public float getTTBSpeed(int tool) {
-        for (Tag tag : tags) {
+        for (BlockTag tag : tags) {
             Float speed = blockProperties.proficiencies.get(tag);
             if (speed != null) {
                 return speed;

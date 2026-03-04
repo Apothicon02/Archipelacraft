@@ -4,7 +4,7 @@ import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
 import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.blocks.Fluids;
-import org.archipelacraft.game.blocks.Tags;
+import org.archipelacraft.game.blocks.BlockTags;
 import org.archipelacraft.game.blocks.drops.BlockDrops;
 import org.archipelacraft.game.blocks.types.BlockProperties;
 import org.archipelacraft.game.blocks.types.BlockType;
@@ -80,7 +80,7 @@ public class HandManager {
                             if (cornerData == -2147483521 || !player.crouching) {
                                 Vector3i intBreakingPos = new Vector3i((int) pos.x, (int) pos.y, (int) pos.z);
                                 boolean canBreak = breakingType.whilePlayerBreaking(intBreakingPos, blockBreaking, handBlock);
-                                if (canBreak && !Tags.cantBreakBlocks.tagged.contains(blockToPlace.x)) {
+                                if (canBreak && !BlockTags.cantBreakBlocks.tagged.contains(blockToPlace.x)) {
                                     if (!player.creative) {
                                         boolean sameBlock = blockStartedBreaking.x == (int)(pos.x) && blockStartedBreaking.y == (int)(pos.y) && blockStartedBreaking.z == (int)(pos.z);
                                         if (sameBlock) {
@@ -131,7 +131,7 @@ public class HandManager {
                                     blockToPlace.x = Fluids.fluidBucketMap.get(blockToPlace.x);
                                     blockType = BlockTypes.blockTypeMap.get(blockToPlace.x);
                                 }
-                                if (oldType.isFluidReplaceable || (oldType.isFluid && !Tags.buckets.tagged.contains(blockToPlace.x) && !blockType.blockProperties.isFluidReplaceable && !blockType.blockProperties.isFluid)) {
+                                if (oldType.isFluidReplaceable || (oldType.isFluid && !BlockTags.buckets.tagged.contains(blockToPlace.x) && !blockType.blockProperties.isFluidReplaceable && !blockType.blockProperties.isFluid)) {
                                     World.setBlock((int) pos.x, (int) pos.y, (int) pos.z, blockToPlace.x, blockToPlace.y, true, false, 1, false);
                                     if (!player.creative) {
                                         if (blockType.blockProperties.isFluid) {

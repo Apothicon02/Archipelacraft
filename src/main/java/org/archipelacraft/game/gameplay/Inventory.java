@@ -1,12 +1,11 @@
 package org.archipelacraft.game.gameplay;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import kotlin.Pair;
 import org.archipelacraft.Main;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.engine.Window;
-import org.archipelacraft.game.items.Item;
-import org.archipelacraft.game.items.ItemType;
-import org.archipelacraft.game.items.ItemTypes;
+import org.archipelacraft.game.items.*;
 import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 
@@ -99,6 +98,47 @@ public class Inventory {
                         World.dropItem(cursorItem);
                     }
                     cursorItem = null;
+                }
+                interactCD = 5;
+            } else if (Main.isMMBClick) {
+                ItemType product = Recipes.recipes.get(new Pair<>(cursorItem.type, selItem.type));
+                if (product == null) {
+                    product = Recipes.recipes.get(new Pair<>(selItem.type, cursorItem.type));
+                }
+                boolean useCursorItem = true;
+                if (product == null) {
+                    for (ItemTag tag : cursorItem.type.tags) {
+                        if (tag.tagged.contains(cursorItem.type)) {
+                            for (ItemTag selTag : selItem.type.tags) {
+                                if (selTag.tagged.contains(selItem.type)) {
+                                    product = Recipes.tagRecipes.get(new Pair<>(tag, selTag));
+                                    if (product != null) {
+                                        useCursorItem = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (product != null) {
+                    if (!useCursorItem || selItem.amount <= cursorItem.amount) {
+                        selItem.type(product);
+                        if (useCursorItem) {
+                            cursorItem.amount(cursorItem.amount - selItem.amount);
+                            if (cursorItem.amount <= 0) {
+                                cursorItem = null;
+                            }
+                        }
+                        selItem.playSound(Main.player.pos);
+                    } else {
+                        cursorItem.type(product);
+                        selItem.amount(selItem.amount-cursorItem.amount);
+                        if (selItem.amount <= 0) {
+                            selItem = null;
+                        }
+                        cursorItem.playSound(Main.player.pos);
+                    }
                 }
                 interactCD = 5;
             }

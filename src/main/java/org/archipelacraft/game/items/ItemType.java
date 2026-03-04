@@ -4,7 +4,10 @@ import org.archipelacraft.game.audio.SFX;
 import org.archipelacraft.game.audio.Sounds;
 import org.joml.Vector2i;
 
+import java.util.List;
+
 public class ItemType {
+    public List<ItemTag> tags = List.of();
     public String name;
     public int maxStackSize = 1;
     public Vector2i atlasOffset = null;

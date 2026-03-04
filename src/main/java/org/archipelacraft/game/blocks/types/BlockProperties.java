@@ -3,14 +3,13 @@ package org.archipelacraft.game.blocks.types;
 import org.archipelacraft.game.audio.BlockSFX;
 import org.archipelacraft.game.audio.SFX;
 import org.archipelacraft.game.audio.Sounds;
-import org.archipelacraft.game.blocks.Tag;
-import org.joml.Vector2i;
+import org.archipelacraft.game.blocks.BlockTag;
 
 import java.util.Map;
 
 public class BlockProperties implements Cloneable {
-    public Map<Tag, Float> proficiencies = Map.of();
-    public BlockProperties proficiencies(Map<Tag, Float> proficiencies) {
+    public Map<BlockTag, Float> proficiencies = Map.of();
+    public BlockProperties proficiencies(Map<BlockTag, Float> proficiencies) {
         this.proficiencies = proficiencies;
         return this;
     }

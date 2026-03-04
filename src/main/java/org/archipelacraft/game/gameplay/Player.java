@@ -5,7 +5,7 @@ import org.archipelacraft.engine.Camera;
 import org.archipelacraft.engine.Utils;
 import org.archipelacraft.game.audio.Sounds;
 import org.archipelacraft.game.audio.Source;
-import org.archipelacraft.game.blocks.Tags;
+import org.archipelacraft.game.blocks.BlockTags;
 import org.archipelacraft.game.blocks.types.BlockTypes;
 import org.archipelacraft.game.items.Item;
 import org.archipelacraft.game.rendering.Renderer;
@@ -170,7 +170,7 @@ public class Player {
                                 friction = Math.min(friction, 0.95f);
                             } else if (typeId == 11 || typeId == 12 || typeId == 13) { //glass
                                 friction = Math.min(friction, 0.85f);
-                            } else if (Tags.planks.tagged.contains(block.x)) { //wood
+                            } else if (BlockTags.planks.tagged.contains(block.x)) { //wood
                                 friction = Math.min(friction, 0.5f);
                             } else if (BlockTypes.blockTypeMap.get(typeId).blockProperties.isCollidable) {
                                 friction = Math.min(friction, 0.75f);
@@ -327,7 +327,7 @@ public class Player {
             modifiedGrav *= 0.2f;
             friction *= 0.9f;
             modifiedSpeed *= 0.5f;
-        } else if (Tags.leaves.tagged.contains(blockIn.x)) { //leaves
+        } else if (BlockTags.leaves.tagged.contains(blockIn.x)) { //leaves
             if (blockIn.y == 0) {
                 friction *= 0.5f;
                 modifiedSpeed *= 0.5f;

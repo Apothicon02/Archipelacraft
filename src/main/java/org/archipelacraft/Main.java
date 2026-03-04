@@ -64,8 +64,10 @@ public class Main {
 
     public static boolean isLMBClick = false;
     public static boolean isRMBClick = false;
+    public static boolean isMMBClick = false;
     public static boolean wasLMBDown = false;
     public static boolean wasRMBDown = false;
+    public static boolean wasMMBDown = false;
     boolean wasTabDown = false;
     boolean wasXDown = false;
     boolean wasTDown = false;
@@ -104,8 +106,10 @@ public class Main {
             } else {
                 boolean isLMBDown = window.leftButtonPressed;
                 boolean isRMBDown = window.rightButtonPressed;
+                boolean isMMBDown = window.middleButtonPressed;
                 isLMBClick = wasLMBDown && !isLMBDown;
                 isRMBClick = wasRMBDown & !isRMBDown;
+                isMMBClick = wasMMBDown & !isMMBDown;
                 isShiftDown = window.isKeyPressed(SDL_SCANCODE_LSHIFT);
                 isCtrlDown = window.isKeyPressed(SDL_SCANCODE_LCTRL);
                 boolean isF11Down = window.isKeyPressed(SDL_SCANCODE_F11);
@@ -244,6 +248,10 @@ public class Main {
 
                 wasLMBDown = isLMBDown;
                 wasRMBDown = isRMBDown;
+                wasMMBDown = isMMBDown;
+                if (wasMMBDown) {
+                    boolean nothing = false;
+                }
                 wasF1Down = window.isKeyPressed(SDL_SCANCODE_F1);
                 wasF2Down = window.isKeyPressed(SDL_SCANCODE_F2);
                 wasF4Down = window.isKeyPressed(SDL_SCANCODE_F4);

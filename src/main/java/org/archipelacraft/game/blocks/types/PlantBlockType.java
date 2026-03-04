@@ -1,8 +1,8 @@
 package org.archipelacraft.game.blocks.types;
 
 import kotlin.Pair;
-import org.archipelacraft.game.blocks.Tag;
-import org.archipelacraft.game.blocks.Tags;
+import org.archipelacraft.game.blocks.BlockTag;
+import org.archipelacraft.game.blocks.BlockTags;
 import org.archipelacraft.game.world.World;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
@@ -14,7 +14,7 @@ public class PlantBlockType extends BlockType {
 
     @Override
     public void lostSupport(Vector3i pos, Vector2i block) {
-        boolean onSediment = Tags.sediment.tagged.contains(getBlock(pos.x, pos.y-1, pos.z).x);
+        boolean onSediment = BlockTags.sediment.tagged.contains(getBlock(pos.x, pos.y-1, pos.z).x);
         World.setBlock(pos.x, pos.y, pos.z, onSediment ? BlockTypes.getId(BlockTypes.DEAD_BUSH) : 0, onSediment ? (int)(Math.random()*1.9) : 0, true, false, 2, false);
     }
 
@@ -25,7 +25,7 @@ public class PlantBlockType extends BlockType {
         }
         Vector2i blockOn = getBlock(pos.x, pos.y-1, pos.z);
         boolean survives = false;
-        for (Pair<Tag, Tag> pair : Tags.survivalTags) {
+        for (Pair<BlockTag, BlockTag> pair : BlockTags.survivalTags) {
             if (pair.getFirst().tagged.contains(block.x)) {
                 if (pair.getSecond().tagged.contains(blockOn.x)) {
                     survives = true;
