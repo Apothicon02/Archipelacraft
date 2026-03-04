@@ -39,7 +39,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         Main main = new Main();
-        Engine gameEng = new Engine("Voxeleers", new Window.WindowOptions(), main);
+        Engine gameEng = new Engine("Archipelacraft", new Window.WindowOptions(), main);
         gameEng.start();
     }
 
