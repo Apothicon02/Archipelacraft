@@ -213,7 +213,6 @@ vec4 prevTintAddition = vec4(0);
 void clearVars() {
     prevTintAddition = vec4(0);
     maxRayDist = 2500.f;
-    hitBlock = ivec3(0);
     hitPos = vec3(0);
     solidHitPos = vec3(0);
     mapPos = vec3(0);
@@ -354,6 +353,8 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                 vec3 hitNormal = -voxelMask * raySign;
                 vec3 realPos = (ogRayPos + rayDir * rayLength);
                 prevPos = realPos + (hitNormal * 0.001f);
+            } else {
+                prevTintAddition = vec4(0);
             }
         } else if (voxelPos.x < 8.0 && voxelPos.x >= 0.0 && voxelPos.y < 8.0 && voxelPos.y >= 0.0 && voxelPos.z < 8.0 && voxelPos.z >= 0.0) {
             if (distance(ogPos, mapPos+(voxelPos/8)) >= maxRayDist) {
@@ -435,21 +436,23 @@ vec4 traceBlock(vec3 rayPos, vec3 iMask, float subChunkDist, float chunkDist) {
                         wasEverUnderwater = true;
                         steppingBlock = true;
                     }
-                    float tintMul = 1.f;
                     if (isFullSemitransparentBlock(block.xy)) {
                         steppingBlock = true;
                     }
                     float brightness = dot(normal, source)*-0.0002f;
-                    tintMul = clamp(0.75f+brightness, 0.66f, 1.f);
+                    float tintMul = clamp(0.75f+brightness, 0.5f, 1.f);
                     if (prevTintAddition != voxelColor) {
                         prevTintAddition = voxelColor;
-                        tint += voxelColor*tintMul;
+                        tint.rgb += voxelColor.rgb*tintMul;
+                        tint.a += voxelColor.a;
                     }
                 } else {
                     hitSolidVoxel = true;
                     texColor = baseColor;
                     return vec4(voxelColor.rgb, 1);
                 }
+            } else {
+                prevTintAddition = vec4(0);
             }
             if (!steppingBlock) {
                 voxelMask = stepMask(voxelSideDist);
@@ -695,12 +698,14 @@ vec4 getShadow(vec4 color, bool actuallyCastShadowRay, bool isTracedObject, floa
             }
             shadowFactor = min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))); //shadowFactor = mix(1.f, min(0.9f, mix(0.75f, 0.9f, min(1, distance(shadowPos, hitPos)/420))), waterDepth);
         }
+        vec4 normalizedTint = tint/max(1.f, max(tint.r, max(tint.g, tint.b)));
+        shadowFactor = max(0.75f, shadowFactor-(normalizedTint.a/4));
         isShadow = false;
         tint = prevTint;
         hitPos = oldHitPos;
     }
     float brightness = (dot(vNorm, source)*-0.0002f)*waterDepth;
-    color.rgb *= clamp(0.75f+brightness, 0.66f, 1.f);
+    color.rgb *= clamp(0.75f+brightness, 0.5f, shadowFactor < 1.f ? 0.5f : 1.f);
     return color;
 }
 
@@ -736,7 +741,7 @@ void main() {
         bool xOdd = bool(int(gl_FragCoord.x) % 2 == 1);
         bool yOdd = bool(int(gl_FragCoord.y) % 2 == 1);
         bool isChecker = (xOdd && yOdd) || (!xOdd && !yOdd);
-        if (reverseChecker) {isChecker = !isChecker;}
+        if (reverseChecker) { isChecker = !isChecker; }
         if (isChecker) {
             pos += checkerStep;
         }
@@ -761,23 +766,20 @@ void main() {
     bool isSky = rasterColor.a <= 0.f;
     bool isLight = false;
     updateLightFog(ogPos);
-        if (rasterColor.a >= 1) {
-            maxRayDist = distance(ogPos, rasterPos.xyz);
-        }
-        fragColor = raytrace(ogPos, ogDir);
-        if (isLightSource(block.xy) && max(texColor.r, max(texColor.g, texColor.b)) > 0.9f) {
-            fragColor.rgb *= 1.5f;
-            isLight = true;
-        }
-        isSky = skyChecks();
-        if (mapPos.y <= 63 && fragColor.a < alphaMax) {
-            fragColor = vec4(1.0f, 0.0f, 0.0f, 1.f);
-            isSky = false;
-        }
-    shouldSelectBlock = false;
-    if (hitBlock == ivec3(playerData[0], playerData[1], playerData[2]) && ui) {
-        fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
+    if (rasterColor.a >= 1) {
+        maxRayDist = distance(ogPos, rasterPos.xyz);
     }
+    fragColor = raytrace(ogPos, ogDir);
+    if (isLightSource(block.xy) && max(texColor.r, max(texColor.g, texColor.b)) > 0.9f) {
+        fragColor.rgb *= 1.5f;
+        isLight = true;
+    }
+    isSky = skyChecks();
+    if (mapPos.y <= 63 && fragColor.a < alphaMax) {
+        fragColor = vec4(1.0f, 0.0f, 0.0f, 1.f);
+        isSky = false;
+    }
+    shouldSelectBlock = false;
     vec4 lighting = vec4(-1);
     lightPos = ogPos + ogDir * size;//this is only used if it's the sky
     bool isTracedObject = true;
@@ -808,7 +810,7 @@ void main() {
             fragColor = shadowResult;
         } else if (fragColor.a >= 10) {
             fragColor.a -= 10;
-            shadowFactor = 0.75f;
+            shadowFactor = 0.5f;
         }
     }
     float fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
@@ -827,6 +829,7 @@ void main() {
         lightPos = hitPos;
         normal = tintNormal;
         vec4 normalizedTint = tint/max(1.f, max(tint.r, max(tint.g, tint.b)));
+        shadowFactor = 1.f;
         normalizedTint = getShadow(normalizedTint, false, false, 0.f);
         fogginess = clamp((clamp(sqrt(distance(ogPos, lightPos)/(size*0.66f))*gradient(lightPos.y, 63, 80, 1, 1+abs(noise(lightPos.xz)/3)), 0, 1)), 0.f, 1.f);
         lighting = (getLight(lightPos.x, lightPos.y, lightPos.z));
@@ -834,8 +837,12 @@ void main() {
         lighting = powLighting(lighting);
         vec4 lightingColor = getLightingColor(lightPos, lighting, false, fogginess);
         normalizedTint.rgb *= lightingColor.rgb;
-        normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
+        normalizedTint.rgb = mix(normalizedTint.rgb, lightingColor.rgb, fogginess);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, mix(normalizedTint.a, 1.f, reflectivity));
+    }
+
+    if (hitBlock == ivec3(playerData[0], playerData[1], playerData[2]) && ui) {
+        fragColor.rgb = mix(fragColor.rgb, vec3(0.7, 0.7, 1), 0.5f);
     }
     fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
