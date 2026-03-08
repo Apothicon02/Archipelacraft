@@ -250,7 +250,9 @@ vec4 lightFogLastCheck = vec4(0);
 void updateLightFog(vec3 pos) {
     if (!isShadow) {
         lightFogLastCheck = (getLight(pos.x, pos.y, pos.z));
-        lightFog = max(lightFog, getLightingColor(mapPos, vec4(lightFogLastCheck.rgb, 0), false, 1)/2);
+        if (lightFogLastCheck.r > 0  && lightFogLastCheck.g > 0  && lightFogLastCheck.b > 0 ) {
+            lightFog = max(lightFog, getLightingColor(mapPos, vec4(lightFogLastCheck.rgb, 0), false, 1)/2);
+        }
     }
 }
 
@@ -835,6 +837,7 @@ void main() {
         normalizedTint.rgb = mix(normalizedTint.rgb*1.2f, lightingColor.rgb, fogginess);
         fragColor.rgb = mix(fragColor.rgb, normalizedTint.rgb, mix(normalizedTint.a, 1.f, reflectivity));
     }
+    fragColor.rgb += max(vec3(0), mix(lightFog.rgb, vec3(0), fogDetractorFactor));
     fragColor = toLinear(fragColor);
     fragColor.a = depth;
 }
